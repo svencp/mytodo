@@ -1,11 +1,13 @@
 /*
     This is my to-do list
     2020.07.24      Sven Ponelat
+
 */
 
 mod library;
 
 use library::my_utils::*;
+use library::enums::*;
 use library::task::*;
 use std::collections::{BTreeMap};
 use std::process::exit;
@@ -17,8 +19,9 @@ use thousands::{Separable};
 use std::time::{SystemTime};
 
 
-const VERSION: &str = env!("CARGO_PKG_VERSION");
-
+const VERSION: &str   = env!("CARGO_PKG_VERSION");
+const PENDING: &str   = "./pending.data";
+const COMPLETED: &str = "./completed.data";
 
 
 #[rustfmt::skip]
