@@ -16,7 +16,8 @@ use crate::library::enums::*;
 #[derive(Clone )]
 pub struct Task {
     pub id: Option<i32>,
-    pub desc: String,
+    // pub hid:
+    pub description: String,
     pub status: Status,
     // entered: Some(i64),
 
@@ -31,7 +32,7 @@ impl Task {
     pub fn new() -> Task {
         Task { 
             id: None,
-            desc: "".to_string(),
+            description: "".to_string(),
             status: Status::Waiting, 
         }
     }

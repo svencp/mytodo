@@ -14,15 +14,19 @@ pub enum Status {
     Deleted,
     Waiting,
     Pending,
+    Completed,
+    Recurring,
 }
 
 
 impl Status {
     fn text(&self) -> &str{
         match *self {
-            Status::Deleted => "Deleted",
-            Status::Waiting => "Waiting",
-            Status::Pending => "Pending",
+            Status::Deleted   => "Deleted",
+            Status::Waiting   => "Waiting",
+            Status::Pending   => "Pending",
+            Status::Completed => "Completed",
+            Status::Recurring => "Recurring",
         }
     }
 }
