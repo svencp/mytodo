@@ -8,7 +8,7 @@
 // use field_names::*;
 
 
-#[derive(Clone )]
+#[derive(Clone  )]
 #[allow(non_snake_case)]
 pub enum Status {
     Deleted,
@@ -33,7 +33,7 @@ impl Status {
 
 
 // enum for recurring type
-#[derive(Clone )]
+#[derive(Clone  )]
 #[allow(non_snake_case)]
 pub enum Rtype {
     Periodic,

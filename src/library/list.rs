@@ -86,7 +86,7 @@ mod tests {
         let json_file = "./test/pending.data";
 
         let mut task = Task::new();
-        task.desc = "Hello Svenny".to_string();
+        task.description = "Hello Svenny".to_string();
         task.id = Some(1);
         task.status = Status::Waiting;
 

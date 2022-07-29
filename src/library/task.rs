@@ -5,6 +5,8 @@
 */
 
 
+use std::time::SystemTime;
+
 use crate::library::enums::*;
 // use serde::{Serialize, Deserialize};
 
@@ -15,10 +17,9 @@ use crate::library::enums::*;
 
 #[derive(Clone )]
 pub struct Task {
+    pub uuiid: i64,
     pub id: Option<i64>,
-    pub hex_id: i64,
     pub description: String,
-    pub status: Status,
     pub entry: i64,
     pub due: Option<i64>,
     pub end: Option<i64>,
@@ -26,37 +27,44 @@ pub struct Task {
     pub modified: Option<i64>,
     pub parent: Option<i64>,
     pub recur: Option<String>,
+    pub status: Status,
     pub rtype: Option<Rtype>,
     pub tags: Vec<String>,
-    pub timetrackingseconds: Option<i64>,
+    pub timetrackingseconds: i64,
 
 
 
 }
 
 
-// impl Task {
+impl Task {
     
-//     // make an empty task for compilers sake
-//     pub fn new() -> Task {
-//         Task { 
-//             id: None,
-//             hex_id: None,
-//             description: "".to_string(),
-//             status: Status::Waiting, 
-//             id: None,
-//             id: None,
-//             id: None,
-//             id: None,
-//         }
-//     }
+    // make an empty task for compilers sake
+    pub fn new() -> Task {
+        Task { 
+            id: None,
+            uuiid: 0,
+            description: "".to_string(),
+            status: Status::Pending, 
+            entry: SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs() as i64,
+            due: None,
+            end: None,
+            wait: None,
+            modified: None,
+            parent: None,
+            recur: None,
+            rtype: None,
+            tags: Vec::new(),
+            timetrackingseconds: 0,
+        }
+    }
 
 
 
 
 
 
-// }
+}
 
 
 
@@ -87,16 +95,18 @@ mod tests {
     use std::fs::remove_file;
 
     
-    // // #[ignore]
-    // #[test]
-    // fn t001_task_new() {
-    //     let mut t1 = Task::new();
-    //     t1.id = Some(23);
-    //     t1.desc = "This is a description".to_string();
-    //     t1.status = Status::Pending;
+    // #[ignore]
+    #[test]
+    fn t001_task_new() {
+        let mut t1 = Task::new();
+        t1.id = Some(23);
+        t1.description = "This is a description".to_string();
+        t1.status = Status::Pending;
+        
 
-    //     assert_eq!(t1.id.unwrap(), 23);
-    // }
+        let yebo: bool = t1.entry > 1650000000;
+        assert_eq!(yebo, true);
+    }
 
 
 
