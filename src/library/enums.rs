@@ -32,9 +32,23 @@ impl Status {
 }
 
 
+// enum for recurring type
+#[derive(Clone )]
+#[allow(non_snake_case)]
+pub enum Rtype {
+    Periodic,
+    Chained,
+}
 
 
-
+impl Rtype {
+    fn text(&self) -> &str{
+        match *self {
+            Rtype::Periodic  => "Periodic",
+            Rtype::Chained   => "Chained",
+        }
+    }
+}
 
 
 
