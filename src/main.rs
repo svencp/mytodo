@@ -7,8 +7,10 @@
 mod library;
 
 use library::my_utils::*;
+use library::functions::*;
 use library::enums::*;
 use library::task::*;
+use substring::Substring;
 use std::collections::{BTreeMap};
 use std::process::exit;
 use std::fs::copy;
@@ -28,6 +30,8 @@ const COMPLETED: &str = "./completed.data";
 fn main() {
     let now = SystemTime::now();
     let arguments: Vec<String> = env::args().collect();
+    let mut arg_id:   Vec<i64> = Vec::new();
+    let mut arg_hex:  Vec<i64> = Vec::new();
     let mut command = None;
     let mut sub1 = None;
     let mut sub2 = None;
@@ -78,9 +82,88 @@ fn main() {
 
 
 
+// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Arguments @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+    // There are no arguments
+    if arguments.len() < 2 {
+        let message = format!("There are zero arguments");
+        feedback(Feedback::Info, message);
+
+    // Too many arguments
+    } else if arguments.len() >= 6 {
+        let message = format!("There are too many arguments.");
+        feedback(Feedback::Warning, message);
+    
+    
+    //majority of arguments    
+    } else {
+
+    // What we have to figure out is, if the first arg is an integer, hex or command
+        let mut matcho: &str;
+    
+        let res_int = is_arg_integer(command.clone().unwrap().as_str());
+        if res_int.is_ok() {
+            arg_id = res_int.unwrap();
+            matcho = "int";
+        }
 
 
-    // let pending = 
+        let res_hexi = is_arg_hexidecimal(command.clone().unwrap().as_str());
+        if res_hexi.is_ok() {
+            arg_hex = res_hexi.unwrap();
+            matcho = "hex";
+        }
+
+
+        // let temp_string = command.clone().unwrap().su
+        // let comm3 = temp_string
+
+
+        match comm3 {
+            
+            "add"  => {
+                let res_add = add_task(arguments.clone());     
+
+            }// end of "add"
+            
+            
+            
+        
+            
+            
+            
+            
+
+
+            // Not a valid first argument 
+            _   => {
+                let message = format!("Not a valid first argument ->  {}",arguments[1]);
+                feedback(Feedback::Warning, message);
+            } //end of _   
+
+
+
+
+
+
+
+        } //  end of match command 
+
+
+
+
+
+
+
+
+
+
+
+
+
+    } // end of else   if arguments.len() 
+
+
 
 
 
