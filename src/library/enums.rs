@@ -51,6 +51,27 @@ impl Rtype {
 }
 
 
+//enum for argument type
+#[derive(Debug, Clone, Eq, PartialEq  )]
+#[allow(non_snake_case)]
+pub enum ArgType {
+    None,
+    Integer,
+    Hexidecimal,
+    Command,
+    Unknown,
+}
+
+
+// impl ArgType {
+//     fn text(&self) -> &str{
+//         match *self {
+//             Rtype::Periodic  => "Periodic",
+//             Rtype::Chained   => "Chained",
+//         }
+//     }
+// }
+
 
 
 

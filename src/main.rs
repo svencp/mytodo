@@ -30,9 +30,10 @@ const COMPLETED: &str = "./completed.data";
 fn main() {
     let now = SystemTime::now();
     let arguments: Vec<String> = env::args().collect();
+    let mut command: String = "".to_string();
     let mut arg_id:   Vec<i64> = Vec::new();
-    let mut arg_hex:  Vec<i64> = Vec::new();
-    let mut command = None;
+    let mut arg_hex:  Vec<String> = Vec::new();
+    let mut first_arg = None;
     let mut sub1 = None;
     let mut sub2 = None;
     let mut sub3 = None;
@@ -42,32 +43,32 @@ fn main() {
     // It seems I need to do this,otherwise temporary variables get dropped
     match arguments.len() {
         2 => {
-            command = Some(arguments[1].to_lowercase().trim().to_owned());
+            first_arg = Some(arguments[1].to_lowercase().trim().to_owned());
         },
         3 => {
-            command = Some(arguments[1].to_lowercase().trim().to_owned());
+            first_arg = Some(arguments[1].to_lowercase().trim().to_owned());
             sub1 = Some(arguments[2].trim().to_owned());
         },
         4 => {
-            command = Some(arguments[1].to_lowercase().trim().to_owned());
+            first_arg = Some(arguments[1].to_lowercase().trim().to_owned());
             sub1 = Some(arguments[2].trim().to_owned());
             sub2 = Some(arguments[3].trim().to_owned());
         }
         5 => {
-            command = Some(arguments[1].to_lowercase().trim().to_owned());
+            first_arg = Some(arguments[1].to_lowercase().trim().to_owned());
             sub1 = Some(arguments[2].trim().to_owned());
             sub2 = Some(arguments[3].trim().to_owned());
             sub3 = Some(arguments[4].trim().to_owned());
         },
         6 => {
-            command = Some(arguments[1].to_lowercase().trim().to_owned());
+            first_arg = Some(arguments[1].to_lowercase().trim().to_owned());
             sub1 = Some(arguments[2].trim().to_owned());
             sub2 = Some(arguments[3].trim().to_owned());
             sub3 = Some(arguments[4].trim().to_owned());
             sub4 = Some(arguments[5].trim().to_owned());
         },
         7 => {
-            command = Some(arguments[1].to_lowercase().trim().to_owned());
+            first_arg = Some(arguments[1].to_lowercase().trim().to_owned());
             sub1 = Some(arguments[2].trim().to_owned());
             sub2 = Some(arguments[3].trim().to_owned());
             sub3 = Some(arguments[4].trim().to_owned());
@@ -84,85 +85,33 @@ fn main() {
 
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Arguments @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-    // There are no arguments
-    if arguments.len() < 2 {
-        let message = format!("There are zero arguments");
-        feedback(Feedback::Info, message);
+    let matcho: ArgType = determine_arg(&arguments, &mut arg_id, &mut arg_hex, &mut command);
 
-    // Too many arguments
-    } else if arguments.len() >= 6 {
-        let message = format!("There are too many arguments.");
-        feedback(Feedback::Warning, message);
-    
-    
-    //majority of arguments    
-    } else {
-
-    // What we have to figure out is, if the first arg is an integer, hex or command
-        let mut matcho: &str;
-    
-        let res_int = is_arg_integer(command.clone().unwrap().as_str());
-        if res_int.is_ok() {
-            arg_id = res_int.unwrap();
-            matcho = "int";
+    // lets do it
+    match matcho {
+        ArgType::None => {
+            println!("No arguments")
         }
-
-
-        let res_hexi = is_arg_hexidecimal(command.clone().unwrap().as_str());
-        if res_hexi.is_ok() {
-            arg_hex = res_hexi.unwrap();
-            matcho = "hex";
-        }
-
-
-        // let temp_string = command.clone().unwrap().su
-        // let comm3 = temp_string
-
-
-        match comm3 {
-            
-            "add"  => {
-                let res_add = add_task(arguments.clone());     
-
-            }// end of "add"
-            
-            
-            
         
-            
-            
-            
-            
-
-
-            // Not a valid first argument 
-            _   => {
-                let message = format!("Not a valid first argument ->  {}",arguments[1]);
-                feedback(Feedback::Warning, message);
-            } //end of _   
-
-
-
+        ArgType::Integer => {
+            println!("Integer arguments")
+        }
+        
+        ArgType::Hexidecimal => {
+            println!("Hexidecimal arguments")
+        }
+        
+        ArgType::Command => {
+            println!("Command argument")
+        }
 
 
 
+        _ => {
+            println!("What happened here!")
+        }
 
-        } //  end of match command 
-
-
-
-
-
-
-
-
-
-
-
-
-
-    } // end of else   if arguments.len() 
-
+    }//end of match
 
 
 

@@ -79,29 +79,29 @@ mod tests {
     use std::fs::remove_file;
 
     
-    // #[ignore]
-    #[test]
-    fn t001_list_new() {
+    // // #[ignore]
+    // #[test]
+    // fn t001_list_new() {
 
-        let json_file = "./test/pending.data";
+    //     let json_file = "./test/pending.data";
 
-        let mut task = Task::new();
-        task.description = "Hello Svenny".to_string();
-        task.id = Some(1);
-        task.status = Status::Waiting;
+    //     let mut task = Task::new();
+    //     task.description = "Hello Svenny".to_string();
+    //     task.id = Some(1);
+    //     task.status = Status::Waiting;
 
 
-        let mut l = List::new();
-        l.list.push(task);
-        assert_eq!(l.list.len(), 1);
+    //     let mut l = List::new();
+    //     l.list.push(task);
+    //     assert_eq!(l.list.len(), 1);
         
-        let res = l.save(json_file);
-        remove_file(json_file).expect("Cleanup test failed");
-        assert_eq!(res.is_ok(), true);
+    //     let res = l.save(json_file);
+    //     remove_file(json_file).expect("Cleanup test failed");
+    //     assert_eq!(res.is_ok(), true);
 
 
 
-    }
+    // }
 
 
 

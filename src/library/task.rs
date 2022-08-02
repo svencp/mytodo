@@ -17,7 +17,8 @@ use crate::library::enums::*;
 
 #[derive(Clone )]
 pub struct Task {
-    pub uuiid: i64,
+    pub uuiid: String,
+    pub uuiid_int: Option<i64>,
     pub id: Option<i64>,
     pub description: String,
     pub entry: i64,
@@ -43,7 +44,8 @@ impl Task {
     pub fn new() -> Task {
         Task { 
             id: None,
-            uuiid: 0,
+            uuiid: "".to_string(),
+            uuiid_int: None,
             description: "".to_string(),
             status: Status::Pending, 
             entry: SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs() as i64,
