@@ -9,6 +9,7 @@ mod library;
 use library::my_utils::*;
 use library::functions::*;
 use library::enums::*;
+use library::settings::*;
 use library::task::*;
 use substring::Substring;
 use std::collections::{BTreeMap};
@@ -24,6 +25,8 @@ use std::time::{SystemTime};
 const VERSION: &str   = env!("CARGO_PKG_VERSION");
 const PENDING: &str   = "./pending.data";
 const COMPLETED: &str = "./completed.data";
+const SETTINGS_FILE: &str = "settings.json";
+
 
 
 #[rustfmt::skip]
@@ -39,6 +42,13 @@ fn main() {
     let mut sub3 = None;
     let mut sub4 = None;
     let mut sub5 = None;
+
+    let settings = load_settings(SETTINGS_FILE);
+    let data_dir = settings.map.get("dataDir").unwrap().to_string();
+    let pending_file = data_dir.clone() + "/pending.data";
+    let completed_file = data_dir + "/completed.data";
+    
+
 
     // It seems I need to do this,otherwise temporary variables get dropped
     match arguments.len() {
