@@ -25,7 +25,7 @@ use std::time::{SystemTime};
 const VERSION: &str   = env!("CARGO_PKG_VERSION");
 const PENDING: &str   = "./pending.data";
 const COMPLETED: &str = "./completed.data";
-const SETTINGS_FILE: &str = "settings.json";
+const SETTINGS_FILE: &str = "settings.txt";
 
 
 

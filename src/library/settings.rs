@@ -7,10 +7,11 @@
 
 use crate::library::my_utils::*;
 use chrono::prelude::*;
+use substring::Substring;
 use std::path::Path;
-use std::fs::{ OpenOptions };
-use std::fs::remove_file;
-use std::io::Write;
+use std::fs::*;
+// use std::fs::remove_file;
+use std::io::{Write, LineWriter};
 use std::process::exit;
 use std::fmt::{Debug};
 use std::str::FromStr;
@@ -18,7 +19,7 @@ use serde::{Serialize, Deserialize};
 use std::collections::BTreeMap;
 use std::env;
 use std::time::{UNIX_EPOCH, Duration};
-
+use std::io::{BufRead, BufReader};
 
 
 
@@ -154,24 +155,49 @@ pub fn file_system_ok(test: &str) -> Result<(), &str> {
     Ok(())
 }
 
-// Reads the settings (settings.json) file into a treemap, returning a result
-pub fn import(path: &str) -> Result<SettingsMap, &str> {
-    let str_file  = std::fs::read_to_string(path );
-    let content = match str_file {
-        Ok(content) => { content },
-        Err(_) => { return Err("Problem reading to String in Settings"); }
-    };
-    
-    let m: SettingsMap  = match serde_json::from_str(&content){
-        Ok(map) => map,
-        Err(_) => { return Err("Problem converting to json in Settings"); }
-    };
+// Reads the settings (settings.text) file into a treemap, returning a result
+// again decided not to make this a json file
+pub fn import(path: &str) -> Result<SettingsMap, &'static str> {
+    let mut ret = SettingsMap::new();
 
-    Ok(m)
+    let res_file = File::open(path);
+    if res_file.is_err() {
+        return Err("Problem opening settings.txt");
+    }
+    
+    let reader = BufReader::new(res_file.unwrap());
+    
+    for line in reader.lines() {
+        if line.is_err(){
+            return Err("Problem reading line in settings");
+        }
+        let read = Some(line.unwrap());
+        if read.clone().is_some() {
+            // let sub = read.unwrap().substring(0, 1);
+            let s = read.clone().unwrap();
+            let sub = s.substring(0, 1);
+            if sub == " " || sub == "#" || sub == "" {
+                continue;
+            }
+            let l = read.clone().unwrap();
+            let split = l.split("\t");
+            let vecs:Vec<&str> = split.collect();
+            if vecs.len() >= 2 {
+                ret.map.insert(vecs[0].to_string(), vecs[1].to_string());
+            }
+        }
+    }
+
+    if ret.map.len() == 0 {
+        return Err("No settings were loaded");
+    }
+
+    return Ok(ret);
 }
 
 
 // Writes the settings to disk in local folder
+// I have decided to make this text and not json
 pub fn export( map: &BTreeMap<String,String>,  path: &str) -> Result<(), String> {
     let path = Path::new(path);
     
@@ -180,24 +206,58 @@ pub fn export( map: &BTreeMap<String,String>,  path: &str) -> Result<(), String>
         feedback(Feedback::Info, message)
     }
 
-    let serialized = serde_json::to_string_pretty(map);
+    let vec = make_file_string(map.clone());
+    // let serialized = serde_json::to_string_pretty(map);
     let mut file = match OpenOptions::new()
                             .read(false)
                             .write(true)
                             .create(true)
                             .open(path)  {
         
-        Err(_) => { return Err("Problems opening json file in 'write_settings'".to_string()); } 
+        Err(_) => { return Err("Problems opening text file in 'write_settings'".to_string()); } 
         Ok(file)   => { file }
     };
-    
-    match file.write_all(serialized.unwrap().as_bytes()) {
-        Err(_) => { return Err("Problems writing json file in 'write_settings'".to_string()); } 
-        Ok(file)   => { file } 
+
+    // let mut file = LineWriter::new(file);
+
+    for line in vec {
+        file.write(line.as_bytes());
+        // file.write_all(line.as_bytes());
     }
+
+
+    // match file.write_all(serialized.as_bytes()) {
+    //     Err(_) => { return Err("Problems writing text file in 'write_settings'".to_string()); } 
+    //     Ok(file)   => { file } 
+    // }
     
     Ok(())
 } 
+
+
+// make a string that will be written to a text file
+pub fn make_file_string(map: BTreeMap<String,String>) -> Vec<String> {
+
+    let mut vec:Vec<String> = Vec::new();
+    let date = chrono::offset::Local::now();
+    let gg = date.format("%Y-%m-%d");
+
+    vec.push("##################\n".to_string());
+    vec.push("#                #\n".to_string());
+    let str = format!("#   {}   #\n",gg);
+    vec.push(str);
+    vec.push("#                #\n".to_string());
+    vec.push("##################\n".to_string());
+    vec.push("\n".to_string());
+    vec.push("\n".to_string());
+
+    for (k,v) in map {
+        let element = k + "\t" +  &v + "\n";
+        vec.push(element);
+    }
+
+    return vec;
+}
 
 
 
@@ -215,23 +275,39 @@ pub fn export( map: &BTreeMap<String,String>,  path: &str) -> Result<(), String>
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::{fs::copy};
     use substring::Substring;
-    use std::fs::remove_file;
+    use std::fs::*;
 
-    
-    // // #[ignore]
-    // #[test]
-    // fn t001_task_new() {
-    //     let mut t1 = Task::new();
-    //     t1.id = Some(23);
-    //     t1.description = "This is a description".to_string();
-    //     t1.status = Status::Pending;
+
+    // #[ignore]
+    #[test]
+    fn t001_date() {
+        let date = Utc.ymd(2022, 8, 3);
+        let str = date.format("%Y-%m-%d");
         
+        assert_eq!(str.to_string(), "2022-08-03".to_string());
+    }
+    
+    // #[ignore]
+    #[test]
+    fn t002_make_file_string() {
+        let path = "./tempo.txt";
+        let mut map: BTreeMap<String,String> = BTreeMap::new();
+        map.insert("dataDir".to_string(), "/DATA/myToDo".to_string());
+        map.insert("lastSpeciesViewed".to_string(), "0".to_string());
+        
+        let res = make_file_string(map.clone());
+        let len = res.len();
+        assert_eq!(len, 9);
+        
+        let _res_wri = export(&map, path);
+        let file = File::open(path);
+        let x = file.unwrap().metadata().unwrap().len();
+        remove_file(path).expect("Cleanup test failed");
+        assert_eq!(x, 138);
 
-    //     let yebo: bool = t1.entry > 1650000000;
-    //     assert_eq!(yebo, true);
-    // }
+
+    }
 
 
 
