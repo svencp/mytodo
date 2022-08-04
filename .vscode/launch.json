@@ -19,7 +19,7 @@
                     "kind": "bin"
                 }
             },
-            "args": [ "add" ],
+            "args": [ "add" , "hello", "due:++3d"],
             "cwd": "${workspaceFolder}"
         },
         {

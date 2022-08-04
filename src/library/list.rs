@@ -6,6 +6,9 @@
 
 
 
+use inflections::Inflect;
+use substring::Substring;
+
 use crate::library::task::*;
 use std::path::Path;
 use std::fs::{ OpenOptions };
@@ -16,7 +19,7 @@ use std::io::prelude::*;
 
 #[derive(Clone )]
 pub struct List {
-    list: Vec<Task>,
+    pub list: Vec<Task>,
 }
 
 impl List {
@@ -29,37 +32,131 @@ impl List {
     }
 
 
-    pub fn save(&self, data_file: &str) -> Result<(), String> {
-        // let path = Path::new(data_file);
-        
+    // return the id of the new task
+    pub fn save(&self, data_file: &str) -> Result<i32, String> {
+        let path = Path::new(data_file);
+        let big_str = self.make_big_string();
+
         // let serialized = serde_json::to_string(&self.list);
-        // let mut file = match OpenOptions::new()
-        //                         .read(false)
-        //                         .write(true)
-        //                         .create(true)
-        //                         .truncate(true)
-        //                         .open(path)  {
+        let mut file = match OpenOptions::new()
+                                .read(false)
+                                .write(true)
+                                .create(true)
+                                .truncate(true)
+                                .open(path)  {
             
-        //     Err(_) => { return Err("Problem exporting species json file".to_string()); }
-        //     Ok(file)   => { file }
-        // };
+            Err(_) => { return Err("Problem exporting species json file".to_string()); }
+            Ok(file)   => { file }
+        };
         
-        // match file.write_all(serialized.unwrap().as_bytes()) {
-        //     Err(_) => { return Err("Problem writing species json file".to_string()); } 
-        //     Ok(_)   => { Ok(()) } 
-        // }
-    Ok(())
+        match file.write_all(big_str.as_bytes()) {
+            Err(_)      => { return Err("Problem writing pending data file".to_string()); } 
+            Ok(file) => { file }
+        }
+
+
+        Ok(self.list.len() as i32)
     }
 
+    pub fn make_big_string(&self) -> String {
+        let mut ret:String =  "".to_string();
+    
+        for task in &self.list {
+            ret.push_str("[description:\"");
+            ret.push_str(&task.description);
+            ret.push_str("\" ");
+            ret.push_str("uuiid:\"");
+            ret.push_str(&task.uuiid);
+            ret.push_str("\" ");
+            ret.push_str("entry:\"");
+            ret.push_str(&task.entry.to_string());
+            ret.push_str("\" ");
+            ret.push_str("status:\"");
+            ret.push_str(&task.status.text().to_lower_case());
+            ret.push_str("\" ");
+
+            if task.due.is_some() {                                                        //due
+                ret.push_str("due:\"");
+                ret.push_str(&task.due.unwrap().to_string());
+                ret.push_str("\" ");
+            }
+            if task.wait.is_some() {                                                       //wait
+                ret.push_str("wait:\"");
+                ret.push_str(&task.wait.unwrap().to_string());
+                ret.push_str("\" ");
+            }
+            
+            if task.recur.is_some() {                                                      //recur
+                ret.push_str("recur:\"");
+                ret.push_str(&task.recur.clone().unwrap());
+                ret.push_str("\" ");
+            }
+            
+            if task.start.is_some() {                                                      //start
+                ret.push_str("start:\"");
+                ret.push_str(&task.start.unwrap().to_string());
+                ret.push_str("\" ");
+            }
+            
+            if task.parent.is_some() {                                                     //parent
+                ret.push_str("parent:\"");
+                ret.push_str(&task.parent.clone().unwrap());
+                ret.push_str("\" ");
+            }
+            
+            if task.tags.len() > 0 {                                                        //tags
+                let mut vec:String = "".to_string();
+                for tag in task.tags.clone() {
+                    let str = tag + ",";
+                    vec.push_str(&str);
+                }
+                
+                //remove last comma
+                let len = vec.len();
+                let end = len -1 ;
+                let taggings = vec[0..end].to_string();
+                
+                ret.push_str("tags:\"");                                                  
+                ret.push_str(&taggings);
+                ret.push_str("\" ");
+
+            }
+
+            ret.push_str("\n")
+
+        }
+
+        return ret;
+
+    } // end of make_big_string
 
 
 
-}
+
+
+
+
+
+
+
+} // end of impl
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Functions @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@           @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
 
 
 
@@ -79,29 +176,28 @@ mod tests {
     use std::fs::remove_file;
 
     
-    // // #[ignore]
-    // #[test]
-    // fn t001_list_new() {
+    // #[ignore]
+    #[test]
+    fn t001_list_new() {
 
-    //     let json_file = "./test/pending.data";
+        let text_file = "./test/pending.data";
+        let vs: Vec<String> = vec!["Nutting".to_string(), "add".to_string(), "Do a job".to_string(),
+                                 "due:2030-01-05".to_string(), "wait:2030-01-01".to_string(), "+household".to_string(),
+                                 "+car".to_string()];
+        let result = make_task(&vs, 26, 30);
+        let mut ll = List::new();
+        ll.list.push(result.unwrap());
 
-    //     let mut task = Task::new();
-    //     task.description = "Hello Svenny".to_string();
-    //     task.id = Some(1);
-    //     task.status = Status::Waiting;
-
-
-    //     let mut l = List::new();
-    //     l.list.push(task);
-    //     assert_eq!(l.list.len(), 1);
-        
-    //     let res = l.save(json_file);
-    //     remove_file(json_file).expect("Cleanup test failed");
-    //     assert_eq!(res.is_ok(), true);
+        let res = ll.save(text_file);
 
 
 
-    // }
+        // remove_file(json_file).expect("Cleanup test failed");
+        assert_eq!(true, true);
+
+
+
+    }
 
 
 

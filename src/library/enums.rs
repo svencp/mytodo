@@ -20,7 +20,7 @@ pub enum Status {
 
 
 impl Status {
-    fn text(&self) -> &str{
+    pub fn text(&self) -> &str{
         match *self {
             Status::Deleted   => "Deleted",
             Status::Waiting   => "Waiting",

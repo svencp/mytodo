@@ -8,6 +8,7 @@
 use std::time::SystemTime;
 use chrono::*;
 use chronoutil::*;
+use substring::Substring;
 use crate::library::enums::*;
 // use dateparser::DateTimeUtc;
 
@@ -15,7 +16,7 @@ use crate::library::enums::*;
 const DAY_SECS: i64         =      86400;
 const WEEK_SECS: i64        =     604800;
 const DATE_FORMAT: &str     = "%Y-%m-%d";
-const ADD_TIME_FORMAT: &str = "%Y-%m-%d %H:%M:%S";
+// const ADD_TIME_FORMAT: &str = "%Y-%m-%d %H:%M:%S";
 
 
 
@@ -31,11 +32,12 @@ pub struct Task {
     pub end: Option<i64>,
     pub wait: Option<i64>,
     // pub modified: Option<i64>,
-    pub parent: Option<i64>,
+    pub parent: Option<String>,
     pub recur: Option<String>,
     pub status: Status,
     pub rtype: Option<Rtype>,
     pub tags: Vec<String>,
+    pub virtual_tags: Vec<String>,
     pub timetrackingseconds: i64,
 
 
@@ -63,6 +65,7 @@ impl Task {
             recur: None,
             rtype: None,
             tags: Vec::new(),
+            virtual_tags: Vec::new(),
             timetrackingseconds: 0,
         }
     }
@@ -97,8 +100,10 @@ pub fn make_task(args: &Vec<String>, uuiid_int: i64, id: i64) -> Result<Task, &'
 
     
 
-    for t in 3..=args.len() {
+    for t in 3..args.len() {
         let split: Vec<&str> = args[t].split(":").collect();
+
+
 
         match split[0] {
             "due" => {
@@ -111,21 +116,58 @@ pub fn make_task(args: &Vec<String>, uuiid_int: i64, id: i64) -> Result<Task, &'
                 }
                 ret.due = Some(resultant_time.unwrap());
             }
-
-
+            
+            "wait" => {
+                if split.len() != 2 {
+                    return Err("Malformed wait term");
+                }
+                let resultant_time = determine_timestamp( &ret.entry, split[1]);
+                if resultant_time.is_err(){
+                    return Err("parsing error in term");
+                }
+                ret.wait = Some(resultant_time.unwrap());
+            }
+            
+            "start" => {
+                if split.len() != 2 {
+                    return Err("Malformed start term");
+                }
+                let resultant_time = determine_timestamp( &ret.entry, split[1]);
+                if resultant_time.is_err(){
+                    return Err("parsing error in term");
+                }
+                ret.start = Some(resultant_time.unwrap());
+            }
+            
+            "recur" => {
+                if split.len() != 2 {
+                    return Err("Malformed recur term");
+                }
+                // run through to test for error
+                let resultant_time = determine_timestamp( &ret.entry, split[1]);
+                if resultant_time.is_err(){
+                    return Err("parsing error in term");
+                }
+                // only store the term
+                ret.recur = Some(split[1].to_string());
+            }
 
             _ => {
-
+                // test for tag
+                if split.len() == 1 {
+                    let first_char = split[0].substring(0, 1);
+                    if first_char != "+" {
+                        return Err("Unknown term");
+                    }
+                    if split[0].len() < 2 {
+                        return Err("Tag item too small");
+                    }
+                    let tag = &split[0][1..];
+                    ret.tags.push(tag.to_string());
+                }
             }
-        }
-
-
-
-        // println!("{}",a)
-    }
-
-
-
+        } // end of match
+    } // end of for loop
 
     Ok(ret)
 }
@@ -148,8 +190,16 @@ pub fn make_hexi(uuiid_int: i64) -> String {
 pub fn determine_timestamp(time: &i64, term: &str) -> Result< i64, &'static str> {
     let char_arr: Vec<char> = term.chars().collect();
 
-    // if a date is given eg 2022-08-03
+    // if NOT +
     if char_arr[0] != '+' {
+
+        // if now
+        if term == "now" {
+            let ret = Utc::now().naive_local().timestamp();
+            return Ok(ret);
+        }
+
+        // if date eg 2022-09-08
         let res_date = NaiveDate::parse_from_str(term, DATE_FORMAT);
         if res_date.is_err() {
             return Err("Error in parsing date (or maybe no + symbol)")
@@ -217,7 +267,7 @@ pub fn determine_timestamp(time: &i64, term: &str) -> Result< i64, &'static str>
         }
     }
     
-}
+} // end of determine_timestamp
 
 
 pub fn make_naive_dt_from_str(date_str: &str) -> Result<NaiveDateTime, &'static str> {
@@ -299,9 +349,18 @@ mod tests {
         let e6 = determine_timestamp(&ndt.timestamp(), "2w");
         assert_eq!(e6.is_err(), true);
     }
-
-
-
+    
+    
+    // #[ignore]
+    #[test]
+    fn t004_make_task1() {
+        let vs: Vec<String> = vec!["Nutting".to_string(), "add".to_string(), "Do a job".to_string(),
+                                 "due:2030-01-05".to_string(), "wait:2030-01-01".to_string(), "+household".to_string()];
+        let result = make_task(&vs, 26, 30);
+        
+        
+        assert_eq!(true, true);
+    }
 
 
 

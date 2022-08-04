@@ -48,8 +48,8 @@ fn main() {
     let data_dir = settings.map.get("dataDir").unwrap().to_string();
     let pending_file = data_dir.clone() + "/pending.data";
     let completed_file = data_dir + "/completed.data";
-    let completed_tasks = List::new();
-    let pending_tasks = List::new();
+    let mut completed_tasks = List::new();
+    let mut pending_tasks = List::new();
 
     let next_id: i64 = 1;
     let next_uuiid_int: i64 = 1;
@@ -122,6 +122,13 @@ fn main() {
             match command.as_str() {
                 "add" => {
                     let result = make_task(&arguments, next_uuiid_int, next_id);
+                    if result.is_err() {
+                        let message = result.err().unwrap().to_string();
+                        feedback(Feedback::Error, message);
+                        exit(17);
+                    }
+                    pending_tasks.list.push(result.unwrap());
+                    let res_save = pending_tasks.save(&pending_file);
                 }
 
                 "mycompleted" => {
