@@ -12,8 +12,10 @@ use crate::library::enums::*;
 // use dateparser::DateTimeUtc;
 
 
-const DAY_SECS: i64  =  86400;
-const WEEK_SECS: i64 = 604800;
+const DAY_SECS: i64         =      86400;
+const WEEK_SECS: i64        =     604800;
+const DATE_FORMAT: &str     = "%Y-%m-%d";
+const ADD_TIME_FORMAT: &str = "%Y-%m-%d %H:%M:%S";
 
 
 
@@ -51,7 +53,7 @@ impl Task {
             uuiid_int: None,
             description: "".to_string(),
             status: Status::Pending, 
-            entry: SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs() as i64,
+            entry: Utc::now().naive_local().timestamp(),
             start: None,
             due: None,
             end: None,
@@ -103,7 +105,11 @@ pub fn make_task(args: &Vec<String>, uuiid_int: i64, id: i64) -> Result<Task, &'
                 if split.len() != 2 {
                     return Err("Malformed due term");
                 }
-                let resultant_time = determine_time(split[1]);
+                let resultant_time = determine_timestamp( &ret.entry, split[1]);
+                if resultant_time.is_err(){
+                    return Err("parsing error in term");
+                }
+                ret.due = Some(resultant_time.unwrap());
             }
 
 
@@ -139,14 +145,14 @@ pub fn make_hexi(uuiid_int: i64) -> String {
 }
 
 
-pub fn determine_time(term: &str) -> Result< i64, &'static str> {
+pub fn determine_timestamp(time: &i64, term: &str) -> Result< i64, &'static str> {
     let char_arr: Vec<char> = term.chars().collect();
 
     // if a date is given eg 2022-08-03
     if char_arr[0] != '+' {
-        let res_date = NaiveDate::parse_from_str(term, "%Y-%m-%d");
+        let res_date = NaiveDate::parse_from_str(term, DATE_FORMAT);
         if res_date.is_err() {
-            return Err("Error in parsing date")
+            return Err("Error in parsing date (or maybe no + symbol)")
         }
         let date_time = res_date.unwrap().and_hms(0, 0, 0);
         let timestamp = date_time.timestamp();
@@ -183,44 +189,45 @@ pub fn determine_time(term: &str) -> Result< i64, &'static str> {
         return Err("No duration symbol given");
     }
 
-
-    let now =SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs() as i64;
+    let time_ndt = NaiveDateTime::from_timestamp(*time, 0);
 
     match c_arr[0] {
         'd' => {
             let addition = num * DAY_SECS;
-            let ret = now + addition;
+            let ret = time_ndt.timestamp() + addition;
             return Ok(ret);
         }
         'w' => {
             let addition = num * WEEK_SECS;
-            let ret = now + addition;
+            let ret = time_ndt.timestamp() + addition;
             return Ok(ret);
         }
         'm' => {
-            let naive = NaiveDateTime::new(now, 0);
             let delta = RelativeDuration::months(num as i32);
-            let ret = naive + delta;
+            let ndt = time_ndt + delta;
+            return Ok(ndt.timestamp());
         }
         'y' => {
-
+            let delta = RelativeDuration::years(num as i32);
+            let ndt = time_ndt + delta;
+            return Ok(ndt.timestamp());
         }
         _ => {
             return Err("Illegal duration symbol");
         }
     }
     
-
-
-
-
-
-
-Ok((1))
 }
 
 
-
+pub fn make_naive_dt_from_str(date_str: &str) -> Result<NaiveDateTime, &'static str> {
+    let res = NaiveDate::parse_from_str(date_str, DATE_FORMAT);
+    if res.is_err() {
+        return Err("Parse error from date string");
+    } 
+    let ret = res.unwrap().and_hms(0, 0, 0);
+    return Ok(ret);
+}
 
 
 
@@ -256,22 +263,41 @@ mod tests {
         assert_eq!(str, "0x00000f".to_string());
     }
 
-
-    
     // #[ignore]
     #[test]
-    fn t003_add_task1() {
-        let mut args: Vec<String> = Vec::new();
-        args.push("name".to_string());
-        args.push("add".to_string());
-        args.push(" My first task ".to_string());
-        args.push("due:+1d".to_string());
+    fn t003_determine_tstamp1() {
+        let date = "2022-05-01";
+        let ndt = make_naive_dt_from_str(date).unwrap();
+
+        let d = determine_timestamp(&ndt.timestamp(), "+365d");
+        assert_eq!(d.unwrap(), 1682899200);
         
-        let task = make_task(&args,1,1);
+        let w = determine_timestamp(&ndt.timestamp(), "+52w");
+        assert_eq!(w.unwrap(), 1682812800);
         
+        let m = determine_timestamp(&ndt.timestamp(), "+14m");
+        assert_eq!(m.unwrap(), 1688169600);
         
+        let y = determine_timestamp(&ndt.timestamp(), "+2y");
+        assert_eq!(y.unwrap(), 1714521600);
         
-        assert_eq!(true, true);
+        let e1 = determine_timestamp(&ndt.timestamp(), "+365 d");
+        assert_eq!(e1.is_err(), true);
+        
+        let e2 = determine_timestamp(&ndt.timestamp(), "+365f");
+        assert_eq!(e2.is_err(), true);
+        
+        let e3 = determine_timestamp(&ndt.timestamp(), "+365");
+        assert_eq!(e3.is_err(), true);
+        
+        let e4 = determine_timestamp(&ndt.timestamp(), "365");
+        assert_eq!(e4.is_err(), true);
+        
+        let e5 = determine_timestamp(&ndt.timestamp(), "+w");
+        assert_eq!(e5.is_err(), true);
+        
+        let e6 = determine_timestamp(&ndt.timestamp(), "2w");
+        assert_eq!(e6.is_err(), true);
     }
 
 
