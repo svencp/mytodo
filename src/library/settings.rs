@@ -198,7 +198,7 @@ pub fn import(path: &str) -> Result<SettingsMap, &'static str> {
 
 // Writes the settings to disk in local folder
 // I have decided to make this text and not json
-pub fn export( map: &BTreeMap<String,String>,  path: &str) -> Result<(), String> {
+pub fn export( map: &BTreeMap<String,String>,  path: &str) -> Result<(), &'static str> {
     let path = Path::new(path);
     
     if remove_file(path).is_err() {
@@ -214,22 +214,16 @@ pub fn export( map: &BTreeMap<String,String>,  path: &str) -> Result<(), String>
                             .create(true)
                             .open(path)  {
         
-        Err(_) => { return Err("Problems opening text file in 'write_settings'".to_string()); } 
+        Err(_) => { return Err("Problems opening text file in 'write_settings'"); } 
         Ok(file)   => { file }
     };
 
-    // let mut file = LineWriter::new(file);
-
     for line in vec {
-        file.write(line.as_bytes());
-        // file.write_all(line.as_bytes());
+        let res = file.write(line.as_bytes());
+        if res.is_err() {
+            return Err("Error in writing settings file")
+        }
     }
-
-
-    // match file.write_all(serialized.as_bytes()) {
-    //     Err(_) => { return Err("Problems writing text file in 'write_settings'".to_string()); } 
-    //     Ok(file)   => { file } 
-    // }
     
     Ok(())
 } 

@@ -11,6 +11,7 @@ use library::functions::*;
 use library::enums::*;
 use library::settings::*;
 use library::task::*;
+use library::list::*;
 use substring::Substring;
 use std::collections::{BTreeMap};
 use std::process::exit;
@@ -47,6 +48,12 @@ fn main() {
     let data_dir = settings.map.get("dataDir").unwrap().to_string();
     let pending_file = data_dir.clone() + "/pending.data";
     let completed_file = data_dir + "/completed.data";
+    let completed_tasks = List::new();
+    let pending_tasks = List::new();
+
+    let next_id: i64 = 1;
+    let next_uuiid_int: i64 = 1;
+
     
 
 
@@ -112,7 +119,20 @@ fn main() {
         }
         
         ArgType::Command => {
-            println!("Command argument")
+            match command.as_str() {
+                "add" => {
+                    let result = make_task(&arguments, next_uuiid_int, next_id);
+                }
+
+                "mycompleted" => {
+
+                }
+
+                _ => { 
+                    // should never get here
+                    println!("Sould never get here -> command unknown")
+                }
+            }
         }
 
 
