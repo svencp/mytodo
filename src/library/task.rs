@@ -5,18 +5,35 @@
 */
 
 
-use std::time::SystemTime;
+use std::str::FromStr;
 use chrono::*;
 use chronoutil::*;
 use substring::Substring;
 use crate::library::enums::*;
-// use dateparser::DateTimeUtc;
 
 
 const DAY_SECS: i64         =      86400;
 const WEEK_SECS: i64        =     604800;
 const DATE_FORMAT: &str     = "%Y-%m-%d";
-// const ADD_TIME_FORMAT: &str = "%Y-%m-%d %H:%M:%S";
+
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct Annotation {
+    pub date: i64,
+    pub desc: String,
+}
+
+
+impl Annotation {
+    pub fn new() -> Annotation {
+        Annotation {
+            date: 0,
+            desc: "".to_string(),
+        }
+    }
+
+
+}//end of impl
 
 
 
@@ -31,7 +48,7 @@ pub struct Task {
     pub due: Option<i64>,
     pub end: Option<i64>,
     pub wait: Option<i64>,
-    // pub modified: Option<i64>,
+    pub prodigy: Option<i64>,
     pub parent: Option<String>,
     pub recur: Option<String>,
     pub status: Status,
@@ -39,6 +56,7 @@ pub struct Task {
     pub tags: Vec<String>,
     pub virtual_tags: Vec<String>,
     pub timetrackingseconds: i64,
+    pub ann: Vec<Annotation>,
 
 
 
@@ -60,12 +78,13 @@ impl Task {
             due: None,
             end: None,
             wait: None,
-            // modified: None,
+            prodigy: None,
             parent: None,
             recur: None,
             rtype: None,
             tags: Vec::new(),
             virtual_tags: Vec::new(),
+            ann: Vec::new(),
             timetrackingseconds: 0,
         }
     }
@@ -150,6 +169,24 @@ pub fn make_task(args: &Vec<String>, uuiid_int: i64, id: i64) -> Result<Task, &'
                 }
                 // only store the term
                 ret.recur = Some(split[1].to_string());
+
+                // default rtype to periodic, if it hasnt been assigned
+                if ret.rtype.is_none() {
+                    ret.rtype = Some(Rtype::Periodic);
+                }
+            }
+            
+            "rtype" => {
+                if split.len() != 2 {
+                    return Err("Malformed rtype term");
+                }
+
+                // run through to test for error
+                let result = Rtype::from_str(split[1]);
+                if result.is_err(){
+                    return Err("parsing error in rtype");
+                }
+                ret.rtype = Some(result.unwrap());
             }
 
             _ => {
@@ -355,11 +392,17 @@ mod tests {
     #[test]
     fn t004_make_task1() {
         let vs: Vec<String> = vec!["Nutting".to_string(), "add".to_string(), "Do a job".to_string(),
-                                 "due:2030-01-05".to_string(), "wait:2030-01-01".to_string(), "+household".to_string()];
+                                "due:2030-01-05".to_string(), "start:now".to_string(), "+household".to_string()];
         let result = make_task(&vs, 26, 30);
+        let now = Utc::now().naive_local().timestamp();
+        assert_eq!(result.unwrap().start.unwrap(), now);
         
-        
-        assert_eq!(true, true);
+        let vs2: Vec<String> = vec!["Nutting".to_string(), "add".to_string(), "Do a job2".to_string(),
+                                "due:now".to_string(), "recur:+4m".to_string(), "rtype:chained".to_string()];
+        let result = make_task(&vs2, 2, 2);
+        assert_eq!(result.unwrap().rtype.unwrap(), Rtype::Chained);
+
+
     }
 
 

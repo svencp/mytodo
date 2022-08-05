@@ -8,11 +8,14 @@
 
 use inflections::Inflect;
 use crate::library::task::*;
+use crate::library::enums::*;
+use std::str::FromStr;
 use std::path::Path;
 use std::fs::{ OpenOptions };
 use std::io::{BufRead, BufReader};
 use std::fs::*;
 use std::io::prelude::*;
+
 
 
 #[derive(Clone )]
@@ -159,7 +162,8 @@ pub fn load_all_tasks(p_file: &str, c_file: &str, pending: &mut List, completed:
 
 
 pub fn load_pending(p_file: &str, pending: &mut List)  -> Result<(), &'static str> {
-    
+    pending.list.clear();
+
     // does the file exists
     if ! Path::new(p_file.clone()).exists() {
         return Ok(())
@@ -170,14 +174,85 @@ pub fn load_pending(p_file: &str, pending: &mut List)  -> Result<(), &'static st
     let reader = BufReader::new(file);
 
     for line in reader.lines() {
+        let mut task = Task::new();
+
         if line.is_err() {
             return Err("Problems reading pending.data")            
         }
-        let l = line.unwrap();
-        let c:Vec<_> = l.split("\t").collect();
-        let r = 1 + 3;
+        let one_line = line.unwrap();
+        let split_tab:Vec<_> = one_line.split("\t").collect();
         
-    }
+        for element in split_tab {
+            let split_colon:Vec<_> = element.split(":").collect();
+            if split_colon.len() != 2 {
+                return Err("Line in pending.data has faulty elements")            
+            }
+            match split_colon[0] {
+                "description" => {
+                    task.description = split_colon[1].to_string();
+                }
+                
+                "uuiid" => {
+                    task.uuiid = split_colon[1].to_string();
+                }
+                
+                "entry" => {
+                    let res= split_colon[1].parse::<i64>();
+                    if res.is_err(){
+                        return Err("Integer parsing error in pending.data")            
+                    }
+                    task.entry = res.unwrap();
+                }
+
+                "due" => {
+                    let res= split_colon[1].parse::<i64>();
+                    if res.is_err(){
+                        return Err("Integer parsing error in pending.data")            
+                    }
+                    task.due = Some(res.unwrap());
+                }
+
+                "wait" => {
+                    let res= split_colon[1].parse::<i64>();
+                    if res.is_err(){
+                        return Err("Integer parsing error in pending.data")            
+                    }
+                    task.wait = Some(res.unwrap());
+                }
+                
+                "status" => {
+                    let res = Status::from_str(split_colon[1]);
+                    if res.is_err(){
+                        return Err("Status parsing error in pending.data")            
+                    }
+                    task.status = res.unwrap();
+                }
+                
+                "tags" => {
+                    let split_comma:Vec<_> = split_colon[1].split(":").collect();
+                    for tag in split_comma {
+                        task.tags.push(tag.to_string());
+                    }
+                }
+                
+                "start" => {
+                    let res= split_colon[1].parse::<i64>();
+                    if res.is_err(){
+                        return Err("Integer parsing error in pending.data")            
+                    }
+                    task.start = Some(res.unwrap());
+                }
+
+
+                _ => {
+                    // shouldnt really get here
+                    return Err("unknown element in colon split")            
+                }
+            }
+
+        }
+        
+    } //end of for line loop
 
 
 
@@ -236,28 +311,30 @@ mod tests {
         let vs: Vec<String> = vec!["Nutting".to_string(), "add".to_string(), "Do a job".to_string(),
                                  "due:2030-01-05".to_string(), "wait:2030-01-01".to_string(), "+household".to_string(),
                                  "+car".to_string()];
-        let result = make_task(&vs, 26, 30);
-        let mut ll = List::new();
-        ll.list.push(result.unwrap());
-
-        let res = ll.save(text_file);
+        let result = make_task(&vs, 1, 1);
+        let mut the_list = List::new();
+        the_list.list.push(result.unwrap());
+        
+        let res = the_list.save(text_file);
         assert_eq!(res.unwrap(), 1);
         
-        let mut pending = List::new();
-        let res_p = load_pending(text_file, &mut pending);
-        
-        
-        
-        
-        
-        assert_eq!(1, 1);
+        // lets do another one
+        let vs: Vec<String> = vec!["Nutting".to_string(), "add".to_string(), "Do a jobby".to_string(),
+                                    "due:2030-01-05".to_string(), "wait:2030-01-01".to_string(), "recur:+4m".to_string()];
+        let result2 = make_task(&vs, 2, 2);
+        the_list.list.push(result2.unwrap());
 
+        let res = the_list.save(text_file);
+        the_list.list.clear();
+        let res_p = load_pending(text_file, &mut the_list);
+        
+        assert_eq!(the_list.list.len(), 2);
     }
+
 
     // #[ignore]
     #[test]
     fn t002_split1() {
-
         let str = "description:Do a job;uuiid:0x00001a;entry:1659664228;status:pending;due:1893801600;wait:1893456000;tags:household,car";
         let split:Vec<&str> = str.split(";").collect();
         

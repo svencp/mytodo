@@ -1,0 +1,15 @@
+annotation_1622160097:
+description
+due
+end
+entry
+parent
+prodigy
+recur
+rtype
+start
+status
+tags
+timetrackingseconds
+uuiid
+wait
