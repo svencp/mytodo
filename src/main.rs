@@ -37,12 +37,12 @@ fn main() {
     let mut command: String = "".to_string();
     let mut arg_id:   Vec<i64> = Vec::new();
     let mut arg_hex:  Vec<String> = Vec::new();
-    let mut first_arg = None;
-    let mut sub1 = None;
-    let mut sub2 = None;
-    let mut sub3 = None;
-    let mut sub4 = None;
-    let mut sub5 = None;
+    // let mut first_arg = None;
+    // let mut sub1 = None;
+    // let mut sub2 = None;
+    // let mut sub3 = None;
+    // let mut sub4 = None;
+    // let mut sub5 = None;
 
     let settings = load_settings(SETTINGS_FILE);
     let data_dir = settings.map.get("dataDir").unwrap().to_string();
@@ -51,51 +51,57 @@ fn main() {
     let mut completed_tasks = List::new();
     let mut pending_tasks = List::new();
 
+    // let result_loading = load_all_tasks(&pending_file,&completed_file, 
+    //                         &mut pending_tasks, &mut completed_tasks);
+
+    // if result_loading
+
+
     let next_id: i64 = 1;
     let next_uuiid_int: i64 = 1;
 
     
 
 
-    // It seems I need to do this,otherwise temporary variables get dropped
-    match arguments.len() {
-        2 => {
-            first_arg = Some(arguments[1].to_lowercase().trim().to_owned());
-        },
-        3 => {
-            first_arg = Some(arguments[1].to_lowercase().trim().to_owned());
-            sub1 = Some(arguments[2].trim().to_owned());
-        },
-        4 => {
-            first_arg = Some(arguments[1].to_lowercase().trim().to_owned());
-            sub1 = Some(arguments[2].trim().to_owned());
-            sub2 = Some(arguments[3].trim().to_owned());
-        }
-        5 => {
-            first_arg = Some(arguments[1].to_lowercase().trim().to_owned());
-            sub1 = Some(arguments[2].trim().to_owned());
-            sub2 = Some(arguments[3].trim().to_owned());
-            sub3 = Some(arguments[4].trim().to_owned());
-        },
-        6 => {
-            first_arg = Some(arguments[1].to_lowercase().trim().to_owned());
-            sub1 = Some(arguments[2].trim().to_owned());
-            sub2 = Some(arguments[3].trim().to_owned());
-            sub3 = Some(arguments[4].trim().to_owned());
-            sub4 = Some(arguments[5].trim().to_owned());
-        },
-        7 => {
-            first_arg = Some(arguments[1].to_lowercase().trim().to_owned());
-            sub1 = Some(arguments[2].trim().to_owned());
-            sub2 = Some(arguments[3].trim().to_owned());
-            sub3 = Some(arguments[4].trim().to_owned());
-            sub4 = Some(arguments[5].trim().to_owned());
-            sub5 = Some(arguments[6].trim().to_owned());
-        },
+    // // It seems I need to do this,otherwise temporary variables get dropped
+    // match arguments.len() {
+    //     2 => {
+    //         first_arg = Some(arguments[1].to_lowercase().trim().to_owned());
+    //     },
+    //     3 => {
+    //         first_arg = Some(arguments[1].to_lowercase().trim().to_owned());
+    //         sub1 = Some(arguments[2].trim().to_owned());
+    //     },
+    //     4 => {
+    //         first_arg = Some(arguments[1].to_lowercase().trim().to_owned());
+    //         sub1 = Some(arguments[2].trim().to_owned());
+    //         sub2 = Some(arguments[3].trim().to_owned());
+    //     }
+    //     5 => {
+    //         first_arg = Some(arguments[1].to_lowercase().trim().to_owned());
+    //         sub1 = Some(arguments[2].trim().to_owned());
+    //         sub2 = Some(arguments[3].trim().to_owned());
+    //         sub3 = Some(arguments[4].trim().to_owned());
+    //     },
+    //     6 => {
+    //         first_arg = Some(arguments[1].to_lowercase().trim().to_owned());
+    //         sub1 = Some(arguments[2].trim().to_owned());
+    //         sub2 = Some(arguments[3].trim().to_owned());
+    //         sub3 = Some(arguments[4].trim().to_owned());
+    //         sub4 = Some(arguments[5].trim().to_owned());
+    //     },
+    //     7 => {
+    //         first_arg = Some(arguments[1].to_lowercase().trim().to_owned());
+    //         sub1 = Some(arguments[2].trim().to_owned());
+    //         sub2 = Some(arguments[3].trim().to_owned());
+    //         sub3 = Some(arguments[4].trim().to_owned());
+    //         sub4 = Some(arguments[5].trim().to_owned());
+    //         sub5 = Some(arguments[6].trim().to_owned());
+    //     },
 
-        _ => { () }
+    //     _ => { () }
 
-    }// end of match
+    // }// end of match
 
 
 

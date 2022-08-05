@@ -7,13 +7,11 @@
 
 
 use inflections::Inflect;
-use substring::Substring;
-
 use crate::library::task::*;
 use std::path::Path;
 use std::fs::{ OpenOptions };
-// use serde::{Serialize, Deserialize};
-// use std::fs::File;
+use std::io::{BufRead, BufReader};
+use std::fs::*;
 use std::io::prelude::*;
 
 
@@ -62,46 +60,46 @@ impl List {
         let mut ret:String =  "".to_string();
     
         for task in &self.list {
-            ret.push_str("[description:\"");
+            ret.push_str("description:");
             ret.push_str(&task.description);
-            ret.push_str("\" ");
-            ret.push_str("uuiid:\"");
+            ret.push_str(";");
+            ret.push_str("uuiid:");
             ret.push_str(&task.uuiid);
-            ret.push_str("\" ");
-            ret.push_str("entry:\"");
+            ret.push_str(";");
+            ret.push_str("entry:");
             ret.push_str(&task.entry.to_string());
-            ret.push_str("\" ");
-            ret.push_str("status:\"");
+            ret.push_str(";");
+            ret.push_str("status:");
             ret.push_str(&task.status.text().to_lower_case());
-            ret.push_str("\" ");
+            // ret.push_str(";");
 
             if task.due.is_some() {                                                        //due
-                ret.push_str("due:\"");
+                ret.push_str(";due:");
                 ret.push_str(&task.due.unwrap().to_string());
-                ret.push_str("\" ");
+                // ret.push_str("\"");
             }
             if task.wait.is_some() {                                                       //wait
-                ret.push_str("wait:\"");
+                ret.push_str(";wait:");
                 ret.push_str(&task.wait.unwrap().to_string());
-                ret.push_str("\" ");
+                // ret.push_str("\"");
             }
             
             if task.recur.is_some() {                                                      //recur
-                ret.push_str("recur:\"");
+                ret.push_str(";recur:");
                 ret.push_str(&task.recur.clone().unwrap());
-                ret.push_str("\" ");
+                // ret.push_str("\"");
             }
             
             if task.start.is_some() {                                                      //start
-                ret.push_str("start:\"");
+                ret.push_str(";start:");
                 ret.push_str(&task.start.unwrap().to_string());
-                ret.push_str("\" ");
+                // ret.push_str("\"");
             }
             
             if task.parent.is_some() {                                                     //parent
-                ret.push_str("parent:\"");
+                ret.push_str(";parent:");
                 ret.push_str(&task.parent.clone().unwrap());
-                ret.push_str("\" ");
+                // ret.push_str("\"");
             }
             
             if task.tags.len() > 0 {                                                        //tags
@@ -116,9 +114,9 @@ impl List {
                 let end = len -1 ;
                 let taggings = vec[0..end].to_string();
                 
-                ret.push_str("tags:\"");                                                  
+                ret.push_str(";tags:");                                                  
                 ret.push_str(&taggings);
-                ret.push_str("\" ");
+                // ret.push_str("\"");
 
             }
 
@@ -157,6 +155,61 @@ impl List {
 
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Functions @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@           @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+pub fn load_all_tasks(p_file: &str, c_file: &str, pending: &mut List, completed: &mut List)   {
+
+    let res_pend = load_pending(p_file,pending);
+    
+
+}
+
+
+
+pub fn load_pending(p_file: &str, pending: &mut List)  -> Result<(), &'static str> {
+    
+    // does the file exists
+    if ! Path::new(p_file.clone()).exists() {
+        return Ok(())
+    }
+
+
+    let file = File::open(p_file).unwrap();
+    let reader = BufReader::new(file);
+
+    for line in reader.lines() {
+        if ! line.is_err() {
+            let l = line.unwrap();
+            let c:Vec<_> = l.split(";").collect();
+            let r = 1 + 3;
+
+        }
+        // let mut split:Vec<String> = line.unwrap().split(";").collect();
+        
+    }
+
+    // let res_file = File::open(p_file);
+    // if res_file.is_err() {
+    //     return Err("Problem opening settings.txt");
+    // }
+    // let reader = BufReader::new(res_file.unwrap());
+    
+    // // for each line
+    // for line in reader.lines() {
+    //     if line.is_err(){
+    //         return Err("Problem reading line in settings");
+    //     }
+    //     let read = Some(line.unwrap());
+    //     if read.clone().is_some() {
+    //         let split_tab: Vec<&str> = read.clone().unwrap().split(";").collect();
+
+
+    //         let rr=8;
+    //     }
+    // }
+
+return Err("y")
+
+}
+
 
 
 
@@ -189,17 +242,33 @@ mod tests {
         ll.list.push(result.unwrap());
 
         let res = ll.save(text_file);
-
-
-
-        // remove_file(json_file).expect("Cleanup test failed");
-        assert_eq!(true, true);
-
-
+        assert_eq!(res.unwrap(), 1);
+        
+        let mut pending = List::new();
+        let res_p = load_pending(text_file, &mut pending);
+        
+        
+        
+        
+        
+        assert_eq!(1, 1);
 
     }
 
+    // #[ignore]
+    #[test]
+    fn t002_split1() {
 
+        let str = "description:Do a job;uuiid:0x00001a;entry:1659664228;status:pending;due:1893801600;wait:1893456000;tags:household,car";
+        let split:Vec<&str> = str.split(";").collect();
+        
+        
+        
+        
+        
+        assert_eq!(1, 1);
+
+    }
 
 
 
