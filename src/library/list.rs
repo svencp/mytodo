@@ -56,50 +56,45 @@ impl List {
         Ok(self.list.len() as i32)
     }
 
+    // make a big string to save to a text file
     pub fn make_big_string(&self) -> String {
         let mut ret:String =  "".to_string();
     
         for task in &self.list {
             ret.push_str("description:");
             ret.push_str(&task.description);
-            ret.push_str(";");
+            ret.push_str("\t");
             ret.push_str("uuiid:");
             ret.push_str(&task.uuiid);
-            ret.push_str(";");
+            ret.push_str("\t");
             ret.push_str("entry:");
             ret.push_str(&task.entry.to_string());
-            ret.push_str(";");
+            ret.push_str("\t");
             ret.push_str("status:");
             ret.push_str(&task.status.text().to_lower_case());
-            // ret.push_str(";");
 
             if task.due.is_some() {                                                        //due
-                ret.push_str(";due:");
+                ret.push_str("\tdue:");
                 ret.push_str(&task.due.unwrap().to_string());
-                // ret.push_str("\"");
             }
             if task.wait.is_some() {                                                       //wait
-                ret.push_str(";wait:");
+                ret.push_str("\twait:");
                 ret.push_str(&task.wait.unwrap().to_string());
-                // ret.push_str("\"");
             }
             
             if task.recur.is_some() {                                                      //recur
-                ret.push_str(";recur:");
+                ret.push_str("\trecur:");
                 ret.push_str(&task.recur.clone().unwrap());
-                // ret.push_str("\"");
             }
             
             if task.start.is_some() {                                                      //start
-                ret.push_str(";start:");
+                ret.push_str("\tstart:");
                 ret.push_str(&task.start.unwrap().to_string());
-                // ret.push_str("\"");
             }
             
             if task.parent.is_some() {                                                     //parent
-                ret.push_str(";parent:");
+                ret.push_str("\tparent:");
                 ret.push_str(&task.parent.clone().unwrap());
-                // ret.push_str("\"");
             }
             
             if task.tags.len() > 0 {                                                        //tags
@@ -114,9 +109,8 @@ impl List {
                 let end = len -1 ;
                 let taggings = vec[0..end].to_string();
                 
-                ret.push_str(";tags:");                                                  
+                ret.push_str("\ttags:");                                                  
                 ret.push_str(&taggings);
-                // ret.push_str("\"");
 
             }
 
@@ -126,7 +120,7 @@ impl List {
 
         return ret;
 
-    } // end of make_big_string
+    } // end of make_big_string 
 
 
 
@@ -176,15 +170,16 @@ pub fn load_pending(p_file: &str, pending: &mut List)  -> Result<(), &'static st
     let reader = BufReader::new(file);
 
     for line in reader.lines() {
-        if ! line.is_err() {
-            let l = line.unwrap();
-            let c:Vec<_> = l.split(";").collect();
-            let r = 1 + 3;
-
+        if line.is_err() {
+            return Err("Problems reading pending.data")            
         }
-        // let mut split:Vec<String> = line.unwrap().split(";").collect();
+        let l = line.unwrap();
+        let c:Vec<_> = l.split("\t").collect();
+        let r = 1 + 3;
         
     }
+
+
 
     // let res_file = File::open(p_file);
     // if res_file.is_err() {
@@ -199,7 +194,11 @@ pub fn load_pending(p_file: &str, pending: &mut List)  -> Result<(), &'static st
     //     }
     //     let read = Some(line.unwrap());
     //     if read.clone().is_some() {
-    //         let split_tab: Vec<&str> = read.clone().unwrap().split(";").collect();
+    //         let split_tab = read.clone().unwrap();
+    //         let col = split_tab.clone().split("\t");
+    //         let aaa:Vec<_> =  col.clone().collect();
+    //         let len = aaa.clone().len();
+    //         println!("{}",aaa[0]);
 
 
     //         let rr=8;
