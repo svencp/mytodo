@@ -32,9 +32,6 @@ impl Status {
         }
     }
 
-
-    
-    
 }
 
 impl FromStr for Status {
@@ -68,7 +65,7 @@ pub enum Rtype {
 
 
 impl Rtype {
-    fn text(&self) -> &str{
+    pub fn text(&self) -> &str{
         match *self {
             Rtype::Periodic  => "Periodic",
             Rtype::Chained   => "Chained",

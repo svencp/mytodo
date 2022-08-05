@@ -89,6 +89,11 @@ impl List {
                 ret.push_str("\trecur:");
                 ret.push_str(&task.recur.clone().unwrap());
             }
+
+            if task.rtype.is_some() {                                                      //recur
+                ret.push_str("\ttype:");
+                ret.push_str(&task.rtype.clone().unwrap().text().to_lowercase());
+            }
             
             if task.start.is_some() {                                                      //start
                 ret.push_str("\tstart:");
@@ -100,7 +105,26 @@ impl List {
                 ret.push_str(&task.parent.clone().unwrap());
             }
             
-            if task.tags.len() > 0 {                                                        //tags
+            if task.prodigy.is_some() {                                                    //parent
+                ret.push_str("\tprodigy:");
+                ret.push_str(&task.prodigy.unwrap().to_string());
+            }
+            
+            if task.timetrackingseconds != 0 {                                             //parent
+                ret.push_str("\ttimetrackingseconds:");
+                ret.push_str(&task.timetrackingseconds.to_string());
+            }
+            
+            if task.ann.len() != 0 {
+                for a in task.ann.clone() {
+                    ret.push_str("\tannotation_");
+                    let num = a.date.to_string() + ":";
+                    ret.push_str(&num);
+                    ret.push_str(&a.desc);
+                }
+            }
+
+            if task.tags.len() > 0 {                                                       //tags
                 let mut vec:String = "".to_string();
                 for tag in task.tags.clone() {
                     let str = tag + ",";
@@ -307,12 +331,12 @@ mod tests {
     #[test]
     fn t001_list_new() {
 
+        let mut the_list = List::new();
         let text_file = "./test/pending.data";
         let vs: Vec<String> = vec!["Nutting".to_string(), "add".to_string(), "Do a job".to_string(),
                                  "due:2030-01-05".to_string(), "wait:2030-01-01".to_string(), "+household".to_string(),
                                  "+car".to_string()];
         let result = make_task(&vs, 1, 1);
-        let mut the_list = List::new();
         the_list.list.push(result.unwrap());
         
         let res = the_list.save(text_file);
