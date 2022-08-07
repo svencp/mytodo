@@ -17,7 +17,7 @@ const WEEK_SECS: i64        =     604800;
 const DATE_FORMAT: &str     = "%Y-%m-%d";
 
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub struct Annotation {
     pub date: i64,
     pub desc: String,
@@ -40,7 +40,7 @@ impl Annotation {
 #[derive(Clone )]
 pub struct Task {
     pub uuiid: String,
-    pub uuiid_int: Option<i64>,
+    pub uuiid_int: i64,
     pub id: Option<i64>,
     pub description: String,
     pub entry: i64,
@@ -50,6 +50,7 @@ pub struct Task {
     pub wait: Option<i64>,
     pub prodigy: Option<i64>,
     pub parent: Option<String>,
+    pub parent_int: Option<i64>,
     pub recur: Option<String>,
     pub status: Status,
     pub rtype: Option<Rtype>,
@@ -70,7 +71,7 @@ impl Task {
         Task { 
             id: None,
             uuiid: "".to_string(),
-            uuiid_int: None,
+            uuiid_int: 0,
             description: "".to_string(),
             status: Status::Pending, 
             entry: Utc::now().naive_local().timestamp(),
@@ -80,6 +81,7 @@ impl Task {
             wait: None,
             prodigy: None,
             parent: None,
+            parent_int: None,
             recur: None,
             rtype: None,
             tags: Vec::new(),
@@ -110,7 +112,7 @@ impl Task {
 pub fn make_task(args: &Vec<String>, uuiid_int: i64, id: i64) -> Result<Task, &'static str> {
     let mut ret = Task::new();
     ret.id = Some(id);
-    ret.uuiid_int = Some(uuiid_int);
+    ret.uuiid_int = uuiid_int;
     ret.uuiid = make_hexi(uuiid_int);
 
     //lets do args[2] here

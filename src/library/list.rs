@@ -9,13 +9,14 @@
 use inflections::Inflect;
 use crate::library::task::*;
 use crate::library::enums::*;
+use crate::library::functions::*;
 use std::str::FromStr;
 use std::path::Path;
 use std::fs::{ OpenOptions };
 use std::io::{BufRead, BufReader};
 use std::fs::*;
 use std::io::prelude::*;
-
+use std::collections::BTreeSet;
 
 
 #[derive(Clone )]
@@ -91,7 +92,7 @@ impl List {
             }
 
             if task.rtype.is_some() {                                                      //recur
-                ret.push_str("\ttype:");
+                ret.push_str("\trtype:");
                 ret.push_str(&task.rtype.clone().unwrap().text().to_lowercase());
             }
             
@@ -309,7 +310,203 @@ return Err("y")
 }
 
 
+pub fn load_task_list(path: &str,) -> Result<(List ,BTreeSet<i64>), String> {
+    let mut ret_list = List::new();
+    let mut ret_hexi64: BTreeSet<i64> = BTreeSet::new();
 
+    // does the file exists, if not return empties
+    if ! Path::new(path).exists() {
+        let ret = ( ret_list, ret_hexi64 );
+        return Ok(ret)
+    }
+
+
+    let file = File::open(path).unwrap();
+    let reader = BufReader::new(file);
+
+    for line in reader.lines() {
+        let mut task = Task::new();
+
+        if line.is_err() {
+            let message = format!("Problems reading file: {}",path);
+            return Err(message);            
+        }
+        let one_line = line.unwrap();
+        let split_tab:Vec<_> = one_line.split("\t").collect();
+        
+        for element in split_tab {
+            let split_colon:Vec<_> = element.split(":").collect();
+            if split_colon.len() != 2 {
+                let message = format!("Line in file: {} has faulty elements",path);
+                return Err(message);           
+            }
+            
+            // to take care of annotation with time, i'm going to make a separate match term
+            let mut matcho = split_colon[0];
+            if matcho.starts_with("annotation") {
+                matcho = "annotation";
+            }
+            
+            match matcho {
+                "annotation" => {
+                    let split_ann:Vec<_> = split_colon[0].split("_").collect();
+                    if split_ann.len() != 2 {
+                        let message = format!("Line in file: {} has faulty annotations",path);
+                        return Err(message);           
+                    }
+                    let mut anno = Annotation::new();
+                    let date = split_ann[1].parse::<i64>();
+                    if date.is_err(){
+                        let message = format!("Line in file: {} has faulty annotations times",path);
+                        return Err(message);  
+                    }
+                    anno.date = date.unwrap();
+                    anno.desc = split_colon[1].to_string();
+                    task.ann.push(anno);
+
+                }
+
+                "description" => {
+                    task.description = split_colon[1].to_string();
+                }
+                
+                "due" => {
+                    let res= split_colon[1].parse::<i64>();
+                    if res.is_err(){
+                        let message = format!("Integer parsing error in file: {}",path);
+                        return Err(message);           
+                    }
+                    task.due = Some(res.unwrap());
+                }
+                
+                "end" => {
+                    let res= split_colon[1].parse::<i64>();
+                    if res.is_err(){
+                        let message = format!("Integer parsing error in file: {}",path);
+                        return Err(message);           
+                    }
+                    task.end = Some(res.unwrap());
+                }
+
+                "entry" => {
+                    let res= split_colon[1].parse::<i64>();
+                    if res.is_err(){
+                        let message = format!("Integer parsing error in file: {}",path);
+                        return Err(message);           
+                    }
+                    task.entry = res.unwrap();
+                }
+                
+                "parent" => {
+                    let parent = split_colon[1].to_string();
+                    let res = hexi_verify(&parent);
+                    if res.is_err(){
+                        let message = format!("Line in file: {} has faulty hex values",path);
+                        return Err(message);           
+                    }
+                    task.parent = Some(parent);
+                    task.parent_int = Some(res.unwrap());
+                }
+                
+                "prodigy" => {
+                    let res= split_colon[1].parse::<i64>();
+                    if res.is_err(){
+                        let message = format!("Integer parsing error in file: {}",path);
+                        return Err(message);           
+                    }
+                    task.prodigy = Some(res.unwrap());
+                }
+                
+                "recur" => {
+                    task.recur = Some(split_colon[1].to_string());
+                }
+                
+                "rtype" => {
+                    let res = Rtype::from_str(split_colon[1]);
+                    if res.is_err(){
+                        let message = format!("Rtype parsing error in file: {}",path);
+                        return Err(message);         
+                    }
+                    task.rtype = Some(res.unwrap());
+                }
+                
+                "start" => {
+                    let res= split_colon[1].parse::<i64>();
+                    if res.is_err(){
+                        let message = format!("Status parsing error in file: {}",path);
+                        return Err(message);             
+                    }
+                    task.start = Some(res.unwrap());
+                }
+                
+                "status" => {
+                    let res = Status::from_str(split_colon[1]);
+                    if res.is_err(){
+                        let message = format!("Status parsing error in file: {}",path);
+                        return Err(message);         
+                    }
+                    task.status = res.unwrap();
+                }
+                
+                "tags" => {
+                    let split_comma:Vec<_> = split_colon[1].split(":").collect();
+                    for tag in split_comma {
+                        task.tags.push(tag.to_string());
+                    }
+                }
+                
+                "timetrackingseconds" => {
+                    let res= split_colon[1].parse::<i64>();
+                    if res.is_err(){
+                        let message = format!("timetrackingseconds parsing error in file: {}",path);
+                        return Err(message);             
+                    }
+                    task.timetrackingseconds = res.unwrap();
+                }
+
+                "uuiid" => {
+                    let uuiid = split_colon[1].to_string();
+                    let res = hexi_verify(&uuiid);
+                    if res.is_err(){
+                        let message = format!("Line in file: {} has faulty hex values",path);
+                        return Err(message);           
+                    }
+                    task.uuiid = uuiid;
+                    let u_int = res.unwrap();
+                    task.uuiid_int = u_int;
+                    ret_hexi64.insert(u_int);
+                }
+
+                "wait" => {
+                    let res= split_colon[1].parse::<i64>();
+                    if res.is_err(){
+                        let message = format!("Integer parsing error in file: {}",path);
+                        return Err(message);         
+                    }
+                    task.wait = Some(res.unwrap());
+                }
+                
+
+                _ => {
+                    // shouldnt really get here
+                    return Err("Unknown element in colon split".to_string())            
+                }
+            }
+
+        }
+        
+         if task.ann.len() > 1 {
+            task.ann.sort();    
+         }
+        ret_list.list.push(task);
+    } //end of for line loop
+
+
+
+
+    let ret = ( ret_list, ret_hexi64 );
+    Ok(ret)
+}
 
 
 
@@ -348,9 +545,13 @@ mod tests {
         let result2 = make_task(&vs, 2, 2);
         the_list.list.push(result2.unwrap());
 
-        let res = the_list.save(text_file);
+        let _res = the_list.save(text_file);
         the_list.list.clear();
-        let res_p = load_pending(text_file, &mut the_list);
+        let res_p = load_task_list(text_file);
+        let mut bt:BTreeSet<i64> = BTreeSet::new();
+        // let ( mut the_list,  mut bt ) = res_p.unwrap();
+        the_list   = res_p.unwrap()[0];
+        bt.insert(78);
         
         assert_eq!(the_list.list.len(), 2);
     }

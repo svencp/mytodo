@@ -71,16 +71,24 @@ pub fn is_arg_hexidecimal(first: &str) -> Result<Vec<String>, &str> {
     let split: Vec<&str> = first.split(",").collect();
 
     for hexi in split {
-        let sub2 = "0x";
-        if hexi.substring(0, 2) != sub2 {
-            return Err("Does not start with 0x");
+
+        let res = hexi_verify(hexi);
+        if res.is_err() {
+            return Err(res.err().unwrap());
         }
-        let n_hexi = hexi.trim_start_matches(sub2);
-        let res_int = i64::from_str_radix(n_hexi, 16);
-        if res_int.is_err() {
-            return Err("Not a hexidecimal");
-        }
+
         ret.push(hexi.to_lowercase().trim().to_string());
+
+        // let sub2 = "0x";
+        // if hexi.substring(0, 2) != sub2 {
+        //     return Err("Does not start with 0x");
+        // }
+        // let n_hexi = hexi.trim_start_matches(sub2);
+        // let res_int = i64::from_str_radix(n_hexi, 16);
+        // if res_int.is_err() {
+        //     return Err("Not a hexidecimal");
+        // }
+        // ret.push(hexi.to_lowercase().trim().to_string());
     }
 
     Ok(ret)
@@ -122,7 +130,20 @@ pub fn report_single_uuiid(){
 }
 
 
+pub fn hexi_verify(str: &str) -> Result<i64, &'static str> {
+    let sub2 = "0x";
 
+    if str.substring(0, 2) != sub2 {
+        return Err("Does not start with 0x");
+    }
+    let n_hexi = str.trim_start_matches(sub2);
+    let res_int = i64::from_str_radix(n_hexi, 16);
+    if res_int.is_err() {
+        return Err("Not a hexidecimal string");
+    }
+    
+    Ok(res_int.unwrap())
+}
 
 
 
@@ -232,6 +253,18 @@ mod tests {
         assert_eq!(_res, ArgType::Command);
     }
     
+    // #[ignore]
+    #[test]
+    fn t008_hexi_verify() {
+        let hexi = "0x0ff";
+        let res = hexi_verify(hexi);
+        assert_eq!(res.unwrap(), 255);
+        
+        let hexi2 = "0x0fgf";
+        let res2 = hexi_verify(hexi2);
+        let error = res2.err().unwrap();
+        assert_eq!(error, "Not a hexidecimal string");
+    }
 
 
 
