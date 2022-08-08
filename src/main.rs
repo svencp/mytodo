@@ -23,11 +23,11 @@ use thousands::{Separable};
 use std::time::{SystemTime};
 
 
-const VERSION: &str   = env!("CARGO_PKG_VERSION");
-const PENDING: &str   = "./pending.data";
-const COMPLETED: &str = "./completed.data";
-const SETTINGS_FILE: &str = "settings.txt";
-
+pub const VERSION: &str         = env!("CARGO_PKG_VERSION");
+pub const PENDING: &str         = "./pending.data";
+pub const COMPLETED: &str       = "./completed.data";
+pub const SETTINGS_FILE: &str   = "settings.txt";
+pub const DATE_FORMAT: &str     = "%Y-%m-%d";
 
 
 #[rustfmt::skip]
@@ -48,8 +48,13 @@ fn main() {
     let data_dir = settings.map.get("dataDir").unwrap().to_string();
     let pending_file = data_dir.clone() + "/pending.data";
     let completed_file = data_dir + "/completed.data";
-    let mut completed_tasks = List::new();
-    let mut pending_tasks = List::new();
+    // let mut completed_tasks = List::new();
+    // let mut pending_tasks = List::new();
+    let mut pending_tasks:   BTreeMap<i64,Task> = BTreeMap::new();
+    let mut completed_tasks: BTreeMap<i64,Task> = BTreeMap::new();
+
+
+
 
     // let result_loading = load_all_tasks(&pending_file,&completed_file, 
     //                         &mut pending_tasks, &mut completed_tasks);
@@ -127,14 +132,14 @@ fn main() {
         ArgType::Command => {
             match command.as_str() {
                 "add" => {
-                    let result = make_task(&arguments, next_uuiid_int, next_id);
-                    if result.is_err() {
-                        let message = result.err().unwrap().to_string();
-                        feedback(Feedback::Error, message);
-                        exit(17);
-                    }
-                    pending_tasks.list.push(result.unwrap());
-                    let res_save = pending_tasks.save(&pending_file);
+                    // let result = make_task(&arguments, next_uuiid_int, next_id);
+                    // if result.is_err() {
+                    //     let message = result.err().unwrap().to_string();
+                    //     feedback(Feedback::Error, message);
+                    //     exit(17);
+                    // }
+                    // pending_tasks.list.push(result.unwrap());
+                    // let res_save = pending_tasks.save(&pending_file);
                 }
 
                 "mycompleted" => {

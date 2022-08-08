@@ -10,11 +10,12 @@ use chrono::*;
 use chronoutil::*;
 use substring::Substring;
 use crate::library::enums::*;
+use crate::library::functions::*;
 
 
 const DAY_SECS: i64         =      86400;
 const WEEK_SECS: i64        =     604800;
-const DATE_FORMAT: &str     = "%Y-%m-%d";
+
 
 
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq)]
@@ -74,7 +75,8 @@ impl Task {
             uuiid_int: 0,
             description: "".to_string(),
             status: Status::Pending, 
-            entry: Utc::now().naive_local().timestamp(),
+            // entry: chrono::offset::Local::now().timestamp().timestamp(),
+            entry: chrono::offset::Local::now().timestamp(),
             start: None,
             due: None,
             end: None,
@@ -109,104 +111,348 @@ impl Task {
 
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Functions @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@           @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-pub fn make_task(args: &Vec<String>, uuiid_int: i64, id: i64) -> Result<Task, &'static str> {
-    let mut ret = Task::new();
-    ret.id = Some(id);
-    ret.uuiid_int = uuiid_int;
-    ret.uuiid = make_hexi(uuiid_int);
 
-    //lets do args[2] here
-    let desc = args[2].trim().to_string();
-    ret.description = desc;
+pub fn from_timestamp_to_date_str(num: i64) -> String {
+    // Create a NaiveDateTime from the timestamp
+    let naive = NaiveDateTime::from_timestamp(num, 0);
+
+    // Create a normal DateTime from the NaiveDateTime
+    let datetime: DateTime<Utc> = DateTime::from_utc(naive, Utc);
+    // let datetime: DateTime<Local> = DateTime::from_local(naive, chrono::Local::from_local_datetime(&self, local));
+    
+    // Format the datetime how you want
+    let newdate = naive.format("%Y-%m-%d %H:%M:%S");
+    // let newdate = datetime.format(crate::DATE_FORMAT);
+
+    return newdate.to_string()
+}
+
+// pub fn make_task(args: &Vec<String>, uuiid_int: i64, id: i64) -> Result<Task, &'static str> {
+//     let mut ret = Task::new();
+//     ret.id = Some(id);
+//     ret.uuiid_int = uuiid_int;
+//     ret.uuiid = make_hexi(uuiid_int);
+
+//     //lets do args[2] here
+//     let desc = args[2].trim().to_string();
+//     ret.description = desc;
 
     
 
-    for t in 3..args.len() {
-        let split: Vec<&str> = args[t].split(":").collect();
+//     for t in 3..args.len() {
+//         let split: Vec<&str> = args[t].split(":").collect();
 
 
 
-        match split[0] {
-            "due" => {
-                if split.len() != 2 {
-                    return Err("Malformed due term");
-                }
-                let resultant_time = determine_timestamp( &ret.entry, split[1]);
-                if resultant_time.is_err(){
-                    return Err("parsing error in term");
-                }
-                ret.due = Some(resultant_time.unwrap());
-            }
+//         match split[0] {
+//             "due" => {
+//                 if split.len() != 2 {
+//                     return Err("Malformed due term");
+//                 }
+//                 let resultant_time = determine_timestamp( &ret.entry, split[1]);
+//                 if resultant_time.is_err(){
+//                     return Err("parsing error in term");
+//                 }
+//                 ret.due = Some(resultant_time.unwrap());
+//             }
             
-            "wait" => {
-                if split.len() != 2 {
-                    return Err("Malformed wait term");
-                }
-                let resultant_time = determine_timestamp( &ret.entry, split[1]);
-                if resultant_time.is_err(){
-                    return Err("parsing error in term");
-                }
-                ret.wait = Some(resultant_time.unwrap());
-            }
+//             "wait" => {
+//                 if split.len() != 2 {
+//                     return Err("Malformed wait term");
+//                 }
+//                 let resultant_time = determine_timestamp( &ret.entry, split[1]);
+//                 if resultant_time.is_err(){
+//                     return Err("parsing error in term");
+//                 }
+//                 ret.wait = Some(resultant_time.unwrap());
+//             }
             
-            "start" => {
-                if split.len() != 2 {
-                    return Err("Malformed start term");
-                }
-                let resultant_time = determine_timestamp( &ret.entry, split[1]);
-                if resultant_time.is_err(){
-                    return Err("parsing error in term");
-                }
-                ret.start = Some(resultant_time.unwrap());
-            }
+//             "start" => {
+//                 if split.len() != 2 {
+//                     return Err("Malformed start term");
+//                 }
+//                 let resultant_time = determine_timestamp( &ret.entry, split[1]);
+//                 if resultant_time.is_err(){
+//                     return Err("parsing error in term");
+//                 }
+//                 ret.start = Some(resultant_time.unwrap());
+//             }
             
-            "recur" => {
-                if split.len() != 2 {
-                    return Err("Malformed recur term");
-                }
-                // run through to test for error
-                let resultant_time = determine_timestamp( &ret.entry, split[1]);
-                if resultant_time.is_err(){
-                    return Err("parsing error in term");
-                }
-                // only store the term
-                ret.recur = Some(split[1].to_string());
+//             "recur" => {
+//                 if split.len() != 2 {
+//                     return Err("Malformed recur term");
+//                 }
+//                 // run through to test for error
+//                 let resultant_time = determine_timestamp( &ret.entry, split[1]);
+//                 if resultant_time.is_err(){
+//                     return Err("parsing error in term");
+//                 }
+//                 // only store the term
+//                 ret.recur = Some(split[1].to_string());
 
-                // default rtype to periodic, if it hasnt been assigned
-                if ret.rtype.is_none() {
-                    ret.rtype = Some(Rtype::Periodic);
+//                 // default rtype to periodic, if it hasnt been assigned
+//                 if ret.rtype.is_none() {
+//                     ret.rtype = Some(Rtype::Periodic);
+//                 }
+//             }
+            
+//             "rtype" => {
+//                 if split.len() != 2 {
+//                     return Err("Malformed rtype term");
+//                 }
+
+//                 // run through to test for error
+//                 let result = Rtype::from_str(split[1]);
+//                 if result.is_err(){
+//                     return Err("parsing error in rtype");
+//                 }
+//                 ret.rtype = Some(result.unwrap());
+//             }
+
+//             _ => {
+//                 // test for tag
+//                 if split.len() == 1 {
+//                     let first_char = split[0].substring(0, 1);
+//                     if first_char != "+" {
+//                         return Err("Unknown term");
+//                     }
+//                     if split[0].len() < 2 {
+//                         return Err("Tag item too small");
+//                     }
+//                     let tag = &split[0][1..];
+//                     ret.tags.push(tag.to_string());
+//                 }
+//             }
+//         } // end of match
+//     } // end of for loop
+
+//     Ok(ret)
+// }
+
+
+pub fn make_task(vec:Vec<&str>) -> Result<Task, &'static str> {
+    let mut ret = Task::new();
+
+    for element in vec {
+        let split_colon: Vec<_> = element.split(":").collect();
+        let number_of_terms = split_colon.len();
+
+        match number_of_terms {
+            1 => {
+                if split_colon[0].len() < 2 {
+                    return Err("tag term is too short")
+                }
+                let one =  split_colon[0].clone().to_string();
+                let first_char = one.substring(0, 1);
+                match first_char {
+                    "+" => {
+                        let tag = one[1..].to_string();
+                        ret.tags.push(tag);
+                    }
+                    
+                    _ => {
+                        if ret.description.len() != 0 {
+                            return Err("too many descriptions")
+                        } 
+                        ret.description = one;
+                    }
                 }
             }
-            
-            "rtype" => {
-                if split.len() != 2 {
-                    return Err("Malformed rtype term");
+
+            2 => {
+
+                // to take care of annotation with time, i'm going to make a separate match term
+                let mut matcho = split_colon[0];
+                if matcho.starts_with("annotation") {
+                    matcho = "annotation";
                 }
 
-                // run through to test for error
-                let result = Rtype::from_str(split[1]);
-                if result.is_err(){
-                    return Err("parsing error in rtype");
+                match matcho {
+                    "annotation" => {
+                        let split_ann:Vec<_> = split_colon[0].split("_").collect();
+                        if split_ann.len() != 2 {
+                            // let message = format!("Line in file: {} has faulty annotations",path);
+                            return Err("element has faulty annotations");           
+                        }
+                        let mut anno = Annotation::new();
+                        let date = split_ann[1].parse::<i64>();
+                        if date.is_err(){
+                            // let message = format!("Line in file: {} has faulty annotations times",path);
+                            return Err("element has faulty annotations times(date)");  
+                        }
+                        anno.date = date.unwrap();
+                        anno.desc = split_colon[1].to_string();
+                        ret.ann.push(anno);
+
+                    }
+
+                    "description" => {
+                        if ret.description.len() != 0 {
+                            return Err("too many descriptions")
+                        } 
+                        ret.description = split_colon[1].to_string();
+                    }
+                    
+                    "due" => {
+                        let res= split_colon[1].parse::<i64>();
+                        if res.is_err(){
+                            let term = split_colon[1].trim().to_lowercase();
+                            if term.starts_with("now") {
+                                ret.due = Some(chrono::offset::Local::now().timestamp());
+                            }
+                            else {
+                                return Err("Integer parsing error");           
+                            }
+                        } 
+                        else {
+                            ret.due = Some(res.unwrap());
+                        }
+                    }
+                    
+                    "end" => {
+                        let res= split_colon[1].parse::<i64>();
+                        if res.is_err(){
+                            // let message = format!("Integer parsing error in file: {}",path);
+                            return Err("Integer parsing error");           
+                        }
+                        ret.end = Some(res.unwrap());
+                    }
+
+                    "entry" => {
+                        let res= split_colon[1].parse::<i64>();
+                        if res.is_err(){
+                            // let message = format!("Integer parsing error in file: {}",path);
+                            return Err("Integer parsing error");           
+                        }
+                        ret.entry = res.unwrap();
+                    }
+                    
+                    "parent" => {
+                        let parent = split_colon[1].to_string();
+                        let res = hexi_verify(&parent);
+                        if res.is_err(){
+                            // let message = format!("Line in file: {} has faulty hex values",path);
+                            return Err("faulty hex values");           
+                        }
+                        ret.parent = Some(parent);
+                        ret.parent_int = Some(res.unwrap());
+                    }
+                    
+                    "prodigy" => {
+                        let res= split_colon[1].parse::<i64>();
+                        if res.is_err(){
+                            // let message = format!("Integer parsing error in file: {}",path);
+                            return Err("Integer parsing error");          
+                        }
+                        ret.prodigy = Some(res.unwrap());
+                    }
+                    
+                    "recur" => {
+                        ret.recur = Some(split_colon[1].to_string());
+                    }
+                    
+                    "rtype" => {
+                        let res = Rtype::from_str(split_colon[1]);
+                        if res.is_err(){
+                            // let message = format!("Rtype parsing error in file: {}",path);
+                            return Err("Rtype parsing error");         
+                        }
+                        ret.rtype = Some(res.unwrap());
+                    }
+                    
+                    "start" => {
+                        let res= split_colon[1].parse::<i64>();
+                        if res.is_err(){
+                            let term = split_colon[1].trim().to_lowercase();
+                            if term.starts_with("now") {
+                                ret.start = Some(chrono::offset::Local::now().timestamp());
+                            }
+                            else {
+                                return Err("Integer parsing error");           
+                            }
+                        } 
+                        else {
+                            ret.start = Some(res.unwrap());
+                        }
+                    }
+                    
+                    "status" => {
+                        let res = Status::from_str(split_colon[1]);
+                        if res.is_err(){
+                            // let message = format!("Status parsing error in file: {}",path);
+                            return Err("Status parsing error");         
+                        }
+                        ret.status = res.unwrap();
+                    }
+                    
+                    "tags" => {
+                        let split_comma:Vec<_> = split_colon[1].split(":").collect();
+                        for tag in split_comma {
+                            ret.tags.push(tag.to_string());
+                        }
+                    }
+                    
+                    "timetrackingseconds" => {
+                        let res= split_colon[1].parse::<i64>();
+                        if res.is_err(){
+                            // let message = format!("timetrackingseconds parsing error in file: {}",path);
+                            return Err("timetrackingseconds parsing error");             
+                        }
+                        ret.timetrackingseconds = res.unwrap();
+                    }
+
+                    "uuiid" => {
+                        let uuiid = split_colon[1].to_string();
+                        let res = hexi_verify(&uuiid);
+                        if res.is_err(){
+                            // let message = format!("Line in file: {} has faulty hex values",path);
+                            return Err("faulty hex values");           
+                        }
+                        ret.uuiid = uuiid;
+                        let u_int = res.unwrap();
+                        ret.uuiid_int = u_int;
+                        // h_set.insert(u_int);
+                    }
+
+                    "wait" => {
+                        let res= split_colon[1].parse::<i64>();
+                        if res.is_err(){
+                            // let message = format!("Integer parsing error in file: {}",path);
+                            return Err("Integer parsing error");         
+                        }
+                        ret.wait = Some(res.unwrap());
+                    }
+                    
+
+                    _ => {
+                        // shouldnt really get here
+                        return Err("Unknown element in colon split")            
+                    }
                 }
-                ret.rtype = Some(result.unwrap());
+
+
+
+
+
+
+
+
+
+
+
+
+
             }
 
             _ => {
-                // test for tag
-                if split.len() == 1 {
-                    let first_char = split[0].substring(0, 1);
-                    if first_char != "+" {
-                        return Err("Unknown term");
-                    }
-                    if split[0].len() < 2 {
-                        return Err("Tag item too small");
-                    }
-                    let tag = &split[0][1..];
-                    ret.tags.push(tag.to_string());
-                }
+                return Err("too many terms per element")
             }
-        } // end of match
-    } // end of for loop
+        }
+
+    }
+
+
+
 
     Ok(ret)
 }
@@ -234,12 +480,12 @@ pub fn determine_timestamp(time: &i64, term: &str) -> Result< i64, &'static str>
 
         // if now
         if term == "now" {
-            let ret = Utc::now().naive_local().timestamp();
+            let ret = chrono::offset::Local::now().timestamp();
             return Ok(ret);
         }
 
         // if date eg 2022-09-08
-        let res_date = NaiveDate::parse_from_str(term, DATE_FORMAT);
+        let res_date = NaiveDate::parse_from_str(term, crate::DATE_FORMAT);
         if res_date.is_err() {
             return Err("Error in parsing date (or maybe no + symbol)")
         }
@@ -308,9 +554,16 @@ pub fn determine_timestamp(time: &i64, term: &str) -> Result< i64, &'static str>
     
 } // end of determine_timestamp
 
+// pub fn determine_time_from_term(term: &str) -> Result<i64, &'static str> {
+//     let to_be = term.trim().to_lowercase();
+
+
+// }
+
+
 
 pub fn make_naive_dt_from_str(date_str: &str) -> Result<NaiveDateTime, &'static str> {
-    let res = NaiveDate::parse_from_str(date_str, DATE_FORMAT);
+    let res = NaiveDate::parse_from_str(date_str, crate::DATE_FORMAT);
     if res.is_err() {
         return Err("Parse error from date string");
     } 
@@ -390,25 +643,53 @@ mod tests {
     }
     
     
+    // // #[ignore]
+    // #[test]
+    // fn t004_make_task1() {
+    //     let vs: Vec<String> = vec!["Nutting".to_string(), "add".to_string(), "Do a job".to_string(),
+    //                             "due:2030-01-05".to_string(), "start:now".to_string(), "+household".to_string()];
+    //     let result = make_task(&vs, 26, 30);
+    //     let now = chrono::offset::Local::now().timestamp().timestamp();
+    //     assert_eq!(result.unwrap().start.unwrap(), now);
+        
+    //     let vs2: Vec<String> = vec!["Nutting".to_string(), "add".to_string(), "Do a job2".to_string(),
+    //                             "due:now".to_string(), "recur:+4m".to_string(), "rtype:chained".to_string()];
+    //     let result = make_task(&vs2, 2, 2);
+    //     assert_eq!(result.unwrap().rtype.unwrap(), Rtype::Chained);
+    // }
+
+
     // #[ignore]
     #[test]
-    fn t004_make_task1() {
-        let vs: Vec<String> = vec!["Nutting".to_string(), "add".to_string(), "Do a job".to_string(),
-                                "due:2030-01-05".to_string(), "start:now".to_string(), "+household".to_string()];
-        let result = make_task(&vs, 26, 30);
-        let now = Utc::now().naive_local().timestamp();
-        assert_eq!(result.unwrap().start.unwrap(), now);
+    fn t005_make_task() {
+        let vs: Vec<&str> = vec!["First Task", "due:2030-01-05", "start:now", "+household"];
+        let res = make_task(vs);
+        assert_eq!(true,true);
+
+
+
+
+        //from line in file
+        let line = "description:how do i get the konsole that i have now\tdue:1658513756\t
+                        entry:1658513756\tstart:1658513756\tstatus:pending\tuuid:0x0011";
+        let vec:Vec<_> = line.split("\t").collect();
+
+        let task = make_task(vec);
+
+
+
+
+        // let vs: Vec<String> = vec!["Nutting".to_string(), "add".to_string(), "Do a job".to_string(),
+        //                         "due:2030-01-05".to_string(), "start:now".to_string(), "+household".to_string()];
+        // let result = make_task(&vs, 26, 30);
+        // let now = chrono::offset::Local::now().timestamp().timestamp();
+        // assert_eq!(result.unwrap().start.unwrap(), now);
         
-        let vs2: Vec<String> = vec!["Nutting".to_string(), "add".to_string(), "Do a job2".to_string(),
-                                "due:now".to_string(), "recur:+4m".to_string(), "rtype:chained".to_string()];
-        let result = make_task(&vs2, 2, 2);
-        assert_eq!(result.unwrap().rtype.unwrap(), Rtype::Chained);
-
-
+        // let vs2: Vec<String> = vec!["Nutting".to_string(), "add".to_string(), "Do a job2".to_string(),
+        //                         "due:now".to_string(), "recur:+4m".to_string(), "rtype:chained".to_string()];
+        // let result = make_task(&vs2, 2, 2);
+        assert_eq!(true,true);
     }
-
-
-
 
 
 

@@ -1,17 +1,20 @@
-use inflections::Inflect;
-use substring::Substring;
-
-use super::enums::ArgType;
 
 /*
-    Module for everything all main functions
-    2022.07.31      Sven Ponelat
+        Module for everything all main functions
+        2022.07.31      Sven Ponelat
 
 */
 
 
+use inflections::Inflect;
+use substring::Substring;
+use std::str::FromStr;
+use chrono::*;
+use chronoutil::*;
+use super::enums::ArgType;
 use crate::library::enums::*;
-
+use crate::library::task::*;
+use std::time::{Duration, SystemTime};
 
 
 
@@ -145,7 +148,44 @@ pub fn hexi_verify(str: &str) -> Result<i64, &'static str> {
     Ok(res_int.unwrap())
 }
 
+// takes a term like "now", "2022-09-08" etc and coverts it to an i64 timestamp
+pub fn term_to_timestamp(term:&str) -> Result<i64, &'static str> {
+    let to_be = term.trim().to_lowercase();
+    let now = chrono::offset::Local::now().timestamp();
 
+    // now
+    if to_be.starts_with("now") {
+        return Ok(now)
+    }
+
+    // if date eg 2022-09-08
+    let res_date = NaiveDate::parse_from_str(term, crate::DATE_FORMAT);
+    if res_date.is_ok() {
+        let date_time = res_date.unwrap().and_hms(0, 0, 0);
+        let timestamp = date_time.timestamp();
+        return Ok(timestamp);
+    }
+
+    // +3m
+    if to_be.starts_with("+") {
+        let stripped = to_be.replace("+", "");
+        let mut n_arr:Vec<char> = Vec::new();
+        let mut c_arr:Vec<char> = Vec::new();
+        let str_arr: Vec<char> = stripped.chars().collect();
+        for c in str_arr {
+            if c.is_numeric() {
+                n_arr.push(c);
+                continue;
+            }
+            c_arr.push(c);
+        }
+    }
+
+
+
+
+    return Err("")
+}
 
 
 
@@ -266,7 +306,44 @@ mod tests {
         assert_eq!(error, "Not a hexidecimal string");
     }
 
+    // #[ignore]
+    #[test]
+    fn t009_term_to_timestamp() {
 
+        let t1 = "2022-05-01";
+        let r1 = term_to_timestamp(t1);
+        assert_eq!(r1.unwrap(), 1651363200);
+        
+        let t2 = "now";
+        let y2 = chrono::offset::Local::now().timestamp();
+        let r2 = term_to_timestamp(t2);
+        assert_eq!(r2.unwrap(), y2);
+        
+        let t1 = "+14m";
+        // let now = chrono::offset::Local::now().timestamp();
+        let now = chrono::offset::Local::now().timestamp();
+        let s1 = from_timestamp_to_date_str(now);
+        
+        let local_time = Local::now().timestamp();
+
+
+        let yyy = Local.timestamp(local_time, 0).offset().fix().local_minus_utc();
+
+        let ans = local_time + yyy as i64;
+
+        let qu = Utc::now().timestamp();
+        let ql = Local::now().timestamp();
+
+        let sss = SystemTime::now();
+        let local_time = Local::now();
+        // assert_eq!(r2.unwrap(), y2);
+
+        println!("{:?}", chrono::offset::Local::now().timestamp());
+        println!("{:?}", chrono::offset::Utc::now());
+
+
+
+    }
 
 
 
