@@ -11,10 +11,10 @@ use chronoutil::*;
 use substring::Substring;
 use crate::library::enums::*;
 use crate::library::functions::*;
+use crate::library::lts::*;
 
 
-const DAY_SECS: i64         =      86400;
-const WEEK_SECS: i64        =     604800;
+
 
 
 
@@ -294,19 +294,25 @@ pub fn make_task(vec:Vec<&str>) -> Result<Task, &'static str> {
                     }
                     
                     "due" => {
-                        let res= split_colon[1].parse::<i64>();
-                        if res.is_err(){
-                            let term = split_colon[1].trim().to_lowercase();
-                            if term.starts_with("now") {
-                                ret.due = Some(chrono::offset::Local::now().timestamp());
-                            }
-                            else {
-                                return Err("Integer parsing error");           
-                            }
-                        } 
-                        else {
-                            ret.due = Some(res.unwrap());
+                        let res = determine_due_start_wait(split_colon[1]);
+                        if res.is_err() {
+                            return Err(res.err().unwrap())
                         }
+                        ret.due = Some(res.unwrap());
+
+                        // let res= split_colon[1].parse::<i64>();
+                        // if res.is_err(){
+                        //     let term = split_colon[1].trim().to_lowercase();
+                        //     if term.starts_with("now") {
+                        //         ret.due = Some(chrono::offset::Local::now().timestamp());
+                        //     }
+                        //     else {
+                        //         return Err("Integer parsing error");           
+                        //     }
+                        // } 
+                        // else {
+                        //     ret.due = Some(res.unwrap());
+                        // }
                     }
                     
                     "end" => {
@@ -361,19 +367,25 @@ pub fn make_task(vec:Vec<&str>) -> Result<Task, &'static str> {
                     }
                     
                     "start" => {
-                        let res= split_colon[1].parse::<i64>();
-                        if res.is_err(){
-                            let term = split_colon[1].trim().to_lowercase();
-                            if term.starts_with("now") {
-                                ret.start = Some(chrono::offset::Local::now().timestamp());
-                            }
-                            else {
-                                return Err("Integer parsing error");           
-                            }
-                        } 
-                        else {
-                            ret.start = Some(res.unwrap());
+                        let res = determine_due_start_wait(split_colon[1]);
+                        if res.is_err() {
+                            return Err(res.err().unwrap())
                         }
+                        ret.start = Some(res.unwrap());
+
+                        // let res= split_colon[1].parse::<i64>();
+                        // if res.is_err(){
+                        //     let term = split_colon[1].trim().to_lowercase();
+                        //     if term.starts_with("now") {
+                        //         ret.start = Some(chrono::offset::Local::now().timestamp());
+                        //     }
+                        //     else {
+                        //         return Err("Integer parsing error");           
+                        //     }
+                        // } 
+                        // else {
+                        //     ret.start = Some(res.unwrap());
+                        // }
                     }
                     
                     "status" => {
@@ -415,12 +427,18 @@ pub fn make_task(vec:Vec<&str>) -> Result<Task, &'static str> {
                     }
 
                     "wait" => {
-                        let res= split_colon[1].parse::<i64>();
-                        if res.is_err(){
-                            // let message = format!("Integer parsing error in file: {}",path);
-                            return Err("Integer parsing error");         
+                        let res = determine_due_start_wait(split_colon[1]);
+                        if res.is_err() {
+                            return Err(res.err().unwrap())
                         }
                         ret.wait = Some(res.unwrap());
+
+                        // let res= split_colon[1].parse::<i64>();
+                        // if res.is_err(){
+                        //     // let message = format!("Integer parsing error in file: {}",path);
+                        //     return Err("Integer parsing error");         
+                        // }
+                        // ret.wait = Some(res.unwrap());
                     }
                     
 
@@ -429,18 +447,6 @@ pub fn make_task(vec:Vec<&str>) -> Result<Task, &'static str> {
                         return Err("Unknown element in colon split")            
                     }
                 }
-
-
-
-
-
-
-
-
-
-
-
-
 
             }
 
@@ -485,7 +491,7 @@ pub fn determine_timestamp(time: &i64, term: &str) -> Result< i64, &'static str>
         }
 
         // if date eg 2022-09-08
-        let res_date = NaiveDate::parse_from_str(term, crate::DATE_FORMAT);
+        let res_date = NaiveDate::parse_from_str(term, DATE_FORMAT);
         if res_date.is_err() {
             return Err("Error in parsing date (or maybe no + symbol)")
         }
@@ -554,22 +560,52 @@ pub fn determine_timestamp(time: &i64, term: &str) -> Result< i64, &'static str>
     
 } // end of determine_timestamp
 
-// pub fn determine_time_from_term(term: &str) -> Result<i64, &'static str> {
-//     let to_be = term.trim().to_lowercase();
 
-
-// }
 
 
 
 pub fn make_naive_dt_from_str(date_str: &str) -> Result<NaiveDateTime, &'static str> {
-    let res = NaiveDate::parse_from_str(date_str, crate::DATE_FORMAT);
+    let res = NaiveDate::parse_from_str(date_str, DATE_FORMAT);
     if res.is_err() {
         return Err("Parse error from date string");
     } 
     let ret = res.unwrap().and_hms(0, 0, 0);
     return Ok(ret);
 }
+
+// given a term like +3m -> return timestamp
+pub fn determine_due_start_wait(term: &str) -> Result<i64, &'static str> {
+    // now
+    if term.starts_with("now") {
+        return Ok(lts_now());
+    }
+
+    // 1600 000 000
+    let res_s64 = lts_from_str64_to_timestamp(term);
+    if res_s64.is_ok(){
+        return Ok(res_s64.unwrap())
+    }
+    
+    // 2020-02-27
+    let res_date = lts_date_string_to_timestamp(term);
+    if res_date.is_ok(){
+        return Ok(res_date.unwrap())
+    }
+    
+    // +3m
+    if term.starts_with("+") {
+        let now = lts_now();
+        let res_term = lts_add_timestamp_to_recur_term(now, term);
+        if res_term.is_ok() {
+            return Ok(res_term.unwrap())
+        }
+    }
+
+    Err("unknown term for due: start: wait:")
+}
+
+
+
 
 
 
@@ -643,40 +679,13 @@ mod tests {
     }
     
     
-    // // #[ignore]
-    // #[test]
-    // fn t004_make_task1() {
-    //     let vs: Vec<String> = vec!["Nutting".to_string(), "add".to_string(), "Do a job".to_string(),
-    //                             "due:2030-01-05".to_string(), "start:now".to_string(), "+household".to_string()];
-    //     let result = make_task(&vs, 26, 30);
-    //     let now = chrono::offset::Local::now().timestamp().timestamp();
-    //     assert_eq!(result.unwrap().start.unwrap(), now);
-        
-    //     let vs2: Vec<String> = vec!["Nutting".to_string(), "add".to_string(), "Do a job2".to_string(),
-    //                             "due:now".to_string(), "recur:+4m".to_string(), "rtype:chained".to_string()];
-    //     let result = make_task(&vs2, 2, 2);
-    //     assert_eq!(result.unwrap().rtype.unwrap(), Rtype::Chained);
-    // }
-
-
     // #[ignore]
     #[test]
-    fn t005_make_task() {
-        let vs: Vec<&str> = vec!["First Task", "due:2030-01-05", "start:now", "+household"];
-        let res = make_task(vs);
-        assert_eq!(true,true);
+    fn t004_determine_due_start_wait() {
+        // let term1 = "now";
 
 
-
-
-        //from line in file
-        let line = "description:how do i get the konsole that i have now\tdue:1658513756\t
-                        entry:1658513756\tstart:1658513756\tstatus:pending\tuuid:0x0011";
-        let vec:Vec<_> = line.split("\t").collect();
-
-        let task = make_task(vec);
-
-
+        // let term2 = "2021-09-30";
 
 
         // let vs: Vec<String> = vec!["Nutting".to_string(), "add".to_string(), "Do a job".to_string(),
@@ -688,8 +697,35 @@ mod tests {
         // let vs2: Vec<String> = vec!["Nutting".to_string(), "add".to_string(), "Do a job2".to_string(),
         //                         "due:now".to_string(), "recur:+4m".to_string(), "rtype:chained".to_string()];
         // let result = make_task(&vs2, 2, 2);
-        assert_eq!(true,true);
+        // assert_eq!(result.unwrap().rtype.unwrap(), Rtype::Chained);
     }
+
+
+    // #[ignore]
+    #[test]
+    fn t005_make_task() {
+        let vs: Vec<&str> = vec!["First Task", "due:2030-01-05", "start:now", "+household"];
+        let res = make_task(vs);
+        assert_eq!(res.unwrap().start.unwrap(), lts_now() );
+        
+        //from line in file
+        let line = "description:how do i get the konsole that i have now\tdue:1658513756\t\
+                        entry:1658513756\tstart:1658513756\tstatus:pending\tuuiid:0x0011";
+        let vec:Vec<_> = line.split("\t").collect();
+        let task = make_task(vec);
+        assert_eq!(task.clone().unwrap().start.unwrap(), 1658513756 );
+        assert_eq!(task.clone().unwrap().status, Status::Pending );
+        assert_eq!(task.clone().unwrap().uuiid_int, 17 );
+    }
+
+
+
+
+
+
+
+
+
 
 
 

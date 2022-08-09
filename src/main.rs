@@ -13,7 +13,7 @@ use library::settings::*;
 use library::task::*;
 use library::list::*;
 use substring::Substring;
-use std::collections::{BTreeMap};
+use std::collections::{BTreeMap, BTreeSet};
 use std::process::exit;
 use std::fs::copy;
 use std::path::Path;
@@ -27,7 +27,7 @@ pub const VERSION: &str         = env!("CARGO_PKG_VERSION");
 pub const PENDING: &str         = "./pending.data";
 pub const COMPLETED: &str       = "./completed.data";
 pub const SETTINGS_FILE: &str   = "settings.txt";
-pub const DATE_FORMAT: &str     = "%Y-%m-%d";
+
 
 
 #[rustfmt::skip]
@@ -52,12 +52,10 @@ fn main() {
     // let mut pending_tasks = List::new();
     let mut pending_tasks:   BTreeMap<i64,Task> = BTreeMap::new();
     let mut completed_tasks: BTreeMap<i64,Task> = BTreeMap::new();
+    let mut hexi_set: BTreeSet<i64>             = BTreeSet::new();
 
-
-
-
-    // let result_loading = load_all_tasks(&pending_file,&completed_file, 
-    //                         &mut pending_tasks, &mut completed_tasks);
+    let result_loading = load_all_tasks(&pending_file,&completed_file, 
+                            &mut pending_tasks, &mut completed_tasks, &mut hexi_set);
 
     // if result_loading
 
@@ -148,7 +146,7 @@ fn main() {
 
                 _ => { 
                     // should never get here
-                    println!("Sould never get here -> command unknown")
+                    println!("Should never get here -> command unknown")
                 }
             }
         }

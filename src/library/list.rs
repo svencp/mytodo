@@ -177,137 +177,179 @@ impl List {
 
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Functions @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@           @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-pub fn load_all_tasks(p_file: &str, c_file: &str, pending: &mut List, completed: &mut List)   {
-
-    let res_pend = load_pending(p_file,pending);
+pub fn load_all_tasks(  p_file: &str, c_file: &str, pending: &mut BTreeMap<i64,Task>, 
+                        completed: &mut BTreeMap<i64,Task>, hexi_set: &mut BTreeSet<i64>) -> Result<(),&'static str> {
+    
+    let res_pend = load_task_file(p_file, pending, hexi_set);
     
 
+
+    // let res_pend = load_pending(p_file,pending);
+    
+    Ok(())
 }
 
-
-
-pub fn load_pending(p_file: &str, pending: &mut List)  -> Result<(), &'static str> {
-    pending.list.clear();
-
-    // does the file exists
-    if ! Path::new(p_file.clone()).exists() {
-        return Ok(())
+pub fn load_task_file(task_file: &str, task_map: &mut BTreeMap<i64,Task>, hexi_set: &mut BTreeSet<i64>) -> Result<(), String> {
+    // does the file exists, if not return empties
+    if ! Path::new(task_file).exists() {
+        return Ok(());
     }
 
-
-    let file = File::open(p_file).unwrap();
+    let mut line_counter = 0;
+    let file = File::open(task_file).unwrap();
     let reader = BufReader::new(file);
 
     for line in reader.lines() {
-        let mut task = Task::new();
+        line_counter += 1;
+        let mut task;
 
         if line.is_err() {
-            return Err("Problems reading pending.data")            
+            let message = format!("Problems reading file: {} on line number {}",task_file, line_counter);
+            return Err(message);            
         }
         let one_line = line.unwrap();
         let split_tab:Vec<_> = one_line.split("\t").collect();
-        
-        for element in split_tab {
-            let split_colon:Vec<_> = element.split(":").collect();
-            if split_colon.len() != 2 {
-                return Err("Line in pending.data has faulty elements")            
-            }
-            match split_colon[0] {
-                "description" => {
-                    task.description = split_colon[1].to_string();
-                }
-                
-                "uuiid" => {
-                    task.uuiid = split_colon[1].to_string();
-                }
-                
-                "entry" => {
-                    let res= split_colon[1].parse::<i64>();
-                    if res.is_err(){
-                        return Err("Integer parsing error in pending.data")            
-                    }
-                    task.entry = res.unwrap();
-                }
 
-                "due" => {
-                    let res= split_colon[1].parse::<i64>();
-                    if res.is_err(){
-                        return Err("Integer parsing error in pending.data")            
-                    }
-                    task.due = Some(res.unwrap());
-                }
-
-                "wait" => {
-                    let res= split_colon[1].parse::<i64>();
-                    if res.is_err(){
-                        return Err("Integer parsing error in pending.data")            
-                    }
-                    task.wait = Some(res.unwrap());
-                }
-                
-                "status" => {
-                    let res = Status::from_str(split_colon[1]);
-                    if res.is_err(){
-                        return Err("Status parsing error in pending.data")            
-                    }
-                    task.status = res.unwrap();
-                }
-                
-                "tags" => {
-                    let split_comma:Vec<_> = split_colon[1].split(":").collect();
-                    for tag in split_comma {
-                        task.tags.push(tag.to_string());
-                    }
-                }
-                
-                "start" => {
-                    let res= split_colon[1].parse::<i64>();
-                    if res.is_err(){
-                        return Err("Integer parsing error in pending.data")            
-                    }
-                    task.start = Some(res.unwrap());
-                }
-
-
-                _ => {
-                    // shouldnt really get here
-                    return Err("unknown element in colon split")            
-                }
-            }
-
+        let res_task = make_task(split_tab);
+        if res_task.is_err() {
+            let message = format!("Task error: {} on line number {}",
+                            res_task.err().unwrap(), line_counter);
+            return Err(message);
         }
-        
-    } //end of for line loop
+        task = res_task.unwrap();
+        task.id = Some(line_counter);
 
+        hexi_set.insert(task.uuiid_int);
+        task_map.insert(task.id.unwrap(), task);
+    }
 
-
-    // let res_file = File::open(p_file);
-    // if res_file.is_err() {
-    //     return Err("Problem opening settings.txt");
-    // }
-    // let reader = BufReader::new(res_file.unwrap());
-    
-    // // for each line
-    // for line in reader.lines() {
-    //     if line.is_err(){
-    //         return Err("Problem reading line in settings");
-    //     }
-    //     let read = Some(line.unwrap());
-    //     if read.clone().is_some() {
-    //         let split_tab = read.clone().unwrap();
-    //         let col = split_tab.clone().split("\t");
-    //         let aaa:Vec<_> =  col.clone().collect();
-    //         let len = aaa.clone().len();
-    //         println!("{}",aaa[0]);
-
-
-    //         let rr=8;
-    //     }
-    // }
-
-return Err("y")
-
+    Ok(())
 }
+
+
+
+// pub fn load_pending(p_file: &str, pending: &mut List)  -> Result<(), &'static str> {
+//     pending.list.clear();
+
+//     // does the file exists
+//     if ! Path::new(p_file.clone()).exists() {
+//         return Ok(())
+//     }
+
+
+//     let file = File::open(p_file).unwrap();
+//     let reader = BufReader::new(file);
+
+//     for line in reader.lines() {
+//         let mut task = Task::new();
+
+//         if line.is_err() {
+//             return Err("Problems reading pending.data")            
+//         }
+//         let one_line = line.unwrap();
+//         let split_tab:Vec<_> = one_line.split("\t").collect();
+        
+//         for element in split_tab {
+//             let split_colon:Vec<_> = element.split(":").collect();
+//             if split_colon.len() != 2 {
+//                 return Err("Line in pending.data has faulty elements")            
+//             }
+//             match split_colon[0] {
+//                 "description" => {
+//                     task.description = split_colon[1].to_string();
+//                 }
+                
+//                 "uuiid" => {
+//                     task.uuiid = split_colon[1].to_string();
+//                 }
+                
+//                 "entry" => {
+//                     let res= split_colon[1].parse::<i64>();
+//                     if res.is_err(){
+//                         return Err("Integer parsing error in pending.data")            
+//                     }
+//                     task.entry = res.unwrap();
+//                 }
+
+//                 "due" => {
+//                     let res= split_colon[1].parse::<i64>();
+//                     if res.is_err(){
+//                         return Err("Integer parsing error in pending.data")            
+//                     }
+//                     task.due = Some(res.unwrap());
+//                 }
+
+//                 "wait" => {
+//                     let res= split_colon[1].parse::<i64>();
+//                     if res.is_err(){
+//                         return Err("Integer parsing error in pending.data")            
+//                     }
+//                     task.wait = Some(res.unwrap());
+//                 }
+                
+//                 "status" => {
+//                     let res = Status::from_str(split_colon[1]);
+//                     if res.is_err(){
+//                         return Err("Status parsing error in pending.data")            
+//                     }
+//                     task.status = res.unwrap();
+//                 }
+                
+//                 "tags" => {
+//                     let split_comma:Vec<_> = split_colon[1].split(":").collect();
+//                     for tag in split_comma {
+//                         task.tags.push(tag.to_string());
+//                     }
+//                 }
+                
+//                 "start" => {
+//                     let res= split_colon[1].parse::<i64>();
+//                     if res.is_err(){
+//                         return Err("Integer parsing error in pending.data")            
+//                     }
+//                     task.start = Some(res.unwrap());
+//                 }
+
+
+//                 _ => {
+//                     // shouldnt really get here
+//                     return Err("unknown element in colon split")            
+//                 }
+//             }
+
+//         }
+        
+//     } //end of for line loop
+
+
+
+//     // let res_file = File::open(p_file);
+//     // if res_file.is_err() {
+//     //     return Err("Problem opening settings.txt");
+//     // }
+//     // let reader = BufReader::new(res_file.unwrap());
+    
+//     // // for each line
+//     // for line in reader.lines() {
+//     //     if line.is_err(){
+//     //         return Err("Problem reading line in settings");
+//     //     }
+//     //     let read = Some(line.unwrap());
+//     //     if read.clone().is_some() {
+//     //         let split_tab = read.clone().unwrap();
+//     //         let col = split_tab.clone().split("\t");
+//     //         let aaa:Vec<_> =  col.clone().collect();
+//     //         let len = aaa.clone().len();
+//     //         println!("{}",aaa[0]);
+
+
+//     //         let rr=8;
+//     //     }
+//     // }
+
+// return Err("y")
+
+// }
 
 
 pub fn load_task_list(path: &str, list: &mut List, h_set: &mut BTreeSet<i64>) -> Result<(), String> {
@@ -524,39 +566,30 @@ mod tests {
     use std::fs::remove_file;
 
     
-    // // #[ignore]
-    // #[test]
-    // fn t001_list_new() {
+    // #[ignore]
+    #[test]
+    fn t001_load_task_file() {
 
-    //     let mut pending: BTreeMap<i64,Task> = BTreeMap::new();
-    //     let mut h_set:BTreeSet<i64> = BTreeSet::new();
+        let mut pending: BTreeMap<i64,Task> = BTreeMap::new();
+        let mut h_set:BTreeSet<i64> = BTreeSet::new();
+        
+        let source = "/DATA/programming/Rust/mytodo/test/some-documents/pending1.data";
+        let destination = "./test/pending.data";
+        copy(source,destination).expect("Failed to copy");
+        let _res = load_task_file(destination, &mut pending, &mut h_set);
+        remove_file(destination).expect("Cleanup test failed");
 
-    //     let text_file = "./test/pending.data";
-    //     let vs: Vec<String> = vec!["Nutting".to_string(), "add".to_string(), "Do a job".to_string(),
-    //                              "due:2030-01-05".to_string(), "wait:2030-01-01".to_string(), "+household".to_string(),
-    //                              "+car".to_string()];
-    //     let result = make_task(&vs, 1, 1);
-    //     the_list.list.push(result.unwrap());
+        assert_eq!(pending.len(), 3);
+        let third_one = pending.get(&3).unwrap();
+        assert_eq!(third_one.uuiid, "0x0003");
+        assert_eq!(third_one.id.unwrap(), 3);
         
-    //     let res = the_list.save(text_file);
-    //     assert_eq!(res.unwrap(), 1);
-        
-    //     // lets do another one
-    //     let vs: Vec<String> = vec!["Nutting".to_string(), "add".to_string(), "Do a jobby".to_string(),
-    //                                 "due:2030-01-05".to_string(), "wait:2030-01-01".to_string(), "recur:+4m".to_string()];
-    //     let result2 = make_task(&vs, 2, 2);
-    //     the_list.list.push(result2.unwrap());
+        let second = pending.get(&2).unwrap();
+        let ann = second.clone();
+        assert_eq!(ann.ann[0].desc, "remember janes payroll");
 
-    //     let _res = the_list.save(text_file);
-    //     the_list.list.clear();
-    //     let res_p = load_task_list(text_file);
-    //     let mut bt:BTreeSet<i64> = BTreeSet::new();
-    //     // let ( mut the_list,  mut bt ) = res_p.unwrap();
-    //     the_list   = res_p.unwrap()[0];
-    //     bt.insert(78);
         
-    //     assert_eq!(the_list.list.len(), 2);
-    // }
+    }
 
 
     // #[ignore]

@@ -1,0 +1,3 @@
+description:fill out walkies.	due:1564695000	entry:1562079163	recur:+1m	rtype:periodic	status:recurring	uuiid:0x01	wait:1564630200
+annotation_1622160097:remember janes payroll	description:do eom finances	due:1601953199	entry:1599084449	recur:+1m	rtype:periodic	status:recurring	tags:household,car	uuiid:0x02	wait:1601693999
+description:you should no longer receive any emails from nespresso	due:1660658596	entry:1659621796	status:pending	uuiid:0x0003	wait:1660485796
