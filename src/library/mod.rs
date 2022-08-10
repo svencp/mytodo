@@ -5,6 +5,7 @@ pub mod list;
 pub mod functions;
 pub mod settings;
 pub mod lts;
+pub mod structs;
 
 
 

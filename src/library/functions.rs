@@ -12,6 +12,7 @@ use super::enums::ArgType;
 use crate::library::task::*;
 use crate::library::list::*;
 use crate::library::lts::*;
+use crate::library::structs::*;
 
 
 
@@ -146,8 +147,16 @@ pub fn hexi_verify(str: &str) -> Result<i64, &'static str> {
 }
 
 // function to add task from command line
-pub fn command_add_task(line: Vec<&str>,  pending: &mut List, next_hexi: i64 ) -> Result<i64, String> {
-    let t_result = make_task(line);
+pub fn command_add_task(args: &Vec<String>,  pending: &mut List, hdeci: &mut Hdeci ) -> Result<i64, String> {
+
+    // for add - remove the first two arguments
+    let result = shorten_front_of_vec_by_2(&args);
+    if result.is_err(){
+        let message = result.err().unwrap().to_string();
+        return Err(message);
+    }
+
+    let t_result = make_task(result.unwrap());
     if t_result.is_err(){
         let message = t_result.err().unwrap().to_string();
         return Err(message);
@@ -158,8 +167,10 @@ pub fn command_add_task(line: Vec<&str>,  pending: &mut List, next_hexi: i64 ) -
     let id = len_pen + 1;
     task.id = Some(id);
 
-    task.uuiid_int = next_hexi;
-    task.uuiid = make_hexi(next_hexi);
+    let next_hexidecimal = hdeci.get_next_hexidecimal();
+    task.uuiid_int = next_hexidecimal;
+    task.uuiid =  hexidecimal_to_string(next_hexidecimal);
+    hdeci.add(next_hexidecimal);
 
     pending.list.push(task);
     let save = pending.save();
@@ -171,92 +182,37 @@ pub fn command_add_task(line: Vec<&str>,  pending: &mut List, next_hexi: i64 ) -
     Ok(pending.list.len() as i64)
 }
 
+// //find next available hexi number
+// pub fn get_next_hexidecimal(set: BTreeSet<i64>) -> i64 {
+//     let mut index = 0;
+//     let mut found = false;
 
-// // takes a term like "now", "2022-09-08" etc and coverts it to an i64 timestamp
-// pub fn term_to_timestamp(term:&str) -> Result<i64, &'static str> {
-//     let to_be = term.trim().to_lowercase();
-//     let now = chrono::offset::Local::now().timestamp();
-
-//     // now
-//     if to_be.starts_with("now") {
-//         return Ok(now)
+//     for _i in 0..set.len() {
+//         index += 1;
+//         if ! set.contains(&index){
+//             found = true;
+//             break;
+//         } 
 //     }
 
-//     // if date eg 2022-09-08
-//     let res_date = NaiveDate::parse_from_str(term, DATE_FORMAT);
-//     if res_date.is_ok() {
-//         let date_time = res_date.unwrap().and_hms(0, 0, 0);
-//         let timestamp = date_time.timestamp();
-//         return Ok(timestamp);
+//     if ! found {
+//         let ret = index + 1;
+//         return ret;
 //     }
 
-//     // +3m
-//     if to_be.starts_with("+") {
-//         let stripped = to_be.replace("+", "");
-//         let mut n_arr:Vec<char> = Vec::new();
-//         let mut c_arr:Vec<char> = Vec::new();
-//         let str_arr: Vec<char> = stripped.chars().collect();
-//         for c in str_arr {
-//             if c.is_numeric() {
-//                 n_arr.push(c);
-//                 continue;
-//             }
-//             c_arr.push(c);
-//         }
-//     }
-
-
-
-
-//     return Err("")
+//     return index;
 // }
-
-
-//find next available hexi number
-pub fn get_next_hexidecimal(set: BTreeSet<i64>) -> i64 {
-    let mut index = 0;
-    let mut found = false;
-
-    for _i in 0..set.len() {
-        index += 1;
-        if ! set.contains(&index){
-            found = true;
-            break;
-        } 
-    }
-
-    if ! found {
-        let ret = index + 1;
-        return ret;
-    }
-
-    return index;
-}
 
 // shorten vec from the front by ... 
 pub fn shorten_front_of_vec_by_2<'a>(args: &'a Vec<String>) -> Result<Vec<&'a str>, &'static str> {
-    // lets make a joined vector
-    // let vec: String = "".to_string();
-    // for s in args {
-    //     vec.push(ch)
-    // }
-
 
     let mut ret: Vec<&str> = Vec::new();
     let len:i32 = args.len() as i32;
 
     let can_do = len - 2;
-    if can_do < 0 {
-        return Err("cannot shorten vector past length zero");
+    if can_do <= 0 {
+        return Err("there are no arguments to act open");
     }
-
-    // let first = cut as usize;
-    // let end = len as usize;
-
-    // let mut part = vec!["".to_string(); can_do as usize];
-    // part.copy_from_slice(&args[1..3]);
-
-
 
     for i in 0..args.len() {
         match i {
@@ -269,9 +225,6 @@ pub fn shorten_front_of_vec_by_2<'a>(args: &'a Vec<String>) -> Result<Vec<&'a st
             }
         }
     }
-
-
-
 
     Ok(ret)
 }
@@ -394,25 +347,25 @@ mod tests {
     // #[ignore]
     #[test]
     fn t009_get_next_hexi() {
-        let mut set: BTreeSet<i64> = BTreeSet::new();
-        set.insert(1);
-        set.insert(2);
-        set.insert(4);
-        let num = get_next_hexidecimal(set.clone());
+        let mut set  = Hdeci::new();
+        set.add(1);
+        set.add(2);
+        set.add(4);
+        let num = set.get_next_hexidecimal();
         assert_eq!(num,3);
         
-        set.insert(3);
-        let num2 = get_next_hexidecimal(set.clone());
+        set.add(3);
+        let num2 = set.get_next_hexidecimal();
         assert_eq!(num2,5);
 
-        set.insert(7);
-        let num3 = get_next_hexidecimal(set.clone());
+        set.add(7);
+        let num3 = set.get_next_hexidecimal();
         assert_eq!(num3,5);
         
-        set.insert(5);
-        set.insert(6);
-        set.insert(8);
-        let num4 = get_next_hexidecimal(set.clone());
+        set.add(5);
+        set.add(6);
+        set.add(8);
+        let num4 = set.get_next_hexidecimal();
         assert_eq!(num4,9);
     }
 
@@ -431,15 +384,53 @@ mod tests {
 
     // #[ignore]
     #[test]
-    fn t011_shorten_vector() {
-        // let vec = vec!["aa".to_string(), "bb".to_string(), "cc".to_string(), "dd".to_string()];
-        // let nv = shorten_front_of_vec_by(&vec, 1);
-        // assert_eq!(nv.unwrap()[0],"bb".to_string());
+    fn t011_command_add() {
+        let destination = "./test/trial.data";
+        let mut pen = List::new(destination);
+        let mut h_set:Hdeci = Hdeci::new();
+        h_set.add(2);
+        h_set.add(1);
+        let next =  h_set.get_next_hexidecimal();
+        
+        let vs1: Vec<String> = vec!["Something".to_string(),
+                                    "another".to_string()];
+        let result_add1 = command_add_task(&vs1 ,&mut pen, &mut h_set);
 
+        let vs2: Vec<String> = vec!["Something".to_string(),
+                                    "another".to_string(),
+                                    "First Task".to_string()];
+        let result_add2 = command_add_task(&vs2 ,&mut pen, &mut h_set);
+        
+        let vs3: Vec<String> = vec!["Something".to_string(),
+                                    "another".to_string(),
+                                    "First Task".to_string(),
+                                    "household".to_string()];
+        let result_add3 = command_add_task(&vs3 ,&mut pen, &mut h_set);
 
+        let vs4: Vec<String> = vec!["Something".to_string(),
+                                    "another".to_string(),
+                                    "First Task".to_string(),
+                                    "start:noow".to_string(),
+                                    "+household".to_string()];
+        let result_add4 = command_add_task(&vs4 ,&mut pen, &mut h_set);
 
-
-
+        let vs5: Vec<String> = vec!["Something".to_string(),
+                                    "another".to_string(),
+                                    "First Task".to_string(),
+                                    "start:now".to_string(),
+                                    "due:2030-01-05".to_string(),
+                                    "+household".to_string()];
+        let result_add5 = command_add_task(&vs5 ,&mut pen, &mut h_set);
+        
+        assert_eq!(result_add1.is_err(),true);
+        assert_eq!(result_add2.is_err(),false);
+        assert_eq!(result_add3.is_err(),true);
+        assert_eq!(result_add4.is_err(),true);
+        assert_eq!(result_add5.is_err(),false);
+        
+        let save = pen.save();
+        assert_eq!(save.unwrap(),2);
+        remove_file(destination).expect("Cleanup test failed");
     }
 
 

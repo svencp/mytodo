@@ -10,6 +10,7 @@ use library::my_utils::*;
 use library::functions::*;
 use library::enums::*;
 use library::settings::*;
+use library::structs::*;
 use library::task::*;
 use library::list::*;
 use substring::Substring;
@@ -49,63 +50,18 @@ fn main() {
     let data_dir = settings.map.get("dataDir").unwrap().to_string();
     let pending_file = data_dir.clone() + "/pending.data";
     let completed_file = data_dir + "/completed.data";
-    // let mut pending_tasks:   BTreeMap<i64,Task> = BTreeMap::new();
-    // let mut pending_tasks:   Vec<Task>          = Vec::new();
-    let mut pending_tasks:List          = List::new(&pending_file);
-    // let mut completed_tasks: BTreeMap<i64,Task> = BTreeMap::new();
-    let mut completed_tasks:List          = List::new(&completed_file);
-    let mut hexi_set: BTreeSet<i64>             = BTreeSet::new();
+    let mut pending_tasks:List    = List::new(&pending_file);
+    let mut completed_tasks:List  = List::new(&completed_file);
+    let mut hd_set: Hdeci         = Hdeci::new();
 
-    load_all_tasks( &pending_file,&completed_file, &mut pending_tasks, &mut completed_tasks, &mut hexi_set);
+    load_all_tasks( &pending_file,&completed_file, &mut pending_tasks, &mut completed_tasks, &mut hd_set);
 
-    let mut next_hexi = get_next_hexidecimal(hexi_set);
+    // let mut next_hexi = get_next_hexidecimal(hexi_set);
 
     // let next_id: i64 = 1;
     // let next_uuiid_int: i64 = 1;
 
     
-
-
-    // // It seems I need to do this,otherwise temporary variables get dropped
-    // match arguments.len() {
-    //     2 => {
-    //         first_arg = Some(arguments[1].to_lowercase().trim().to_owned());
-    //     },
-    //     3 => {
-    //         first_arg = Some(arguments[1].to_lowercase().trim().to_owned());
-    //         sub1 = Some(arguments[2].trim().to_owned());
-    //     },
-    //     4 => {
-    //         first_arg = Some(arguments[1].to_lowercase().trim().to_owned());
-    //         sub1 = Some(arguments[2].trim().to_owned());
-    //         sub2 = Some(arguments[3].trim().to_owned());
-    //     }
-    //     5 => {
-    //         first_arg = Some(arguments[1].to_lowercase().trim().to_owned());
-    //         sub1 = Some(arguments[2].trim().to_owned());
-    //         sub2 = Some(arguments[3].trim().to_owned());
-    //         sub3 = Some(arguments[4].trim().to_owned());
-    //     },
-    //     6 => {
-    //         first_arg = Some(arguments[1].to_lowercase().trim().to_owned());
-    //         sub1 = Some(arguments[2].trim().to_owned());
-    //         sub2 = Some(arguments[3].trim().to_owned());
-    //         sub3 = Some(arguments[4].trim().to_owned());
-    //         sub4 = Some(arguments[5].trim().to_owned());
-    //     },
-    //     7 => {
-    //         first_arg = Some(arguments[1].to_lowercase().trim().to_owned());
-    //         sub1 = Some(arguments[2].trim().to_owned());
-    //         sub2 = Some(arguments[3].trim().to_owned());
-    //         sub3 = Some(arguments[4].trim().to_owned());
-    //         sub4 = Some(arguments[5].trim().to_owned());
-    //         sub5 = Some(arguments[6].trim().to_owned());
-    //     },
-
-    //     _ => { () }
-
-    // }// end of match
-
 
 
 
@@ -130,21 +86,17 @@ fn main() {
         ArgType::Command => {
             match command.as_str() {
                 "add" => {
-                    // for add - remove the first two arguments
-                    let result = shorten_front_of_vec_by_2(&arguments);
-                    if result.is_err(){
-                        let message = result.err().unwrap().to_string();
-                        feedback(Feedback::Error, message);
-                        exit(17);
-                    }
-
-                    let result_add = command_add_task(result.unwrap(),&mut pending_tasks, next_hexi);
+                    let result_add = command_add_task(&arguments ,&mut pending_tasks, &mut hd_set);
                     if result_add.is_err(){
                         let message = result_add.err().unwrap().to_string();
                         feedback(Feedback::Error, message);
                         exit(17);
                     }
                     println!("Created task {}",result_add.unwrap());
+                    // for i in hd_set.set {
+                    //     println!(" {}",hexidecimal_to_string(i));
+                    // }
+
                 }
 
                 "mycompleted" => {

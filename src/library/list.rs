@@ -10,6 +10,7 @@ use crate::library::task::*;
 use crate::library::my_utils::*;
 use crate::library::enums::*;
 use crate::library::functions::*;
+use crate::library::structs::*;
 use std::str::FromStr;
 use std::path::Path;
 use std::fs::{ OpenOptions };
@@ -187,7 +188,7 @@ impl<'a> List<'a> {
 
 // no result needed as files could be messed up
 pub fn load_all_tasks(  p_file: &str, c_file: &str, pending: &mut List, 
-                        completed: &mut List, hexi_set: &mut BTreeSet<i64>) {
+                        completed: &mut List, hexi_set: &mut Hdeci) {
     
     let res_pend = load_task_file(p_file, pending, hexi_set);
     if res_pend.is_err(){
@@ -204,7 +205,7 @@ pub fn load_all_tasks(  p_file: &str, c_file: &str, pending: &mut List,
     }
 }
 
-pub fn load_task_file(task_file: &str, the_list: &mut List, hexi_set: &mut BTreeSet<i64>) -> Result<(), String> {
+pub fn load_task_file(task_file: &str, the_list: &mut List, hexi_set: &mut Hdeci) -> Result<(), String> {
     // does the file exists, if not return empties
     if ! Path::new(task_file).exists() {
         return Ok(());
@@ -234,139 +235,12 @@ pub fn load_task_file(task_file: &str, the_list: &mut List, hexi_set: &mut BTree
         task = res_task.unwrap();
         task.id = Some(line_counter);
 
-        hexi_set.insert(task.uuiid_int);
-        // task_map.insert(task.id.unwrap(), task);
-        // task_map.push(task)
+        hexi_set.add(task.uuiid_int);
         the_list.list.push(task);
     }
 
     Ok(())
 }
-
-
-
-// pub fn load_pending(p_file: &str, pending: &mut List)  -> Result<(), &'static str> {
-//     pending.list.clear();
-
-//     // does the file exists
-//     if ! Path::new(p_file.clone()).exists() {
-//         return Ok(())
-//     }
-
-
-//     let file = File::open(p_file).unwrap();
-//     let reader = BufReader::new(file);
-
-//     for line in reader.lines() {
-//         let mut task = Task::new();
-
-//         if line.is_err() {
-//             return Err("Problems reading pending.data")            
-//         }
-//         let one_line = line.unwrap();
-//         let split_tab:Vec<_> = one_line.split("\t").collect();
-        
-//         for element in split_tab {
-//             let split_colon:Vec<_> = element.split(":").collect();
-//             if split_colon.len() != 2 {
-//                 return Err("Line in pending.data has faulty elements")            
-//             }
-//             match split_colon[0] {
-//                 "description" => {
-//                     task.description = split_colon[1].to_string();
-//                 }
-                
-//                 "uuiid" => {
-//                     task.uuiid = split_colon[1].to_string();
-//                 }
-                
-//                 "entry" => {
-//                     let res= split_colon[1].parse::<i64>();
-//                     if res.is_err(){
-//                         return Err("Integer parsing error in pending.data")            
-//                     }
-//                     task.entry = res.unwrap();
-//                 }
-
-//                 "due" => {
-//                     let res= split_colon[1].parse::<i64>();
-//                     if res.is_err(){
-//                         return Err("Integer parsing error in pending.data")            
-//                     }
-//                     task.due = Some(res.unwrap());
-//                 }
-
-//                 "wait" => {
-//                     let res= split_colon[1].parse::<i64>();
-//                     if res.is_err(){
-//                         return Err("Integer parsing error in pending.data")            
-//                     }
-//                     task.wait = Some(res.unwrap());
-//                 }
-                
-//                 "status" => {
-//                     let res = Status::from_str(split_colon[1]);
-//                     if res.is_err(){
-//                         return Err("Status parsing error in pending.data")            
-//                     }
-//                     task.status = res.unwrap();
-//                 }
-                
-//                 "tags" => {
-//                     let split_comma:Vec<_> = split_colon[1].split(":").collect();
-//                     for tag in split_comma {
-//                         task.tags.push(tag.to_string());
-//                     }
-//                 }
-                
-//                 "start" => {
-//                     let res= split_colon[1].parse::<i64>();
-//                     if res.is_err(){
-//                         return Err("Integer parsing error in pending.data")            
-//                     }
-//                     task.start = Some(res.unwrap());
-//                 }
-
-
-//                 _ => {
-//                     // shouldnt really get here
-//                     return Err("unknown element in colon split")            
-//                 }
-//             }
-
-//         }
-        
-//     } //end of for line loop
-
-
-
-//     // let res_file = File::open(p_file);
-//     // if res_file.is_err() {
-//     //     return Err("Problem opening settings.txt");
-//     // }
-//     // let reader = BufReader::new(res_file.unwrap());
-    
-//     // // for each line
-//     // for line in reader.lines() {
-//     //     if line.is_err(){
-//     //         return Err("Problem reading line in settings");
-//     //     }
-//     //     let read = Some(line.unwrap());
-//     //     if read.clone().is_some() {
-//     //         let split_tab = read.clone().unwrap();
-//     //         let col = split_tab.clone().split("\t");
-//     //         let aaa:Vec<_> =  col.clone().collect();
-//     //         let len = aaa.clone().len();
-//     //         println!("{}",aaa[0]);
-
-
-//     //         let rr=8;
-//     //     }
-//     // }
-
-// return Err("y")
-
-// }
 
 
 pub fn load_task_list(path: &str, list: &mut List, h_set: &mut BTreeSet<i64>) -> Result<(), String> {
@@ -587,7 +461,7 @@ mod tests {
     #[test]
     fn t001_load_task_file() {
 
-        let mut h_set:BTreeSet<i64> = BTreeSet::new();
+        let mut h_set:Hdeci = Hdeci::new();
         
         let source = "/DATA/programming/Rust/mytodo/test/some-documents/pending1.data";
         let destination = "./test/pending.data";
@@ -612,7 +486,7 @@ mod tests {
     #[test]
     fn t002_load_task_file() {
 
-        let mut h_set:BTreeSet<i64> = BTreeSet::new();
+        let mut h_set:Hdeci = Hdeci::new();
         
         let source = "/DATA/programming/Rust/mytodo/test/some-documents/completedx1.data";
         let destination = "./test/completed.data";
@@ -645,7 +519,7 @@ mod tests {
         let ann = lts_to_date_time_string(one.ann[0].date);
         assert_eq!(date_str2, ann);
         
-        let h = get_next_hexidecimal(h_set);
+        let h = h_set.get_next_hexidecimal();
         assert_eq!(h, 1);
     }
 

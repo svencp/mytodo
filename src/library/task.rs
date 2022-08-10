@@ -12,13 +12,14 @@ use substring::Substring;
 use crate::library::enums::*;
 use crate::library::functions::*;
 use crate::library::lts::*;
+use crate::library::structs::*;
 
 
 
 
 
 
-#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq)]
+#[derive(Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub struct Annotation {
     pub date: i64,
     pub desc: String,
@@ -118,116 +119,12 @@ pub fn from_timestamp_to_date_str(num: i64) -> String {
 
     // Create a normal DateTime from the NaiveDateTime
     let datetime: DateTime<Utc> = DateTime::from_utc(naive, Utc);
-    // let datetime: DateTime<Local> = DateTime::from_local(naive, chrono::Local::from_local_datetime(&self, local));
     
     // Format the datetime how you want
     let newdate = naive.format("%Y-%m-%d %H:%M:%S");
-    // let newdate = datetime.format(crate::DATE_FORMAT);
 
     return newdate.to_string()
 }
-
-// pub fn make_task(args: &Vec<String>, uuiid_int: i64, id: i64) -> Result<Task, &'static str> {
-//     let mut ret = Task::new();
-//     ret.id = Some(id);
-//     ret.uuiid_int = uuiid_int;
-//     ret.uuiid = make_hexi(uuiid_int);
-
-//     //lets do args[2] here
-//     let desc = args[2].trim().to_string();
-//     ret.description = desc;
-
-    
-
-//     for t in 3..args.len() {
-//         let split: Vec<&str> = args[t].split(":").collect();
-
-
-
-//         match split[0] {
-//             "due" => {
-//                 if split.len() != 2 {
-//                     return Err("Malformed due term");
-//                 }
-//                 let resultant_time = determine_timestamp( &ret.entry, split[1]);
-//                 if resultant_time.is_err(){
-//                     return Err("parsing error in term");
-//                 }
-//                 ret.due = Some(resultant_time.unwrap());
-//             }
-            
-//             "wait" => {
-//                 if split.len() != 2 {
-//                     return Err("Malformed wait term");
-//                 }
-//                 let resultant_time = determine_timestamp( &ret.entry, split[1]);
-//                 if resultant_time.is_err(){
-//                     return Err("parsing error in term");
-//                 }
-//                 ret.wait = Some(resultant_time.unwrap());
-//             }
-            
-//             "start" => {
-//                 if split.len() != 2 {
-//                     return Err("Malformed start term");
-//                 }
-//                 let resultant_time = determine_timestamp( &ret.entry, split[1]);
-//                 if resultant_time.is_err(){
-//                     return Err("parsing error in term");
-//                 }
-//                 ret.start = Some(resultant_time.unwrap());
-//             }
-            
-//             "recur" => {
-//                 if split.len() != 2 {
-//                     return Err("Malformed recur term");
-//                 }
-//                 // run through to test for error
-//                 let resultant_time = determine_timestamp( &ret.entry, split[1]);
-//                 if resultant_time.is_err(){
-//                     return Err("parsing error in term");
-//                 }
-//                 // only store the term
-//                 ret.recur = Some(split[1].to_string());
-
-//                 // default rtype to periodic, if it hasnt been assigned
-//                 if ret.rtype.is_none() {
-//                     ret.rtype = Some(Rtype::Periodic);
-//                 }
-//             }
-            
-//             "rtype" => {
-//                 if split.len() != 2 {
-//                     return Err("Malformed rtype term");
-//                 }
-
-//                 // run through to test for error
-//                 let result = Rtype::from_str(split[1]);
-//                 if result.is_err(){
-//                     return Err("parsing error in rtype");
-//                 }
-//                 ret.rtype = Some(result.unwrap());
-//             }
-
-//             _ => {
-//                 // test for tag
-//                 if split.len() == 1 {
-//                     let first_char = split[0].substring(0, 1);
-//                     if first_char != "+" {
-//                         return Err("Unknown term");
-//                     }
-//                     if split[0].len() < 2 {
-//                         return Err("Tag item too small");
-//                     }
-//                     let tag = &split[0][1..];
-//                     ret.tags.push(tag.to_string());
-//                 }
-//             }
-//         } // end of match
-//     } // end of for loop
-
-//     Ok(ret)
-// }
 
 
 pub fn make_task(vec:Vec<&str>) -> Result<Task, &'static str> {
@@ -464,18 +361,18 @@ pub fn make_task(vec:Vec<&str>) -> Result<Task, &'static str> {
 }
 
 
-pub fn make_hexi(uuiid_int: i64) -> String {
-    // make it hex
-    let str = format!("{:x}",uuiid_int);
+// pub fn make_hexi(uuiid_int: i64) -> String {
+//     // make it hex
+//     let str = format!("{:x}",uuiid_int);
 
-    // pad with leading zeros with up to six places
-    let lead = format!("{:0>6}",str);
+//     // pad with leading zeros with up to six places
+//     let lead = format!("{:0>6}",str);
 
-    // add the 0x
-    let ret = "0x".to_string() + lead.as_str();
+//     // add the 0x
+//     let ret = "0x".to_string() + lead.as_str();
 
-    return ret;
-}
+//     return ret;
+// }
 
 
 pub fn determine_timestamp(time: &i64, term: &str) -> Result< i64, &'static str> {
@@ -637,7 +534,7 @@ mod tests {
     // #[ignore]
     #[test]
     fn t002_hexi() {
-        let str = make_hexi(15);
+        let str = hexidecimal_to_string(15);
         assert_eq!(str, "0x00000f".to_string());
     }
 
