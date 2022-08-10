@@ -42,7 +42,7 @@ impl SettingsMap {
     fn init_map(map: &mut BTreeMap<String,String>) {
         // map.insert("dataDir".to_string(), "/DATA/myToDo".to_string());
         map.insert("dataDir".to_string(), "/DATA/programming/Rust/mytodo/test/working".to_string());
-        map.insert("lastSpeciesViewed".to_string(), "0".to_string());
+        map.insert("nag".to_string(), "You go Sven".to_string());
     
     } 
     

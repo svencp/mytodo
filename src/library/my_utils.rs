@@ -105,6 +105,17 @@ pub fn justify(phrase: String, num: usize, which: Justify) -> String {
 }
 
 
+// tried to transcribe my units eg. task -> tasks
+pub fn units(unit: &str, how_many: usize) -> String {
+    if how_many > 1 {
+        let ret:String = "".to_string() + unit + "s";
+        return ret;
+    }
+    return unit.to_string();
+}
+
+
+
 
 
 /*

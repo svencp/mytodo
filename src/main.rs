@@ -79,66 +79,77 @@ fn main() {
             let matcho2: ArgType = determine_second_arg(&arguments, &mut command);
 
             match matcho2 {
-                ArgType::None => {
-                    println!("No secondary arguments")
-                }
-
+                
                 ArgType::Command => {
-                    let term = &command;
+                    let term = command.as_str();
                     
                     match term {
                         "ann" => {
-                            return Ok(term);
+                            println!("{}",term);
                         }
                         
                         "del" => {
-                            return Ok(term);
+                            println!("{}",term);
                         }
                         
                         "den" => {
-                            return Ok(term);
+                            println!("{}",term);
                         }
-                
+                        
+                        // done
                         "don" => {
-                            return Ok(term);
+                            let result = command_done(arg_id, &mut pending_tasks, &mut completed_tasks);
+                            if result.is_err(){
+                                let message = result.err().unwrap().to_string();
+                                feedback(Feedback::Error, message);
+                                exit(17);
+                            }
+                            let size = result.unwrap() as usize;
+                            pending_tasks.save();
+                            completed_tasks.save();
+                            println!("Completed {} {}",size, units("task",size));
                         }
-                
+                        
                         "dup" => {
-                            return Ok(term);
+                            println!("{}",term);
                         }
                         
                         "hel" => {
-                            return Ok(term);
+                            println!("{}",term);
                         }
-                
+                        
                         "mod" => {
-                            return Ok(term);
+                            println!("{}",term);
                         }
                         
                         "pur" => {
-                            return Ok(term);
+                            println!("{}",term);
                         }
                         
                         "sta" => {
-                            return Ok(term);
+                            println!("{}",term);
                         }
                         
                         "sto" => {
-                            return Ok(term);
+                            println!("{}",term);
                         }
-                
+                        
                         _ => {
-                        // should never get here
-                        println!("Should never get here -> (3rd case)" );
+                            // should never get here
+                            println!("Should never get here -> (3rd case)" );
                         }
                     }
+                    
+                } // end of ArgType::Command
 
+                ArgType::None => {
+                    println!("No secondary arguments")
                 }
-
+                
                 ArgType::Unknown => {
                     println!("Unknown secondary command")
                 }
-
+                
                 _ => {
                     // should never get here
                     println!("Should never get here -> (2nd case)" );

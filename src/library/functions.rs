@@ -9,6 +9,7 @@
 use substring::Substring;
 use std::collections::BTreeSet;
 use super::enums::ArgType;
+use super::enums::Status;
 use crate::library::task::*;
 use crate::library::list::*;
 use crate::library::lts::*;
@@ -250,6 +251,61 @@ pub fn command_add_task(args: &Vec<String>,  pending: &mut List, hdeci: &mut Hde
 
     Ok(pending.list.len() as i64)
 }
+
+//function to complete tasks; return number of tasks completed
+pub fn command_done(vec_int:Vec<i64>, pending: &mut List, completed: &mut List ) -> Result<i64, &'static str> {
+    // remeneber it is not zero based
+    let len = pending.list.len() as i64;
+
+    for element in vec_int.clone() {
+        if element > len {
+            return Err("Included task number greater than number of tasks")
+        }
+
+        let index = ( element - 1) as usize;
+        let mut task = &mut pending.list[index];
+        // let mut task = *pending.list.clone().get(index).unwrap();
+        if task.id.unwrap() != ( index + 1 ) as i64 {
+            return Err("a task has been fetched whose id's don't match")
+        }
+
+        task.end = Some(lts_now());
+        task.status = Status::Completed;
+        
+        let start:i64;
+        match task.start {
+            None => {
+                start = task.entry;
+            }
+            Some(i) => {
+                start = i;
+            }
+        }
+
+        task.timetrackingseconds = task.timetrackingseconds + (task.end.unwrap() - start);
+
+        // copy to completed
+        let c_task = task.clone();
+        completed.list.insert(0, c_task);
+
+        // give message
+        println!("Completed task {} '{}'",task.uuiid, task.description);
+
+
+    } //end of for element
+
+    //loop over vector while deciding to remove element
+    pending.list.retain(|task| {
+        let mut remove = false;
+        if task.status == Status::Completed {
+            remove = true;
+        }
+        !remove
+    });
+
+    Ok(vec_int.len() as i64)
+}
+
 
 // //find next available hexi number
 // pub fn get_next_hexidecimal(set: BTreeSet<i64>) -> i64 {

@@ -77,7 +77,7 @@ impl Task {
             description: "".to_string(),
             status: Status::Pending, 
             // entry: chrono::offset::Local::now().timestamp().timestamp(),
-            entry: chrono::offset::Local::now().timestamp(),
+            entry: lts_now(),
             start: None,
             due: None,
             end: None,

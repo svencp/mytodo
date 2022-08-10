@@ -6,4 +6,4 @@
 
 
 dataDir	/DATA/programming/Rust/mytodo/test/working
-lastSpeciesViewed	0
+nag	You go Sven
