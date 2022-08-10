@@ -14,6 +14,7 @@ use library::task::*;
 use library::list::*;
 use substring::Substring;
 use std::collections::{BTreeMap, BTreeSet};
+use std::future::pending;
 use std::process::exit;
 use std::fs::copy;
 use std::path::Path;
@@ -24,8 +25,8 @@ use std::time::{SystemTime};
 
 
 pub const VERSION: &str         = env!("CARGO_PKG_VERSION");
-pub const PENDING: &str         = "./pending.data";
-pub const COMPLETED: &str       = "./completed.data";
+pub const PENDING: &str         = "./test/working/pending.data";
+pub const COMPLETED: &str       = "./test/working/completed.data";
 pub const SETTINGS_FILE: &str   = "settings.txt";
 
 
@@ -48,20 +49,19 @@ fn main() {
     let data_dir = settings.map.get("dataDir").unwrap().to_string();
     let pending_file = data_dir.clone() + "/pending.data";
     let completed_file = data_dir + "/completed.data";
-    // let mut completed_tasks = List::new();
-    // let mut pending_tasks = List::new();
-    let mut pending_tasks:   BTreeMap<i64,Task> = BTreeMap::new();
-    let mut completed_tasks: BTreeMap<i64,Task> = BTreeMap::new();
+    // let mut pending_tasks:   BTreeMap<i64,Task> = BTreeMap::new();
+    // let mut pending_tasks:   Vec<Task>          = Vec::new();
+    let mut pending_tasks:List          = List::new(&pending_file);
+    // let mut completed_tasks: BTreeMap<i64,Task> = BTreeMap::new();
+    let mut completed_tasks:List          = List::new(&completed_file);
     let mut hexi_set: BTreeSet<i64>             = BTreeSet::new();
 
-    let result_loading = load_all_tasks(&pending_file,&completed_file, 
-                            &mut pending_tasks, &mut completed_tasks, &mut hexi_set);
+    load_all_tasks( &pending_file,&completed_file, &mut pending_tasks, &mut completed_tasks, &mut hexi_set);
 
-    // if result_loading
+    let mut next_hexi = get_next_hexidecimal(hexi_set);
 
-
-    let next_id: i64 = 1;
-    let next_uuiid_int: i64 = 1;
+    // let next_id: i64 = 1;
+    // let next_uuiid_int: i64 = 1;
 
     
 
@@ -130,14 +130,21 @@ fn main() {
         ArgType::Command => {
             match command.as_str() {
                 "add" => {
-                    // let result = make_task(&arguments, next_uuiid_int, next_id);
-                    // if result.is_err() {
-                    //     let message = result.err().unwrap().to_string();
-                    //     feedback(Feedback::Error, message);
-                    //     exit(17);
-                    // }
-                    // pending_tasks.list.push(result.unwrap());
-                    // let res_save = pending_tasks.save(&pending_file);
+                    // for add - remove the first two arguments
+                    let result = shorten_front_of_vec_by_2(&arguments);
+                    if result.is_err(){
+                        let message = result.err().unwrap().to_string();
+                        feedback(Feedback::Error, message);
+                        exit(17);
+                    }
+
+                    let result_add = command_add_task(result.unwrap(),&mut pending_tasks, next_hexi);
+                    if result_add.is_err(){
+                        let message = result_add.err().unwrap().to_string();
+                        feedback(Feedback::Error, message);
+                        exit(17);
+                    }
+                    println!("Created task {}",result_add.unwrap());
                 }
 
                 "mycompleted" => {

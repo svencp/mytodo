@@ -1,0 +1,9 @@
+##################
+#                #
+#   2022-08-09   #
+#                #
+##################
+
+
+dataDir	/DATA/programming/Rust/mytodo/test/working
+lastSpeciesViewed	0

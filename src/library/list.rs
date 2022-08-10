@@ -5,9 +5,9 @@
 */
 
 
-
 use inflections::Inflect;
 use crate::library::task::*;
+use crate::library::my_utils::*;
 use crate::library::enums::*;
 use crate::library::functions::*;
 use std::str::FromStr;
@@ -17,26 +17,34 @@ use std::io::{BufRead, BufReader};
 use std::fs::*;
 use std::io::prelude::*;
 use std::collections::{BTreeSet, BTreeMap};
+use std::process::exit;
+
+
+
+
 
 
 #[derive(Clone )]
-pub struct List {
+pub struct List<'a> {
     pub list: Vec<Task>,
+    file: &'a str,
 }
 
-impl List {
+impl<'a> List<'a> {
     
     // make an empty task for compilers sake
-    pub fn new() -> List {
+    pub fn new(file: &str) -> List {
         List { 
             list: Vec::new(),
+            file: file,
         }
     }
 
 
     // return the id of the new task
-    pub fn save(&self, data_file: &str) -> Result<i32, String> {
-        let path = Path::new(data_file);
+    pub fn save(&self) -> Result<i64, String> {
+        // let path = Path::new(data_file);
+        let path = Path::new(self.file);
         let big_str = self.make_big_string();
 
         // let serialized = serde_json::to_string(&self.list);
@@ -56,8 +64,7 @@ impl List {
             Ok(file) => { file }
         }
 
-
-        Ok(self.list.len() as i32)
+        Ok(self.list.len() as i64)
     }
 
     // make a big string to save to a text file
@@ -177,19 +184,27 @@ impl List {
 
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Functions @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@           @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-pub fn load_all_tasks(  p_file: &str, c_file: &str, pending: &mut BTreeMap<i64,Task>, 
-                        completed: &mut BTreeMap<i64,Task>, hexi_set: &mut BTreeSet<i64>) -> Result<(),&'static str> {
+
+// no result needed as files could be messed up
+pub fn load_all_tasks(  p_file: &str, c_file: &str, pending: &mut List, 
+                        completed: &mut List, hexi_set: &mut BTreeSet<i64>) {
     
     let res_pend = load_task_file(p_file, pending, hexi_set);
+    if res_pend.is_err(){
+        let message = res_pend.err().unwrap();
+        feedback(Feedback::Error, message);
+        exit(17);
+    }
     
-
-
-    // let res_pend = load_pending(p_file,pending);
-    
-    Ok(())
+    let res_comp = load_task_file(c_file, completed, hexi_set);
+    if res_comp.is_err(){
+        let message = res_comp.err().unwrap();
+        feedback(Feedback::Error, message);
+        exit(17);
+    }
 }
 
-pub fn load_task_file(task_file: &str, task_map: &mut BTreeMap<i64,Task>, hexi_set: &mut BTreeSet<i64>) -> Result<(), String> {
+pub fn load_task_file(task_file: &str, the_list: &mut List, hexi_set: &mut BTreeSet<i64>) -> Result<(), String> {
     // does the file exists, if not return empties
     if ! Path::new(task_file).exists() {
         return Ok(());
@@ -220,7 +235,9 @@ pub fn load_task_file(task_file: &str, task_map: &mut BTreeMap<i64,Task>, hexi_s
         task.id = Some(line_counter);
 
         hexi_set.insert(task.uuiid_int);
-        task_map.insert(task.id.unwrap(), task);
+        // task_map.insert(task.id.unwrap(), task);
+        // task_map.push(task)
+        the_list.list.push(task);
     }
 
     Ok(())
@@ -558,7 +575,7 @@ pub fn load_task_list(path: &str, list: &mut List, h_set: &mut BTreeSet<i64>) ->
 
 #[cfg(test)]
 mod tests {
-    use crate::library::enums::Status;
+    use crate::library::{enums::Status, lts::lts_to_date_time_string};
 
     use super::*;
     use std::{fs::copy};
@@ -570,44 +587,95 @@ mod tests {
     #[test]
     fn t001_load_task_file() {
 
-        let mut pending: BTreeMap<i64,Task> = BTreeMap::new();
         let mut h_set:BTreeSet<i64> = BTreeSet::new();
         
         let source = "/DATA/programming/Rust/mytodo/test/some-documents/pending1.data";
         let destination = "./test/pending.data";
         copy(source,destination).expect("Failed to copy");
+        let mut pending: List = List::new(destination);
         let _res = load_task_file(destination, &mut pending, &mut h_set);
         remove_file(destination).expect("Cleanup test failed");
 
-        assert_eq!(pending.len(), 3);
-        let third_one = pending.get(&3).unwrap();
+        assert_eq!(pending.list.len(), 3);
+        // let third_one = pending[3];
+        let third_one = pending.list.get(2).unwrap();
         assert_eq!(third_one.uuiid, "0x0003");
         assert_eq!(third_one.id.unwrap(), 3);
         
-        let second = pending.get(&2).unwrap();
+        let second = pending.list.get(1).unwrap();
         let ann = second.clone();
         assert_eq!(ann.ann[0].desc, "remember janes payroll");
-
-        
     }
 
 
     // #[ignore]
     #[test]
-    fn t002_split1() {
-        let str = "description:Do a job;uuiid:0x00001a;entry:1659664228;status:pending;due:1893801600;wait:1893456000;tags:household,car";
-        let split:Vec<&str> = str.split(";").collect();
-        
-        
-        
-        
-        
-        assert_eq!(1, 1);
+    fn t002_load_task_file() {
 
+        let mut h_set:BTreeSet<i64> = BTreeSet::new();
+        
+        let source = "/DATA/programming/Rust/mytodo/test/some-documents/completedx1.data";
+        let destination = "./test/completed.data";
+        copy(source,destination).expect("Failed to copy");
+        let mut completed: List = List::new(destination);
+        let res = load_task_file(destination, &mut completed, &mut h_set);
+        remove_file(destination).expect("Cleanup test failed");
+        
+        assert_eq!(res.is_err(), true);
+        let message = res.err().unwrap();
+        feedback(Feedback::Warning, message);
+        completed.list.clear();
+        
+        
+        let source = "/DATA/programming/Rust/mytodo/test/some-documents/completed1.data";
+        let destination = "./test/completed.data";
+        copy(source,destination).expect("Failed to copy");
+        let _res2 = load_task_file(destination, &mut completed, &mut h_set);
+        remove_file(destination).expect("Cleanup test failed");        
+        assert_eq!(completed.list.len(), 2);
+        
+        // let one = completed.clone()[1];
+        let one = completed.list.get(0).unwrap();
+        let date_str = lts_to_date_time_string(one.end.unwrap());
+        let real = "2022-08-03 20:56:50".to_string();
+        assert_eq!(date_str, real);
+        
+        let one1 = 1622160097 as i64;
+        let date_str2 = lts_to_date_time_string(one1);
+        let ann = lts_to_date_time_string(one.ann[0].date);
+        assert_eq!(date_str2, ann);
+        
+        let h = get_next_hexidecimal(h_set);
+        assert_eq!(h, 1);
     }
 
+    // #[ignore]
+    #[test]
+    fn t003_new() {
 
+        // let mut completed: List = List::new();
+        // let mut h_set:BTreeSet<i64> = BTreeSet::new();
 
+        let destination = "./test/trial.data";
+        let mut pen = List::new(destination);
+
+        //from line in file
+        let line = "description:how do i get the konsole that i have now\tdue:1658513756\t\
+                            entry:1658513756\tstart:1658513756\tstatus:pending\tuuiid:0x0011";
+        let line2 = "description:how do i do\tdue:1658513756\t\
+                            entry:1658512756\tstart:1658513756\tstatus:pending\tuuiid:0x0001";
+        let vec:Vec<_> = line.split("\t").collect();
+        let vec2:Vec<_> = line2.split("\t").collect();
+        let task = make_task(vec);
+        let task2 = make_task(vec2);
+        pen.list.push(task.unwrap());
+        pen.list.push(task2.unwrap());
+        let res = pen.save();
+
+        remove_file(destination).expect("Cleanup test failed");
+
+        assert_eq!(res.unwrap(), 2);
+    }
 
 
 

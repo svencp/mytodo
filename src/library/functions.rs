@@ -6,17 +6,12 @@
 */
 
 
-use inflections::Inflect;
 use substring::Substring;
 use std::collections::BTreeSet;
-use std::str::FromStr;
-use chrono::*;
-use chronoutil::*;
 use super::enums::ArgType;
-use crate::library::enums::*;
 use crate::library::task::*;
+use crate::library::list::*;
 use crate::library::lts::*;
-use std::time::{Duration, SystemTime};
 
 
 
@@ -150,6 +145,33 @@ pub fn hexi_verify(str: &str) -> Result<i64, &'static str> {
     Ok(res_int.unwrap())
 }
 
+// function to add task from command line
+pub fn command_add_task(line: Vec<&str>,  pending: &mut List, next_hexi: i64 ) -> Result<i64, String> {
+    let t_result = make_task(line);
+    if t_result.is_err(){
+        let message = t_result.err().unwrap().to_string();
+        return Err(message);
+    }
+
+    let mut task = t_result.unwrap();
+    let len_pen = pending.list.len() as i64;
+    let id = len_pen + 1;
+    task.id = Some(id);
+
+    task.uuiid_int = next_hexi;
+    task.uuiid = make_hexi(next_hexi);
+
+    pending.list.push(task);
+    let save = pending.save();
+    if save.is_err(){
+        let message = save.err().unwrap();
+        return Err(message);
+    }
+
+    Ok(pending.list.len() as i64)
+}
+
+
 // // takes a term like "now", "2022-09-08" etc and coverts it to an i64 timestamp
 // pub fn term_to_timestamp(term:&str) -> Result<i64, &'static str> {
 //     let to_be = term.trim().to_lowercase();
@@ -211,7 +233,48 @@ pub fn get_next_hexidecimal(set: BTreeSet<i64>) -> i64 {
     return index;
 }
 
+// shorten vec from the front by ... 
+pub fn shorten_front_of_vec_by_2<'a>(args: &'a Vec<String>) -> Result<Vec<&'a str>, &'static str> {
+    // lets make a joined vector
+    // let vec: String = "".to_string();
+    // for s in args {
+    //     vec.push(ch)
+    // }
 
+
+    let mut ret: Vec<&str> = Vec::new();
+    let len:i32 = args.len() as i32;
+
+    let can_do = len - 2;
+    if can_do < 0 {
+        return Err("cannot shorten vector past length zero");
+    }
+
+    // let first = cut as usize;
+    // let end = len as usize;
+
+    // let mut part = vec!["".to_string(); can_do as usize];
+    // part.copy_from_slice(&args[1..3]);
+
+
+
+    for i in 0..args.len() {
+        match i {
+            0 | 1 => { 
+                // do nothing
+            }
+
+            _     => {
+                ret.push(&args[i]);
+            }
+        }
+    }
+
+
+
+
+    Ok(ret)
+}
 
 
 
@@ -353,10 +416,31 @@ mod tests {
         assert_eq!(num4,9);
     }
 
+    // #[ignore]
+    #[test]
+    fn t010_copy_part_vector() {
+        //want to only copy elements 2,3,4
+        let data = vec![11, 22, 25, 44, 59, 67];
+        let mut part = vec![0; 3];
+        
+        part.copy_from_slice(&data[1..4]);
+        assert_eq!(part,vec![22,25,44]);
+        
+    }
+
+
+    // #[ignore]
+    #[test]
+    fn t011_shorten_vector() {
+        // let vec = vec!["aa".to_string(), "bb".to_string(), "cc".to_string(), "dd".to_string()];
+        // let nv = shorten_front_of_vec_by(&vec, 1);
+        // assert_eq!(nv.unwrap()[0],"bb".to_string());
 
 
 
 
+
+    }
 
 
 

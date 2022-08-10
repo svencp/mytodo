@@ -40,7 +40,8 @@ impl SettingsMap {
     }
     
     fn init_map(map: &mut BTreeMap<String,String>) {
-        map.insert("dataDir".to_string(), "/DATA/myToDo".to_string());
+        // map.insert("dataDir".to_string(), "/DATA/myToDo".to_string());
+        map.insert("dataDir".to_string(), "/DATA/programming/Rust/mytodo/test/working".to_string());
         map.insert("lastSpeciesViewed".to_string(), "0".to_string());
     
     } 
@@ -73,18 +74,26 @@ impl SettingsMap {
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@           @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 // pub fn load_settings(file: &str) -> SettingsMap {
 pub fn load_settings(file: &str)  -> SettingsMap {
-    let result_path = env::current_exe();
-    if result_path.is_err() {
-        let message = format!("Error in executable file path name.");
-        feedback(Feedback::Error, message);
-        exit(17);
-    }
-    
-    let working_dir = result_path.unwrap().parent().unwrap().to_str().unwrap().to_owned();
-    let path_to_trial = working_dir.clone() + "/trial";
-    let path_to_settings = working_dir + "/" + file;
-    
-    // can we write to this directory
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! dont delete
+    // let result_path = env::current_exe();
+    // if result_path.is_err() {
+        //     let message = format!("Error in executable file path name.");
+        //     feedback(Feedback::Error, message);
+        //     exit(17);
+        // }
+        
+        // let working_dir = result_path.unwrap().parent().unwrap().to_str().unwrap().to_owned();
+        // let path_to_trial = working_dir.clone() + "/trial";
+        // let path_to_settings = working_dir + "/" + file;
+        
+        
+        
+        let working_dir = "/DATA/programming/Rust/mytodo/test/working".to_string();
+        let path_to_trial = working_dir.clone() + "/trial";
+        let path_to_settings = working_dir + "/" + file;
+        
+        // can we write to this directory
+        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! dont delete
     let result_system = file_system_ok(&path_to_trial);
     if result_system.is_err() {
         let message = format!("Error in file_system_ok().");
@@ -124,6 +133,7 @@ pub fn load_settings(file: &str)  -> SettingsMap {
 
     return ret;
 }
+
 
 // This functions checks if one can read and write to the directory.
 // Again for testing puposes I have to input a file with a directory.
@@ -299,11 +309,18 @@ mod tests {
         let x = file.unwrap().metadata().unwrap().len();
         remove_file(path).expect("Cleanup test failed");
         assert_eq!(x, 138);
-
-
     }
 
+    // // #[ignore]
+    // #[test]
+    // fn t003_make_settingsmap() {
+    //     let path = "sett.txt";
+    //     let settings = load_settings(path);
+    //     let d = settings.map.get("dataDir").unwrap();
+    //     remove_file(path).expect("Cleanup test failed");
 
+    //     assert_eq!(9, 9);
+    // }
 
 
 

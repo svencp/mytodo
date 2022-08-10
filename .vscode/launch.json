@@ -19,7 +19,7 @@
                     "kind": "bin"
                 }
             },
-            "args": [ "add" , "hello", "due:++3d"],
+            "args": [ "add" ,"First Task", "due:2030-01-05", "start:now", "+household" ],
             "cwd": "${workspaceFolder}"
         },
         {
