@@ -67,7 +67,7 @@ fn main() {
 
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Arguments @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-    let matcho: ArgType = determine_arg(&arguments, &mut arg_id, &mut arg_hex, &mut command);
+    let matcho: ArgType = determine_first_arg(&arguments, &mut arg_id, &mut arg_hex, &mut command);
 
     // lets do it
     match matcho {
@@ -76,6 +76,83 @@ fn main() {
         }
         
         ArgType::Integer => {
+            let matcho2: ArgType = determine_second_arg(&arguments, &mut command);
+
+            match matcho2 {
+                ArgType::None => {
+                    println!("No secondary arguments")
+                }
+
+                ArgType::Command => {
+                    let term = &command;
+                    
+                    match term {
+                        "ann" => {
+                            return Ok(term);
+                        }
+                        
+                        "del" => {
+                            return Ok(term);
+                        }
+                        
+                        "den" => {
+                            return Ok(term);
+                        }
+                
+                        "don" => {
+                            return Ok(term);
+                        }
+                
+                        "dup" => {
+                            return Ok(term);
+                        }
+                        
+                        "hel" => {
+                            return Ok(term);
+                        }
+                
+                        "mod" => {
+                            return Ok(term);
+                        }
+                        
+                        "pur" => {
+                            return Ok(term);
+                        }
+                        
+                        "sta" => {
+                            return Ok(term);
+                        }
+                        
+                        "sto" => {
+                            return Ok(term);
+                        }
+                
+                        _ => {
+                        // should never get here
+                        println!("Should never get here -> (3rd case)" );
+                        }
+                    }
+
+                }
+
+                ArgType::Unknown => {
+                    println!("Unknown secondary command")
+                }
+
+                _ => {
+                    // should never get here
+                    println!("Should never get here -> (2nd case)" );
+                }
+            }
+
+
+
+
+
+
+
+
+
             println!("Integer arguments")
         }
         
@@ -101,6 +178,10 @@ fn main() {
 
                 "mycompleted" => {
 
+                }
+                
+                "version" => {
+                    println!("Version is {}",VERSION);
                 }
 
                 _ => { 

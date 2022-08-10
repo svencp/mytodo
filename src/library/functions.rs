@@ -17,7 +17,7 @@ use crate::library::structs::*;
 
 
 // determine the first argument type
-pub fn determine_arg(args: &Vec<String>, v_int: &mut Vec<i64>, v_hex: &mut Vec<String>, command: &mut String) -> ArgType {
+pub fn determine_first_arg(args: &Vec<String>, v_int: &mut Vec<i64>, v_hex: &mut Vec<String>, command: &mut String) -> ArgType {
 
     // if none
     if args.len() == 1 {
@@ -47,6 +47,22 @@ pub fn determine_arg(args: &Vec<String>, v_int: &mut Vec<i64>, v_hex: &mut Vec<S
     return ArgType::Unknown;
 }
 
+// determine the second argument type
+pub fn determine_second_arg(args: &Vec<String>, command: &mut String) -> ArgType {
+    // if none
+    if args.len() == 2 {
+        return ArgType::None
+    }
+
+    let second = args[2].as_str();    
+    let res_com = is_arg_secondary_command(second);
+    if res_com.is_ok(){
+        *command = res_com.unwrap().to_string();
+        return ArgType::Command;
+    }
+    
+    return ArgType::Unknown;
+}
 
 
 // Function to determine whether the first argument is an ineteger
@@ -118,6 +134,59 @@ pub fn is_arg_command(first: &str) -> Result< &str, &str> {
     }
 }
 
+// Function to determine if first argument is a command
+pub fn is_arg_secondary_command(second: &str) -> Result< &str, &str> {
+    if second.len() < 3 {
+        return Err("second argument is too short");
+    }
+
+    let term = second.substring(0, 3);
+    match term {
+        "ann" => {
+            return Ok(term);
+        }
+        
+        "del" => {
+            return Ok(term);
+        }
+        
+        "den" => {
+            return Ok(term);
+        }
+
+        "don" => {
+            return Ok(term);
+        }
+
+        "dup" => {
+            return Ok(term);
+        }
+        
+        "hel" => {
+            return Ok(term);
+        }
+
+        "mod" => {
+            return Ok(term);
+        }
+        
+        "pur" => {
+            return Ok(term);
+        }
+        
+        "sta" => {
+            return Ok(term);
+        }
+        
+        "sto" => {
+            return Ok(term);
+        }
+
+        _ => {
+            return Err("unknown command");
+        }
+    }
+}
 
 // Show the task given by integer id
 pub fn report_single_id(){
@@ -260,12 +329,12 @@ mod tests {
     
     // #[ignore]
     #[test]
-    fn t002_determine_arg() {
+    fn t002_determine_first_arg() {
         let mut comm = "".to_string();
         let mut vi: Vec<i64> = Vec::new();
         let mut vh: Vec<String> = Vec::new();
         let vs: Vec<String> = vec!["Nutting".to_string(), "23,43,0".to_string(),];
-        let res = determine_arg(&vs, &mut vi, &mut vh, &mut comm);
+        let res = determine_first_arg(&vs, &mut vi, &mut vh, &mut comm);
 
         assert_eq!(res, ArgType::Integer);
     }
@@ -273,24 +342,24 @@ mod tests {
 
     // #[ignore]
     #[test]
-    fn t003_determine_arg() {
+    fn t003_determine_first_arg() {
         let mut comm = "".to_string();
         let mut vi: Vec<i64> = Vec::new();
         let mut vh: Vec<String> = Vec::new();
         let vs: Vec<String> = vec!["Nutting".to_string(), "23,".to_string(),];
-        let res = determine_arg(&vs, &mut vi, &mut vh, &mut comm);
+        let res = determine_first_arg(&vs, &mut vi, &mut vh, &mut comm);
 
         assert_eq!(res, ArgType::Unknown);
     }
 
     // #[ignore]
     #[test]
-    fn t004_determine_arg() {
+    fn t004_determine_first_arg() {
         let mut comm = "".to_string();
         let mut vi: Vec<i64> = Vec::new();
         let mut vh: Vec<String> = Vec::new();
         let vs: Vec<String> = vec!["Nutting".to_string(), "23".to_string(),];
-        let _res = determine_arg(&vs, &mut vi, &mut vh, &mut comm);
+        let _res = determine_first_arg(&vs, &mut vi, &mut vh, &mut comm);
 
         assert_eq!(vi.len(), 1);
     }
@@ -302,7 +371,7 @@ mod tests {
         let mut vi: Vec<i64> = Vec::new();
         let mut vh: Vec<String> = Vec::new();
         let vs: Vec<String> = vec!["Nutting".to_string(), "0x23,0x00f,0x01,0x1a".to_string(),];
-        let _res = determine_arg(&vs, &mut vi, &mut vh, &mut comm);
+        let _res = determine_first_arg(&vs, &mut vi, &mut vh, &mut comm);
 
         assert_eq!(vh.len(), 4);
     }
@@ -323,11 +392,11 @@ mod tests {
         let mut vi: Vec<i64> = Vec::new();
         let mut vh: Vec<String> = Vec::new();
         let vs: Vec<String> = vec!["Nutting".to_string(), "versio".to_string(),];
-        let _res = determine_arg(&vs, &mut vi, &mut vh, &mut comm);
+        let _res = determine_first_arg(&vs, &mut vi, &mut vh, &mut comm);
         assert_eq!(_res, ArgType::Unknown);
 
         let vs: Vec<String> = vec!["Nutting".to_string(), "ver".to_string(),];
-        let _res = determine_arg(&vs, &mut vi, &mut vh, &mut comm);
+        let _res = determine_first_arg(&vs, &mut vi, &mut vh, &mut comm);
         assert_eq!(_res, ArgType::Command);
     }
     

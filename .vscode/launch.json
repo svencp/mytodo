@@ -19,7 +19,8 @@
                     "kind": "bin"
                 }
             },
-            "args": [ "add" ,"First Task", "due:2030-01-05", "start:now", "+household" ],
+            // "args": [ "1,2" , "done" ],
+            "args": [ "v" ],
             "cwd": "${workspaceFolder}"
         },
         {
