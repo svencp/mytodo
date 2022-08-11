@@ -254,7 +254,7 @@ pub fn command_add_task(args: &Vec<String>,  pending: &mut List, hdeci: &mut Hde
 
 //function to complete tasks; return number of tasks completed
 pub fn command_done(vec_int:Vec<i64>, pending: &mut List, completed: &mut List ) -> Result<i64, &'static str> {
-    // remeneber it is not zero based
+    // remember that tasks are not zero based
     let len = pending.list.len() as i64;
 
     for element in vec_int.clone() {
@@ -307,26 +307,69 @@ pub fn command_done(vec_int:Vec<i64>, pending: &mut List, completed: &mut List )
 }
 
 
-// //find next available hexi number
-// pub fn get_next_hexidecimal(set: BTreeSet<i64>) -> i64 {
-//     let mut index = 0;
-//     let mut found = false;
+// start the given tasks
+pub fn command_start(vec_int:Vec<i64>, pending: &mut List ) -> Result<i64, &'static str> {
+    // remember that tasks are not zero based
+    let len = pending.list.len() as i64;
+    let mut num_started = 0 as i64;
 
-//     for _i in 0..set.len() {
-//         index += 1;
-//         if ! set.contains(&index){
-//             found = true;
-//             break;
-//         } 
-//     }
+    for element in vec_int.clone() {
+        if element > len {
+            return Err("Included task number greater than number of tasks")
+        }
 
-//     if ! found {
-//         let ret = index + 1;
-//         return ret;
-//     }
+        let index = ( element - 1) as usize;
+        let mut task = &mut pending.list[index];
+        if task.id.unwrap() != ( index + 1 ) as i64 {
+            return Err("a task has been fetched whose id's don't match")
+        }
 
-//     return index;
-// }
+        if task.start.is_some() {
+            println!("Task {} '{}' already started.",task.id.unwrap(), task.description);
+            continue;
+        }
+
+        task.start = Some(lts_now());
+        num_started += 1;
+    }
+
+    Ok( num_started )
+}
+
+// stop the given tasks
+pub fn command_stop(vec_int:Vec<i64>, pending: &mut List ) -> Result<i64, &'static str> {
+    // remember that tasks are not zero based
+    let len = pending.list.len() as i64;
+    let mut num_stopped = 0 as i64;
+    let stop = lts_now();
+
+    for element in vec_int.clone() {
+        if element > len {
+            return Err("Included task number greater than number of tasks")
+        }
+
+        let index = ( element - 1) as usize;
+        let mut task = &mut pending.list[index];
+        if task.id.unwrap() != ( index + 1 ) as i64 {
+            return Err("a task has been fetched whose id's don't match")
+        }
+
+        if task.start.is_none() {
+            println!("Task {} '{}' has not started.",task.id.unwrap(), task.description);
+            continue;
+        }
+        
+        task.timetrackingseconds = task.timetrackingseconds + ( stop - task.start.unwrap());
+        task.status = Status::Pending;
+        task.start = None;
+        
+        println!("Stopping task {} '{}'.",task.uuiid, task.description);
+
+        num_stopped += 1;
+    }
+
+    Ok( num_stopped )
+}
 
 // shorten vec from the front by ... 
 pub fn shorten_front_of_vec_by_2<'a>(args: &'a Vec<String>) -> Result<Vec<&'a str>, &'static str> {

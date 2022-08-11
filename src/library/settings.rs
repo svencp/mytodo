@@ -183,7 +183,6 @@ pub fn import(path: &str) -> Result<SettingsMap, &'static str> {
         }
         let read = Some(line.unwrap());
         if read.clone().is_some() {
-            // let sub = read.unwrap().substring(0, 1);
             let s = read.clone().unwrap();
             let sub = s.substring(0, 1);
             if sub == " " || sub == "#" || sub == "" {

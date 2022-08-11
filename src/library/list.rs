@@ -67,11 +67,11 @@ impl<'a> List<'a> {
 
         Ok(self.list.len() as i64)
     }
-
+    
     // make a big string to save to a text file
     pub fn make_big_string(&self) -> String {
         let mut ret:String =  "".to_string();
-    
+        
         for task in &self.list {
             ret.push_str("description:");
             ret.push_str(&task.description);
@@ -85,45 +85,6 @@ impl<'a> List<'a> {
             ret.push_str("status:");
             ret.push_str(&task.status.text().to_lower_case());
 
-            if task.due.is_some() {                                                        //due
-                ret.push_str("\tdue:");
-                ret.push_str(&task.due.unwrap().to_string());
-            }
-            if task.wait.is_some() {                                                       //wait
-                ret.push_str("\twait:");
-                ret.push_str(&task.wait.unwrap().to_string());
-            }
-            
-            if task.recur.is_some() {                                                      //recur
-                ret.push_str("\trecur:");
-                ret.push_str(&task.recur.clone().unwrap());
-            }
-
-            if task.rtype.is_some() {                                                      //recur
-                ret.push_str("\trtype:");
-                ret.push_str(&task.rtype.clone().unwrap().text().to_lowercase());
-            }
-            
-            if task.start.is_some() {                                                      //start
-                ret.push_str("\tstart:");
-                ret.push_str(&task.start.unwrap().to_string());
-            }
-            
-            if task.parent.is_some() {                                                     //parent
-                ret.push_str("\tparent:");
-                ret.push_str(&task.parent.clone().unwrap());
-            }
-            
-            if task.prodigy.is_some() {                                                    //parent
-                ret.push_str("\tprodigy:");
-                ret.push_str(&task.prodigy.unwrap().to_string());
-            }
-            
-            if task.timetrackingseconds != 0 {                                             //parent
-                ret.push_str("\ttimetrackingseconds:");
-                ret.push_str(&task.timetrackingseconds.to_string());
-            }
-            
             if task.ann.len() != 0 {
                 for a in task.ann.clone() {
                     ret.push_str("\tannotation_");
@@ -132,7 +93,34 @@ impl<'a> List<'a> {
                     ret.push_str(&a.desc);
                 }
             }
-
+            if task.due.is_some() {                                                        //due
+                ret.push_str("\tdue:");
+                ret.push_str(&task.due.unwrap().to_string());
+            }
+            if task.end.is_some() {                                                        //due
+                ret.push_str("\tend:");
+                ret.push_str(&task.end.unwrap().to_string());
+            }
+            if task.parent.is_some() {                                                     //parent
+                ret.push_str("\tparent:");
+                ret.push_str(&task.parent.clone().unwrap());
+            }
+            if task.prodigy.is_some() {                                                    //parent
+                ret.push_str("\tprodigy:");
+                ret.push_str(&task.prodigy.unwrap().to_string());
+            }
+            if task.recur.is_some() {                                                      //recur
+                ret.push_str("\trecur:");
+                ret.push_str(&task.recur.clone().unwrap());
+            }
+            if task.rtype.is_some() {                                                      //recur
+                ret.push_str("\trtype:");
+                ret.push_str(&task.rtype.clone().unwrap().text().to_lowercase());
+            }
+            if task.start.is_some() {                                                      //start
+                ret.push_str("\tstart:");
+                ret.push_str(&task.start.unwrap().to_string());
+            }
             if task.tags.len() > 0 {                                                       //tags
                 let mut vec:String = "".to_string();
                 for tag in task.tags.clone() {
@@ -147,7 +135,14 @@ impl<'a> List<'a> {
                 
                 ret.push_str("\ttags:");                                                  
                 ret.push_str(&taggings);
-
+            }
+            if task.timetrackingseconds != 0 {                                             //parent
+                ret.push_str("\ttimetrackingseconds:");
+                ret.push_str(&task.timetrackingseconds.to_string());
+            }
+            if task.wait.is_some() {                                                       //wait
+                ret.push_str("\twait:");
+                ret.push_str(&task.wait.unwrap().to_string());
             }
 
             ret.push_str("\n")

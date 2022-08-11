@@ -105,8 +105,13 @@ fn main() {
                                 exit(17);
                             }
                             let size = result.unwrap() as usize;
-                            pending_tasks.save();
-                            completed_tasks.save();
+                            let save1 = pending_tasks.save();
+                            let save2 = completed_tasks.save();
+                            if save1.is_err() || save2.is_err() {
+                                let message = "Problems saving data files".to_string();
+                                feedback(Feedback::Error, message);
+                                exit(17);
+                            }
                             println!("Completed {} {}",size, units("task",size));
                         }
                         
@@ -125,13 +130,40 @@ fn main() {
                         "pur" => {
                             println!("{}",term);
                         }
-                        
+
+                        // start
                         "sta" => {
-                            println!("{}",term);
+                            let result = command_start(arg_id, &mut pending_tasks);
+                            if result.is_err(){
+                                let message = result.err().unwrap().to_string();
+                                feedback(Feedback::Error, message);
+                                exit(17);
+                            }
+                            let size = result.unwrap() as usize;
+                            let save1 = pending_tasks.save();
+                            if save1.is_err() {
+                                let message = "Problems saving pending data files".to_string();
+                                feedback(Feedback::Error, message);
+                                exit(17);
+                            }
+                            println!("Started {} {}.",size, units("task",size));
                         }
                         
                         "sto" => {
-                            println!("{}",term);
+                            let result = command_stop(arg_id, &mut pending_tasks);
+                            if result.is_err(){
+                                let message = result.err().unwrap().to_string();
+                                feedback(Feedback::Error, message);
+                                exit(17);
+                            }
+                            let size = result.unwrap() as usize;
+                            let save1 = pending_tasks.save();
+                            if save1.is_err() {
+                                let message = "Problems saving pending data files".to_string();
+                                feedback(Feedback::Error, message);
+                                exit(17);
+                            }
+                            println!("Stopped {} {}.",size, units("task",size));
                         }
                         
                         _ => {
