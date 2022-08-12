@@ -43,7 +43,7 @@ impl<'a> List<'a> {
 
 
     // return the id of the new task
-    pub fn save(&self) -> Result<i64, String> {
+    pub fn save(&self)  {
         // let path = Path::new(data_file);
         let path = Path::new(self.file);
         let big_str = self.make_big_string();
@@ -56,16 +56,25 @@ impl<'a> List<'a> {
                                 .truncate(true)
                                 .open(path)  {
             
-            Err(_) => { return Err("Problem exporting species json file".to_string()); }
+            Err(_) => { 
+                let message = "Problems opening data files".to_string();
+                feedback(Feedback::Error, message);
+                exit(17);
+            }
+
             Ok(file)   => { file }
         };
         
         match file.write_all(big_str.as_bytes()) {
-            Err(_)      => { return Err("Problem writing pending data file".to_string()); } 
+            Err(_)      => { 
+                let message = "Problem writing data file".to_string();
+                feedback(Feedback::Error, message);
+                exit(17);
+            } 
             Ok(file) => { file }
         }
 
-        Ok(self.list.len() as i64)
+        // Ok(self.list.len() as i64)
     }
     
     // make a big string to save to a text file
@@ -231,6 +240,10 @@ pub fn load_task_file(task_file: &str, the_list: &mut List, hexi_set: &mut Hdeci
         task.id = Some(line_counter);
 
         hexi_set.add(task.uuiid_int);
+
+        // // we have to do the virtual tags as well
+        // task.virtual_tags = make_virtual_tags(task.clone());
+
         the_list.list.push(task);
     }
 
@@ -539,11 +552,11 @@ mod tests {
         let task2 = make_task(vec2);
         pen.list.push(task.unwrap());
         pen.list.push(task2.unwrap());
-        let res = pen.save();
+        pen.save();
 
         remove_file(destination).expect("Cleanup test failed");
 
-        assert_eq!(res.unwrap(), 2);
+        assert_eq!(pen.list.len(), 2);
     }
 
 

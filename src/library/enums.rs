@@ -105,22 +105,46 @@ pub enum ArgType {
 }
 
 
-// impl ArgType {
-//     fn text(&self) -> &str{
-//         match *self {
-//             Rtype::Periodic  => "Periodic",
-//             Rtype::Chained   => "Chained",
-//         }
-//     }
-// }
+
+            
+            
+            
+            
+
+//enum for argument type
+#[derive(Debug, Clone, Eq, PartialEq  )]
+#[allow(non_snake_case)]
+pub enum VirtualTags {
+    Active,
+    Annotated,
+    Child,
+    Completed,
+    Deleted, 
+    Overdue,
+    Parent,
+    Pending,
+    Tagged,
+    Waiting,
+}
+
+impl VirtualTags {
+    pub fn text(&self) -> &str{
+        match *self {
+            VirtualTags::Active    => "Active",
+            VirtualTags::Annotated => "Annotated",
+            VirtualTags::Child     => "Child",
+            VirtualTags::Completed => "Completed",
+            VirtualTags::Deleted   => "Deleted",
+            VirtualTags::Overdue   => "Overdue",
+            VirtualTags::Parent    => "Parent",
+            VirtualTags::Pending   => "Pending",
+            VirtualTags::Tagged    => "Tagged",
+            VirtualTags::Waiting   => "Waiting",
+        }
+    }
 
 
-
-
-
-
-
-
+} //end of impl
 
 
 

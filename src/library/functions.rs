@@ -16,6 +16,7 @@ use crate::library::structs::*;
 use crate::library::my_utils::*;
 use crate::library::settings::*;
 use crate::library::enums::*;
+use crate::library::reports::*;
 
 
 
@@ -46,19 +47,20 @@ pub fn command_add_task(args: &Vec<String>,  pending: &mut List, hdeci: &mut Hde
     hdeci.add(next_hexidecimal);
 
     pending.list.push(task);
-    let save = pending.save();
-    if save.is_err(){
-        let message = save.err().unwrap();
-        return Err(message);
-    }
+    pending.save();
+    // if save.is_err(){
+    //     let message = save.err().unwrap();
+    //     return Err(message);
+    // }
 
     Ok(pending.list.len() as i64)
 }
 
 //function to complete tasks; return number of tasks completed
-pub fn command_done(vec_int:Vec<i64>, pending: &mut List, completed: &mut List ) -> Result<i64, &'static str> {
+pub fn command_done(colors: &Colors, vec_int:Vec<i64>, pending: &mut List, completed: &mut List ) -> Result<i64, &'static str> {
     // remember that tasks are not zero based
     let len = pending.list.len() as i64;
+    let mut vec_mess:Vec<String> = Vec::new();
 
     for element in vec_int.clone() {
         if element > len {
@@ -86,6 +88,7 @@ pub fn command_done(vec_int:Vec<i64>, pending: &mut List, completed: &mut List )
         }
 
         task.timetrackingseconds = task.timetrackingseconds + (task.end.unwrap() - start);
+        task.start = None;
 
         // copy to completed
         let c_task = task.clone();
@@ -97,11 +100,17 @@ pub fn command_done(vec_int:Vec<i64>, pending: &mut List, completed: &mut List )
 
     } //end of for element
 
+    let size = vec_int.len();
+    println!("Completed {} {}",size, units("task",size));
+
+
     //loop over vector while deciding to remove element
     pending.list.retain(|task| {
         let mut remove = false;
         if task.status == Status::Completed {
             remove = true;
+            let line = format!("Total Time Tracked: {}\n",make_timetracking_string(task.timetrackingseconds));
+            to_orange_feedback(colors, &line);
         }
         !remove
     });
@@ -271,6 +280,10 @@ pub fn is_arg_command(first: &str) -> Result< &str, &str> {
         "-v" | "-version" | "v" | "ver" | "version" | "-ver" => {
             return Ok("version");
         }
+        
+        "-c" | "-color_test" | "c" | "color" | "color_test" | "-color" => {
+            return Ok("colortest");
+        }
 
         _ => {
             return Err("unknown command");
@@ -310,6 +323,62 @@ pub fn is_arg_integer<'a>(first: &str) -> Result<Vec<i64>, &str> {
     }
     
     Ok(ret)
+}
+
+
+
+// Function to determine if first argument is a command
+pub fn is_arg_secondary_command(second: &str) -> Result< &str, &str> {
+    if second.len() < 3 {
+        return Err("second argument is too short");
+    }
+    
+    let term = second.substring(0, 3);
+    match term {
+        "ann" => {
+            return Ok(term);
+        }
+        
+        "del" => {
+            return Ok(term);
+        }
+        
+        "den" => {
+            return Ok(term);
+        }
+        
+        "don" => {
+            return Ok(term);
+        }
+        
+        "dup" => {
+            return Ok(term);
+        }
+        
+        "hel" => {
+            return Ok(term);
+        }
+        
+        "mod" => {
+            return Ok(term);
+        }
+        
+        "pur" => {
+            return Ok(term);
+        }
+        
+        "sta" => {
+            return Ok(term);
+        }
+        
+        "sto" => {
+            return Ok(term);
+        }
+        
+        _ => {
+            return Err("unknown command");
+        }
+    }
 }
 
 // build the time tracking string e.g. P191DT6H43M35S
@@ -396,64 +465,9 @@ pub fn make_timetracking_string(secs: i64) -> String {
     return ret;
 }
 
-
-// Function to determine if first argument is a command
-pub fn is_arg_secondary_command(second: &str) -> Result< &str, &str> {
-    if second.len() < 3 {
-        return Err("second argument is too short");
-    }
-
-    let term = second.substring(0, 3);
-    match term {
-        "ann" => {
-            return Ok(term);
-        }
-        
-        "del" => {
-            return Ok(term);
-        }
-        
-        "den" => {
-            return Ok(term);
-        }
-
-        "don" => {
-            return Ok(term);
-        }
-
-        "dup" => {
-            return Ok(term);
-        }
-        
-        "hel" => {
-            return Ok(term);
-        }
-
-        "mod" => {
-            return Ok(term);
-        }
-        
-        "pur" => {
-            return Ok(term);
-        }
-        
-        "sta" => {
-            return Ok(term);
-        }
-        
-        "sto" => {
-            return Ok(term);
-        }
-
-        _ => {
-            return Err("unknown command");
-        }
-    }
-}
-
 // Show the task given by integer id
 pub fn report_single_id(){
-
+    
 }
 
 
@@ -689,8 +703,8 @@ mod tests {
         assert_eq!(result_add4.is_err(),true);
         assert_eq!(result_add5.is_err(),false);
         
-        let save = pen.save();
-        assert_eq!(save.unwrap(),2);
+        pen.save();
+        assert_eq!(pen.list.len(),2);
         remove_file(destination).expect("Cleanup test failed");
     }
     

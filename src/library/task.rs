@@ -41,25 +41,25 @@ impl Annotation {
 
 #[derive(Clone )]
 pub struct Task {
-    pub uuiid: String,
-    pub uuiid_int: i64,
-    pub id: Option<i64>,
+    pub ann: Vec<Annotation>, 
     pub description: String,
-    pub entry: i64,
-    pub start: Option<i64>,
     pub due: Option<i64>,
     pub end: Option<i64>,
-    pub wait: Option<i64>,
-    pub prodigy: Option<i64>,
-    pub parent: Option<String>,
+    pub entry: i64,
+    pub id: Option<i64>,
     pub parent_int: Option<i64>,
+    pub parent: Option<String>,
+    pub prodigy: Option<i64>,
     pub recur: Option<String>,
-    pub status: Status,
     pub rtype: Option<Rtype>,
+    pub start: Option<i64>,
+    pub status: Status,
     pub tags: Vec<String>,
-    pub virtual_tags: Vec<String>,
     pub timetrackingseconds: i64,
-    pub ann: Vec<Annotation>,
+    pub uuiid_int: i64,
+    pub uuiid: String,
+    pub virtual_tags: Vec<VirtualTags>,
+    pub wait: Option<i64>,
 
 
 
@@ -71,26 +71,25 @@ impl Task {
     // make an empty task for compilers sake
     pub fn new() -> Task {
         Task { 
-            id: None,
-            uuiid: "".to_string(),
-            uuiid_int: 0,
+            ann: Vec::new(),
             description: "".to_string(),
-            status: Status::Pending, 
-            // entry: chrono::offset::Local::now().timestamp().timestamp(),
-            entry: lts_now(),
-            start: None,
             due: None,
             end: None,
-            wait: None,
-            prodigy: None,
-            parent: None,
+            entry: lts_now(),
+            id: None,
             parent_int: None,
+            parent: None,
+            prodigy: None,
             recur: None,
             rtype: None,
+            start: None,
+            status: Status::Pending, 
             tags: Vec::new(),
-            virtual_tags: Vec::new(),
-            ann: Vec::new(),
             timetrackingseconds: 0,
+            uuiid_int: 0,
+            uuiid: "".to_string(),
+            virtual_tags: Vec::new(),
+            wait: None,
         }
     }
 
@@ -99,7 +98,7 @@ impl Task {
 
 
 
-}
+} //end of impl task
 
 
 
@@ -113,22 +112,26 @@ impl Task {
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Functions @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@           @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-pub fn from_timestamp_to_date_str(num: i64) -> String {
-    // Create a NaiveDateTime from the timestamp
-    let naive = NaiveDateTime::from_timestamp(num, 0);
 
-    // Create a normal DateTime from the NaiveDateTime
-    let datetime: DateTime<Utc> = DateTime::from_utc(naive, Utc);
+
+
+// pub fn from_timestamp_to_date_str(num: i64) -> String {
+//     // Create a NaiveDateTime from the timestamp
+//     let naive = NaiveDateTime::from_timestamp(num, 0);
+
+//     // Create a normal DateTime from the NaiveDateTime
+//     let datetime: DateTime<Utc> = DateTime::from_utc(naive, Utc);
     
-    // Format the datetime how you want
-    let newdate = naive.format("%Y-%m-%d %H:%M:%S");
+//     // Format the datetime how you want
+//     let newdate = naive.format("%Y-%m-%d %H:%M:%S");
 
-    return newdate.to_string()
-}
+//     return newdate.to_string()
+// }
 
 
 pub fn make_task(vec:Vec<&str>) -> Result<Task, &'static str> {
     let mut ret = Task::new();
+    let now = lts_now();
 
     for element in vec {
         let split_colon: Vec<_> = element.split(":").collect();
@@ -288,10 +291,17 @@ pub fn make_task(vec:Vec<&str>) -> Result<Task, &'static str> {
                     "status" => {
                         let res = Status::from_str(split_colon[1]);
                         if res.is_err(){
-                            // let message = format!("Status parsing error in file: {}",path);
                             return Err("Status parsing error");         
                         }
+                        let status = res.clone().unwrap();
                         ret.status = res.unwrap();
+
+                        if status == Status::Waiting {
+                            let wait = ret.wait.unwrap();
+                            if now > wait  {
+                                ret.status = Status::Pending
+                            }
+                        }
                     }
                     
                     "tags" => {
@@ -352,123 +362,183 @@ pub fn make_task(vec:Vec<&str>) -> Result<Task, &'static str> {
             }
         }
 
-    }
+    } // end of for elemnt
 
-
+    ret.virtual_tags = make_virtual_tags(ret.clone());
 
 
     Ok(ret)
 }
 
+pub fn make_virtual_tags(task: Task) -> Vec<VirtualTags> {
+    let mut ret: Vec<VirtualTags> = Vec::new();
+    let now = lts_now();
 
-// pub fn make_hexi(uuiid_int: i64) -> String {
-//     // make it hex
-//     let str = format!("{:x}",uuiid_int);
+    // Active
+    if task.start.is_some(){
+        ret.push(VirtualTags::Active);
+    }
 
-//     // pad with leading zeros with up to six places
-//     let lead = format!("{:0>6}",str);
+    // Annotated
+    if task.ann.len() > 0 {
+        ret.push(VirtualTags::Annotated);
+    }
 
-//     // add the 0x
-//     let ret = "0x".to_string() + lead.as_str();
+    // Child
+    if task.parent.is_some() {
+        ret.push(VirtualTags::Child);
+    }
 
-//     return ret;
+    // Completed
+    if task.end.is_some() {
+        ret.push(VirtualTags::Completed);
+    }
+
+    // Deleted
+    if task.status == Status::Deleted {
+        ret.push(VirtualTags::Deleted);
+    }
+    
+    // Overdue
+    if task.due.is_some() {
+        if now > task.due.unwrap() {
+            ret.push(VirtualTags::Overdue);
+        }
+    } 
+    
+    // Parent
+    if task.status == Status::Recurring {
+        ret.push(VirtualTags::Parent);
+    }
+    
+    // Pending
+    match task.wait {
+        Some(w) => {
+            if now > w && task.start.is_none() {
+                ret.push(VirtualTags::Pending);
+            }
+        }
+        None => {
+            if task.start.is_none() {
+                ret.push(VirtualTags::Pending);
+            }
+        }
+    }
+    
+    // Tagged
+    if task.tags.len() > 0 {
+        ret.push(VirtualTags::Tagged);
+    }
+    
+    // Waiting
+    if task.wait.is_some() {
+        if now < task.wait.unwrap() {
+            ret.push(VirtualTags::Waiting);
+        }
+    }
+
+    return ret;
+}
+
+
+
+// pub fn determine_timestamp(time: &i64, term: &str) -> Result< i64, &'static str> {
+//     let char_arr: Vec<char> = term.chars().collect();
+
+//     // if NOT +
+//     if char_arr[0] != '+' {
+
+//         // if now
+//         if term == "now" {
+//             let ret = chrono::offset::Local::now().timestamp();
+//             return Ok(ret);
+//         }
+
+//         // if date eg 2022-09-08
+//         let res_date = NaiveDate::parse_from_str(term, DATE_FORMAT);
+//         if res_date.is_err() {
+//             return Err("Error in parsing date (or maybe no + symbol)")
+//         }
+//         let date_time = res_date.unwrap().and_hms(0, 0, 0);
+//         let timestamp = date_time.timestamp();
+//         return Ok(timestamp);
+//     }
+
+//     // + 
+//     let str = term.replace("+", "");
+//     let mut n_arr:Vec<char> = Vec::new();
+//     let mut c_arr:Vec<char> = Vec::new();
+//     let str_arr: Vec<char> = str.chars().collect();
+//     for c in str_arr {
+//         if c.is_numeric() {
+//             n_arr.push(c);
+//             continue;
+//         }
+//         c_arr.push(c);
+//     }
+
+//     // is it a number
+//     let s_num: String = n_arr.iter().collect();
+//     let res_num = s_num.parse::<i64>();
+//     if res_num.is_err() {
+//         return Err("Number could not be parsed");
+//     }
+//     let num = res_num.unwrap();
+    
+//     // has the term got the right chars (only d,w,m,y)
+//     // let s_char: String = c_arr.iter().collect();
+//     if c_arr.len() > 1 {
+//         return Err("Too many characters in duration");
+//     }
+//     if c_arr.len() < 1 {
+//         return Err("No duration symbol given");
+//     }
+
+//     let time_ndt = NaiveDateTime::from_timestamp(*time, 0);
+
+//     match c_arr[0] {
+//         'd' => {
+//             let addition = num * DAY_SECS;
+//             let ret = time_ndt.timestamp() + addition;
+//             return Ok(ret);
+//         }
+//         'w' => {
+//             let addition = num * WEEK_SECS;
+//             let ret = time_ndt.timestamp() + addition;
+//             return Ok(ret);
+//         }
+//         'm' => {
+//             let delta = RelativeDuration::months(num as i32);
+//             let ndt = time_ndt + delta;
+//             return Ok(ndt.timestamp());
+//         }
+//         'y' => {
+//             let delta = RelativeDuration::years(num as i32);
+//             let ndt = time_ndt + delta;
+//             return Ok(ndt.timestamp());
+//         }
+//         _ => {
+//             return Err("Illegal duration symbol");
+//         }
+//     }
+    
+// } // end of determine_timestamp
+
+
+
+
+
+// pub fn make_naive_dt_from_str(date_str: &str) -> Result<NaiveDateTime, &'static str> {
+//     let res = NaiveDate::parse_from_str(date_str, DATE_FORMAT);
+//     if res.is_err() {
+//         return Err("Parse error from date string");
+//     } 
+//     let ret = res.unwrap().and_hms(0, 0, 0);
+//     return Ok(ret);
 // }
 
 
-pub fn determine_timestamp(time: &i64, term: &str) -> Result< i64, &'static str> {
-    let char_arr: Vec<char> = term.chars().collect();
 
-    // if NOT +
-    if char_arr[0] != '+' {
-
-        // if now
-        if term == "now" {
-            let ret = chrono::offset::Local::now().timestamp();
-            return Ok(ret);
-        }
-
-        // if date eg 2022-09-08
-        let res_date = NaiveDate::parse_from_str(term, DATE_FORMAT);
-        if res_date.is_err() {
-            return Err("Error in parsing date (or maybe no + symbol)")
-        }
-        let date_time = res_date.unwrap().and_hms(0, 0, 0);
-        let timestamp = date_time.timestamp();
-        return Ok(timestamp);
-    }
-
-    // + 
-    let str = term.replace("+", "");
-    let mut n_arr:Vec<char> = Vec::new();
-    let mut c_arr:Vec<char> = Vec::new();
-    let str_arr: Vec<char> = str.chars().collect();
-    for c in str_arr {
-        if c.is_numeric() {
-            n_arr.push(c);
-            continue;
-        }
-        c_arr.push(c);
-    }
-
-    // is it a number
-    let s_num: String = n_arr.iter().collect();
-    let res_num = s_num.parse::<i64>();
-    if res_num.is_err() {
-        return Err("Number could not be parsed");
-    }
-    let num = res_num.unwrap();
-    
-    // has the term got the right chars (only d,w,m,y)
-    // let s_char: String = c_arr.iter().collect();
-    if c_arr.len() > 1 {
-        return Err("Too many characters in duration");
-    }
-    if c_arr.len() < 1 {
-        return Err("No duration symbol given");
-    }
-
-    let time_ndt = NaiveDateTime::from_timestamp(*time, 0);
-
-    match c_arr[0] {
-        'd' => {
-            let addition = num * DAY_SECS;
-            let ret = time_ndt.timestamp() + addition;
-            return Ok(ret);
-        }
-        'w' => {
-            let addition = num * WEEK_SECS;
-            let ret = time_ndt.timestamp() + addition;
-            return Ok(ret);
-        }
-        'm' => {
-            let delta = RelativeDuration::months(num as i32);
-            let ndt = time_ndt + delta;
-            return Ok(ndt.timestamp());
-        }
-        'y' => {
-            let delta = RelativeDuration::years(num as i32);
-            let ndt = time_ndt + delta;
-            return Ok(ndt.timestamp());
-        }
-        _ => {
-            return Err("Illegal duration symbol");
-        }
-    }
-    
-} // end of determine_timestamp
-
-
-
-
-
-pub fn make_naive_dt_from_str(date_str: &str) -> Result<NaiveDateTime, &'static str> {
-    let res = NaiveDate::parse_from_str(date_str, DATE_FORMAT);
-    if res.is_err() {
-        return Err("Parse error from date string");
-    } 
-    let ret = res.unwrap().and_hms(0, 0, 0);
-    return Ok(ret);
-}
 
 // given a term like +3m -> return timestamp
 pub fn determine_due_start_wait(term: &str) -> Result<i64, &'static str> {
@@ -540,39 +610,20 @@ mod tests {
 
     // #[ignore]
     #[test]
-    fn t003_determine_tstamp1() {
-        let date = "2022-05-01";
-        let ndt = make_naive_dt_from_str(date).unwrap();
-
-        let d = determine_timestamp(&ndt.timestamp(), "+365d");
-        assert_eq!(d.unwrap(), 1682899200);
+    fn t003_virtual_tags() {
+        let vs: Vec<&str> = vec!["First Task", "due:2040-01-05", "+household"];
+        let res = make_task(vs);
+        let pending = res.clone().unwrap().virtual_tags.contains(&VirtualTags::Pending);
+        assert_eq!(pending, true);
         
-        let w = determine_timestamp(&ndt.timestamp(), "+52w");
-        assert_eq!(w.unwrap(), 1682812800);
+        let waiting =res.clone().unwrap().virtual_tags.contains(&VirtualTags::Waiting);
+        assert_eq!(waiting, false);
         
-        let m = determine_timestamp(&ndt.timestamp(), "+14m");
-        assert_eq!(m.unwrap(), 1688169600);
+        let tagged =res.clone().unwrap().virtual_tags.contains(&VirtualTags::Tagged);
+        assert_eq!(tagged, true);
         
-        let y = determine_timestamp(&ndt.timestamp(), "+2y");
-        assert_eq!(y.unwrap(), 1714521600);
-        
-        let e1 = determine_timestamp(&ndt.timestamp(), "+365 d");
-        assert_eq!(e1.is_err(), true);
-        
-        let e2 = determine_timestamp(&ndt.timestamp(), "+365f");
-        assert_eq!(e2.is_err(), true);
-        
-        let e3 = determine_timestamp(&ndt.timestamp(), "+365");
-        assert_eq!(e3.is_err(), true);
-        
-        let e4 = determine_timestamp(&ndt.timestamp(), "365");
-        assert_eq!(e4.is_err(), true);
-        
-        let e5 = determine_timestamp(&ndt.timestamp(), "+w");
-        assert_eq!(e5.is_err(), true);
-        
-        let e6 = determine_timestamp(&ndt.timestamp(), "2w");
-        assert_eq!(e6.is_err(), true);
+        let overdue =res.clone().unwrap().virtual_tags.contains(&VirtualTags::Overdue);
+        assert_eq!(overdue, false);
     }
     
     

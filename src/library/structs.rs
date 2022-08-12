@@ -1,11 +1,49 @@
 /*
-    Most of my odd structs are in here.
-    2022.08.09      Sven Ponelat
+Most of my odd structs are in here.
+2022.08.09      Sven Ponelat
 
 */
 
 
+
+
 use std::collections::{BTreeSet, BTreeMap};
+use termion::{color, style};
+use crate::library::settings::*;
+use crate::library::my_utils::*;
+use chrono::prelude::*;
+use substring::Substring;
+use std::path::Path;
+use std::fs::*;
+// use std::fs::remove_file;
+use std::io::{Write, LineWriter};
+use std::process::exit;
+use std::fmt::{Debug};
+use std::str::FromStr;
+use serde::{Serialize, Deserialize};
+use std::time::{UNIX_EPOCH, Duration};
+use std::io::{BufRead, BufReader};
+
+
+
+// Colors
+pub struct Colors {
+    pub orange_feedback: color::Rgb,
+}
+
+impl Colors {
+    pub fn new() -> Colors {
+        Colors { 
+            orange_feedback: color::Rgb (255,255,255) 
+        }
+    }
+
+    
+
+
+
+} // end of impl Colors
+
 
 
 
@@ -60,7 +98,6 @@ impl Hdeci {
 
 
 
-
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Functions @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@           @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
@@ -76,6 +113,21 @@ pub fn hexidecimal_to_string(num: i64) -> String {
     
         return ret;
 }
+
+// load and return all my colors
+pub fn load_colors(settings: &SettingsMap) -> Colors {
+    let mut ret = Colors::new();
+    let orange_feedback = settings.get_color("color_general_orange");
+    if orange_feedback.is_err(){
+        let message = format!("Error in retrieving color from settings.");
+        feedback(Feedback::Error, message);
+        exit(17);
+    }
+    ret.orange_feedback = orange_feedback.unwrap();
+
+    return ret;
+}
+
 
 
 

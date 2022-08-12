@@ -6,6 +6,7 @@ pub mod functions;
 pub mod settings;
 pub mod lts;
 pub mod structs;
+pub mod reports;
 
 
 

@@ -17,7 +17,7 @@ use std::fmt::{Debug};
 use std::str::FromStr;
 use serde::{Serialize, Deserialize};
 use std::collections::BTreeMap;
-use std::env;
+use termion::{color, style};
 use std::time::{UNIX_EPOCH, Duration};
 use std::io::{BufRead, BufReader};
 
@@ -28,6 +28,7 @@ use std::io::{BufRead, BufReader};
 #[derive(Clone, Debug, Serialize, Deserialize, derivative::Derivative)]
 pub struct SettingsMap {
     pub map: BTreeMap< String, String >
+    // pub colors: BTreeMap< String, color::Rgb>
 }
 
 
@@ -37,7 +38,9 @@ impl SettingsMap {
         map.insert("color_general_orange".to_string(), "(246,116,0)".to_string());
         map.insert("dataDir".to_string(), "/DATA/programming/Rust/mytodo/test/working".to_string());
         map.insert("nag".to_string(), "You go Sven".to_string());
-        map.insert("showResponseTimes".to_string(), "false".to_string());
+        // map.insert("report_single_headings".to_string(), "Name,Value".to_string());
+        map.insert("showNag".to_string(), "true".to_string());
+        map.insert("showResponseTimes".to_string(), "true".to_string());
     
     } 
 

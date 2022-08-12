@@ -11,7 +11,7 @@ use library::functions::*;
 use library::enums::*;
 use library::settings::*;
 use library::structs::*;
-use library::task::*;
+use library::reports::*;
 use library::list::*;
 use substring::Substring;
 use std::collections::{BTreeMap, BTreeSet};
@@ -47,9 +47,13 @@ fn main() {
     // let mut sub5 = None;
 
     let settings = load_settings(SETTINGS_FILE);
-    let data_dir = settings.clone().map.get("dataDir").unwrap().to_string();
+    let colors = load_colors(&settings);
+    // let data_dir = settings.clone().map.get("dataDir").unwrap().to_string();
+    let data_dir = settings.map.get("dataDir").unwrap().to_string();
+
     let pending_file = data_dir.clone() + "/pending.data";
     let completed_file = data_dir + "/completed.data";
+
     let mut pending_tasks:List    = List::new(&pending_file);
     let mut completed_tasks:List  = List::new(&completed_file);
     let mut hd_set: Hdeci         = Hdeci::new();
@@ -98,21 +102,22 @@ fn main() {
                         
                         // done
                         "don" => {
-                            let result = command_done(arg_id, &mut pending_tasks, &mut completed_tasks);
+                            let result = command_done(&colors,arg_id, 
+                                                            &mut pending_tasks, &mut completed_tasks);
                             if result.is_err(){
                                 let message = result.err().unwrap().to_string();
                                 feedback(Feedback::Error, message);
                                 exit(17);
                             }
-                            let size = result.unwrap() as usize;
-                            let save1 = pending_tasks.save();
-                            let save2 = completed_tasks.save();
-                            if save1.is_err() || save2.is_err() {
-                                let message = "Problems saving data files".to_string();
-                                feedback(Feedback::Error, message);
-                                exit(17);
-                            }
-                            println!("Completed {} {}",size, units("task",size));
+                            // let size = result.unwrap() as usize;
+                            pending_tasks.save();
+                            completed_tasks.save();
+                            // if save1.is_err() || save2.is_err() {
+                            //     let message = "Problems saving data files".to_string();
+                            //     feedback(Feedback::Error, message);
+                            //     exit(17);
+                            // }
+                            show_nag(&settings,colors);
                         }
                         
                         "dup" => {
@@ -140,12 +145,12 @@ fn main() {
                                 exit(17);
                             }
                             let size = result.unwrap() as usize;
-                            let save1 = pending_tasks.save();
-                            if save1.is_err() {
-                                let message = "Problems saving pending data files".to_string();
-                                feedback(Feedback::Error, message);
-                                exit(17);
-                            }
+                            pending_tasks.save();
+                            // if save1.is_err() {
+                            //     let message = "Problems saving pending data files".to_string();
+                            //     feedback(Feedback::Error, message);
+                            //     exit(17);
+                            // }
                             println!("Started {} {}.",size, units("task",size));
                         }
                         
@@ -156,12 +161,12 @@ fn main() {
                                 feedback(Feedback::Error, message);
                                 exit(17);
                             }
-                            let save1 = pending_tasks.save();
-                            if save1.is_err() {
-                                let message = "Problems saving pending data files".to_string();
-                                feedback(Feedback::Error, message);
-                                exit(17);
-                            }
+                            pending_tasks.save();
+                            // if save1.is_err() {
+                            //     let message = "Problems saving pending data files".to_string();
+                            //     feedback(Feedback::Error, message);
+                            //     exit(17);
+                            // }
 
                         }
                         
@@ -174,7 +179,7 @@ fn main() {
                 } // end of ArgType::Command
 
                 ArgType::None => {
-                    println!("No secondary arguments")
+                    let result = report_single(&settings, colors, arg_id);
                 }
                 
                 ArgType::Unknown => {
@@ -216,6 +221,10 @@ fn main() {
                     //     println!(" {}",hexidecimal_to_string(i));
                     // }
 
+                }
+
+                "colortest" => {
+                    color_test(colors);
                 }
 
                 "mycompleted" => {
