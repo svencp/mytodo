@@ -33,37 +33,71 @@ pub struct SettingsMap {
 
 impl SettingsMap {
     
+    fn init_map(map: &mut BTreeMap<String,String>) {
+        map.insert("color_general_orange".to_string(), "(246,116,0)".to_string());
+        map.insert("dataDir".to_string(), "/DATA/programming/Rust/mytodo/test/working".to_string());
+        map.insert("nag".to_string(), "You go Sven".to_string());
+        map.insert("showResponseTimes".to_string(), "false".to_string());
+    
+    } 
+
+    // get a bool from settings
+    pub fn get_bool(&self, key: &str)  -> Result<bool, &'static str> {
+        let result = self.map.get(key);
+        if result.is_none(){
+            return Err("Boolean missing in settings file.")
+        }
+
+        let ret = result.unwrap().parse::<bool>();
+        if ret.is_err(){
+            return Err("Boolean parsing error in settings file.");
+        }
+
+        Ok(ret.unwrap())
+    }
+
+
+    // Gets the color defined in the options file, if that is corrupt
+    pub fn get_color(&self, key: &str)  -> Result<termion::color::Rgb, &'static str> {
+
+        let result = self.map.get(key);
+        if result.is_none(){
+            return Err("Colour missing in settings file.")
+        }
+
+        let mut org = result.unwrap().clone();
+        org.retain(|c| !r#"( )"#.contains(c));
+        let org = org.split(",");
+        let vec: Vec<&str> = org.collect();
+
+        if vec.len() != 3 {
+            return Err("Colour misformed in settings file.")
+        }
+
+        let r = vec[0].parse::<u8>();
+        let g = vec[1].parse::<u8>();
+        let b = vec[2].parse::<u8>();
+
+        if r.is_err() || g.is_err() || b.is_err() {
+            return Err("Colour misformed in settings file.")
+        }
+        
+        Ok(termion::color::Rgb (r.unwrap(), g.unwrap(), b.unwrap()))
+    }
+
     pub fn new() -> SettingsMap {
         let mut map = BTreeMap::new();
         SettingsMap::init_map(&mut map);
         SettingsMap { map: map }
     }
     
-    fn init_map(map: &mut BTreeMap<String,String>) {
-        // map.insert("dataDir".to_string(), "/DATA/myToDo".to_string());
-        map.insert("dataDir".to_string(), "/DATA/programming/Rust/mytodo/test/working".to_string());
-        map.insert("nag".to_string(), "You go Sven".to_string());
-    
-    } 
     
     
     
     
     
-
-
-
+    
 } //end of impl
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -72,6 +106,118 @@ impl SettingsMap {
 
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Functions @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@           @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+// Writes the settings to disk in local folder
+// I have decided to make this text and not json
+pub fn export( map: &BTreeMap<String,String>,  path: &str) -> Result<(), &'static str> {
+    let path = Path::new(path);
+    
+    if remove_file(path).is_err() {
+        let message = format!("No worries: old settings file was not found, a new one will be created.");
+        feedback(Feedback::Info, message)
+    }
+
+    let vec = make_file_string(map.clone());
+    // let serialized = serde_json::to_string_pretty(map);
+    let mut file = match OpenOptions::new()
+                            .read(false)
+                            .write(true)
+                            .create(true)
+                            .open(path)  {
+        
+        Err(_) => { return Err("Problems opening text file in 'write_settings'"); } 
+        Ok(file)   => { file }
+    };
+
+    for line in vec {
+        let res = file.write(line.as_bytes());
+        if res.is_err() {
+            return Err("Error in writing settings file")
+        }
+    }
+    
+    Ok(())
+} 
+
+
+
+
+
+
+
+
+
+
+// This functions checks if one can read and write to the directory.
+// Again for testing puposes I have to input a file with a directory.
+pub fn file_system_ok(test: &str) -> Result<(), &str> {
+    let path = Path::new(test);
+
+    // Lets open a file
+    let mut file = match OpenOptions::new()
+                                .read(true)
+                                .write(true)
+                                .create(true)
+                                .open(path){
+        Ok(content) => content,
+        Err(_) => { return Err("Problem opening any file in file_system_ok"); }
+    };
+
+    // Lets write to a file
+    match file.write_all("Hello Sven".as_bytes()){
+        Ok(content) => content,
+        Err(_) => { return Err("Problem writing any file in file_system_ok"); }   
+    }
+
+    // Lets delete a file
+    match remove_file(&path){
+        Ok(_) => (),
+        Err(_) => { return Err("Problem removing any file in file_system_ok"); }   
+    }
+
+    Ok(())
+}
+
+
+// Reads the settings (settings.text) file into a treemap, returning a result
+// again decided not to make this a json file
+pub fn import(path: &str) -> Result<SettingsMap, &'static str> {
+    let mut ret = SettingsMap::new();
+
+    let res_file = File::open(path);
+    if res_file.is_err() {
+        return Err("Problem opening settings.txt");
+    }
+    
+    let reader = BufReader::new(res_file.unwrap());
+    
+    for line in reader.lines() {
+        if line.is_err(){
+            return Err("Problem reading line in settings");
+        }
+        let read = Some(line.unwrap());
+        if read.clone().is_some() {
+            let s = read.clone().unwrap();
+            let sub = s.substring(0, 1);
+            if sub == " " || sub == "#" || sub == "" {
+                continue;
+            }
+            let l = read.clone().unwrap();
+            let split = l.split("\t");
+            let vecs:Vec<&str> = split.collect();
+            if vecs.len() >= 2 {
+                ret.map.insert(vecs[0].to_string(), vecs[1].to_string());
+            }
+        }
+    }
+
+    if ret.map.len() == 0 {
+        return Err("No settings were loaded");
+    }
+
+    return Ok(ret);
+}
+
+
 // pub fn load_settings(file: &str) -> SettingsMap {
 pub fn load_settings(file: &str)  -> SettingsMap {
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! dont delete
@@ -135,107 +281,9 @@ pub fn load_settings(file: &str)  -> SettingsMap {
 }
 
 
-// This functions checks if one can read and write to the directory.
-// Again for testing puposes I have to input a file with a directory.
-pub fn file_system_ok(test: &str) -> Result<(), &str> {
-    let path = Path::new(test);
-
-    // Lets open a file
-    let mut file = match OpenOptions::new()
-                                .read(true)
-                                .write(true)
-                                .create(true)
-                                .open(path){
-        Ok(content) => content,
-        Err(_) => { return Err("Problem opening any file in file_system_ok"); }
-    };
-
-    // Lets write to a file
-    match file.write_all("Hello Sven".as_bytes()){
-        Ok(content) => content,
-        Err(_) => { return Err("Problem writing any file in file_system_ok"); }   
-    }
-
-    // Lets delete a file
-    match remove_file(&path){
-        Ok(_) => (),
-        Err(_) => { return Err("Problem removing any file in file_system_ok"); }   
-    }
-
-    Ok(())
-}
-
-// Reads the settings (settings.text) file into a treemap, returning a result
-// again decided not to make this a json file
-pub fn import(path: &str) -> Result<SettingsMap, &'static str> {
-    let mut ret = SettingsMap::new();
-
-    let res_file = File::open(path);
-    if res_file.is_err() {
-        return Err("Problem opening settings.txt");
-    }
-    
-    let reader = BufReader::new(res_file.unwrap());
-    
-    for line in reader.lines() {
-        if line.is_err(){
-            return Err("Problem reading line in settings");
-        }
-        let read = Some(line.unwrap());
-        if read.clone().is_some() {
-            let s = read.clone().unwrap();
-            let sub = s.substring(0, 1);
-            if sub == " " || sub == "#" || sub == "" {
-                continue;
-            }
-            let l = read.clone().unwrap();
-            let split = l.split("\t");
-            let vecs:Vec<&str> = split.collect();
-            if vecs.len() >= 2 {
-                ret.map.insert(vecs[0].to_string(), vecs[1].to_string());
-            }
-        }
-    }
-
-    if ret.map.len() == 0 {
-        return Err("No settings were loaded");
-    }
-
-    return Ok(ret);
-}
 
 
-// Writes the settings to disk in local folder
-// I have decided to make this text and not json
-pub fn export( map: &BTreeMap<String,String>,  path: &str) -> Result<(), &'static str> {
-    let path = Path::new(path);
-    
-    if remove_file(path).is_err() {
-        let message = format!("No worries: old settings file was not found, a new one will be created.");
-        feedback(Feedback::Info, message)
-    }
 
-    let vec = make_file_string(map.clone());
-    // let serialized = serde_json::to_string_pretty(map);
-    let mut file = match OpenOptions::new()
-                            .read(false)
-                            .write(true)
-                            .create(true)
-                            .open(path)  {
-        
-        Err(_) => { return Err("Problems opening text file in 'write_settings'"); } 
-        Ok(file)   => { file }
-    };
-
-    for line in vec {
-        let res = file.write(line.as_bytes());
-        if res.is_err() {
-            return Err("Error in writing settings file")
-        }
-    }
-    
-    Ok(())
-} 
 
 
 // make a string that will be written to a text file
@@ -310,17 +358,26 @@ mod tests {
         assert_eq!(x, 138);
     }
 
-    // // #[ignore]
-    // #[test]
-    // fn t003_make_settingsmap() {
-    //     let path = "sett.txt";
-    //     let settings = load_settings(path);
-    //     let d = settings.map.get("dataDir").unwrap();
-    //     remove_file(path).expect("Cleanup test failed");
+    // #[ignore]
+    #[test]
+    fn t003_get_color() {
+        let settings = SettingsMap::new();
+        let key = "color_general_orange";
+        let color = settings.clone().get_color(key);
+        let tuple = color.unwrap();
 
-    //     assert_eq!(9, 9);
-    // }
+        assert_eq!(tuple.0, 246);
+    }
+    
+    // #[ignore]
+    #[test]
+    fn t004_get_bool() {
+        let settings = SettingsMap::new();
+        let key = "showResponseTimes";
+        let boo = settings.clone().get_bool(key);
 
+        assert_eq!(boo.is_ok(), true);
+    }
 
 
 

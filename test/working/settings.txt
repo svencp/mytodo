@@ -1,9 +1,11 @@
 ##################
 #                #
-#   2022-08-10   #
+#   2022-08-11   #
 #                #
 ##################
 
 
+color_general_orange	(246,116,0)
 dataDir	/DATA/programming/Rust/mytodo/test/working
 nag	You go Sven
+showResponseTimes	false

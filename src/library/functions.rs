@@ -8,213 +8,16 @@
 
 use substring::Substring;
 use std::collections::BTreeSet;
-use super::enums::ArgType;
-use super::enums::Status;
+use termion::{color, style};
 use crate::library::task::*;
 use crate::library::list::*;
 use crate::library::lts::*;
 use crate::library::structs::*;
+use crate::library::my_utils::*;
+use crate::library::settings::*;
+use crate::library::enums::*;
 
 
-
-// determine the first argument type
-pub fn determine_first_arg(args: &Vec<String>, v_int: &mut Vec<i64>, v_hex: &mut Vec<String>, command: &mut String) -> ArgType {
-
-    // if none
-    if args.len() == 1 {
-        return ArgType::None
-    }
-
-    let first = args[1].as_str();
-
-    let res_int = is_arg_integer(first);
-    if res_int.is_ok(){
-        *v_int = res_int.unwrap();
-        return ArgType::Integer;
-    }
-    
-    let res_hex = is_arg_hexidecimal(first);
-    if res_hex.is_ok(){
-        *v_hex = res_hex.unwrap();
-        return ArgType::Hexidecimal;
-    }
-    
-    let res_com = is_arg_command(first);
-    if res_com.is_ok(){
-        *command = res_com.unwrap().to_string();
-        return ArgType::Command;
-    }
-    
-    return ArgType::Unknown;
-}
-
-// determine the second argument type
-pub fn determine_second_arg(args: &Vec<String>, command: &mut String) -> ArgType {
-    // if none
-    if args.len() == 2 {
-        return ArgType::None
-    }
-
-    let second = args[2].as_str();    
-    let res_com = is_arg_secondary_command(second);
-    if res_com.is_ok(){
-        *command = res_com.unwrap().to_string();
-        return ArgType::Command;
-    }
-    
-    return ArgType::Unknown;
-}
-
-
-// Function to determine whether the first argument is an ineteger
-pub fn is_arg_integer<'a>(first: &str) -> Result<Vec<i64>, &str> {
-    let mut ret: Vec<i64> = Vec::new(); 
-    let split: Vec<&str> = first.split(",").collect();
-
-    for num in split {
-        let res_int = num.parse::<i64>();
-        if res_int.is_err() {
-            return Err("Not an integer");
-        }
-        ret.push(res_int.unwrap());
-    }
-
-    Ok(ret)
-}
-
-
-// Function to determine whether the first argument is hexidecimal
-pub fn is_arg_hexidecimal(first: &str) -> Result<Vec<String>, &str> {
-    let mut ret: Vec<String> = Vec::new(); 
-    let split: Vec<&str> = first.split(",").collect();
-
-    for hexi in split {
-
-        let res = hexi_verify(hexi);
-        if res.is_err() {
-            return Err(res.err().unwrap());
-        }
-
-        ret.push(hexi.to_lowercase().trim().to_string());
-
-        // let sub2 = "0x";
-        // if hexi.substring(0, 2) != sub2 {
-        //     return Err("Does not start with 0x");
-        // }
-        // let n_hexi = hexi.trim_start_matches(sub2);
-        // let res_int = i64::from_str_radix(n_hexi, 16);
-        // if res_int.is_err() {
-        //     return Err("Not a hexidecimal");
-        // }
-        // ret.push(hexi.to_lowercase().trim().to_string());
-    }
-
-    Ok(ret)
-}
-
-
-// Function to determine if first argument is a command
-pub fn is_arg_command(first: &str) -> Result< &str, &str> {
-    
-    match first {
-        "add" => {
-            return Ok(first);
-        }
-        
-        "mycompleted" => {
-            return Ok(first);
-        }
-        
-        "-v" | "-version" | "v" | "ver" | "version" | "-ver" => {
-            return Ok("version");
-        }
-
-        _ => {
-            return Err("unknown command");
-        }
-    }
-}
-
-// Function to determine if first argument is a command
-pub fn is_arg_secondary_command(second: &str) -> Result< &str, &str> {
-    if second.len() < 3 {
-        return Err("second argument is too short");
-    }
-
-    let term = second.substring(0, 3);
-    match term {
-        "ann" => {
-            return Ok(term);
-        }
-        
-        "del" => {
-            return Ok(term);
-        }
-        
-        "den" => {
-            return Ok(term);
-        }
-
-        "don" => {
-            return Ok(term);
-        }
-
-        "dup" => {
-            return Ok(term);
-        }
-        
-        "hel" => {
-            return Ok(term);
-        }
-
-        "mod" => {
-            return Ok(term);
-        }
-        
-        "pur" => {
-            return Ok(term);
-        }
-        
-        "sta" => {
-            return Ok(term);
-        }
-        
-        "sto" => {
-            return Ok(term);
-        }
-
-        _ => {
-            return Err("unknown command");
-        }
-    }
-}
-
-// Show the task given by integer id
-pub fn report_single_id(){
-
-}
-
-
-// Show the task given by hexi uuiid
-pub fn report_single_uuiid(){
-
-}
-
-
-pub fn hexi_verify(str: &str) -> Result<i64, &'static str> {
-    let sub2 = "0x";
-
-    if str.substring(0, 2) != sub2 {
-        return Err("Does not start with 0x");
-    }
-    let n_hexi = str.trim_start_matches(sub2);
-    let res_int = i64::from_str_radix(n_hexi, 16);
-    if res_int.is_err() {
-        return Err("Not a hexidecimal string");
-    }
-    
-    Ok(res_int.unwrap())
-}
 
 // function to add task from command line
 pub fn command_add_task(args: &Vec<String>,  pending: &mut List, hdeci: &mut Hdeci ) -> Result<i64, String> {
@@ -337,11 +140,12 @@ pub fn command_start(vec_int:Vec<i64>, pending: &mut List ) -> Result<i64, &'sta
 }
 
 // stop the given tasks
-pub fn command_stop(vec_int:Vec<i64>, pending: &mut List ) -> Result<i64, &'static str> {
+pub fn command_stop(vec_int:Vec<i64>, pending: &mut List, sett: &SettingsMap ) -> Result<(), &'static str> {
     // remember that tasks are not zero based
     let len = pending.list.len() as i64;
     let mut num_stopped = 0 as i64;
     let stop = lts_now();
+    let mut vec_mess:Vec<String> = Vec::new();
 
     for element in vec_int.clone() {
         if element > len {
@@ -366,10 +170,299 @@ pub fn command_stop(vec_int:Vec<i64>, pending: &mut List ) -> Result<i64, &'stat
         println!("Stopping task {} '{}'.",task.uuiid, task.description);
 
         num_stopped += 1;
+
+        let mess = "Total Time Tracked: ".to_string() + &make_timetracking_string(task.timetrackingseconds);
+        vec_mess.push(mess);
     }
 
-    Ok( num_stopped )
+    let s1 = sett.clone().get_color("color_general_orange");
+    if s1.is_err(){
+        return Err("Colour missing in settings file.")
+    }
+
+    println!("Stopped {} {}.",num_stopped.to_string(), units("task",num_stopped as usize));
+    
+    let my_report_orange: color::Rgb = s1.unwrap();
+    for line in vec_mess {
+        print!("{}",color::Fg(my_report_orange));
+        print!("{}.", line.to_string()); 
+        print!("{}\n", style::Reset);  
+    }
+
+    Ok(())
 }
+
+// determine the first argument type
+pub fn determine_first_arg(args: &Vec<String>, v_int: &mut Vec<i64>, v_hex: &mut Vec<String>, command: &mut String) -> ArgType {
+    
+    // if none
+    if args.len() == 1 {
+        return ArgType::None
+    }
+    
+    let first = args[1].as_str();
+    
+    let res_int = is_arg_integer(first);
+    if res_int.is_ok(){
+        *v_int = res_int.unwrap();
+        return ArgType::Integer;
+    }
+    
+    let res_hex = is_arg_hexidecimal(first);
+    if res_hex.is_ok(){
+        *v_hex = res_hex.unwrap();
+        return ArgType::Hexidecimal;
+    }
+    
+    let res_com = is_arg_command(first);
+    if res_com.is_ok(){
+        *command = res_com.unwrap().to_string();
+        return ArgType::Command;
+    }
+    
+    return ArgType::Unknown;
+}
+
+// determine the second argument type
+pub fn determine_second_arg(args: &Vec<String>, command: &mut String) -> ArgType {
+    // if none
+    if args.len() == 2 {
+        return ArgType::None
+    }
+    
+    let second = args[2].as_str();    
+    let res_com = is_arg_secondary_command(second);
+    if res_com.is_ok(){
+        *command = res_com.unwrap().to_string();
+        return ArgType::Command;
+    }
+    
+    return ArgType::Unknown;
+}
+
+// function to verify my hexidecimal string
+pub fn hexi_verify(str: &str) -> Result<i64, &'static str> {
+    let sub2 = "0x";
+    
+    if str.substring(0, 2) != sub2 {
+        return Err("Does not start with 0x");
+    }
+    let n_hexi = str.trim_start_matches(sub2);
+    let res_int = i64::from_str_radix(n_hexi, 16);
+    if res_int.is_err() {
+        return Err("Not a hexidecimal string");
+    }
+    
+    Ok(res_int.unwrap())
+}
+
+// Function to determine if first argument is a command
+pub fn is_arg_command(first: &str) -> Result< &str, &str> {
+    
+    match first {
+        "add" => {
+            return Ok(first);
+        }
+        
+        "mycompleted" => {
+            return Ok(first);
+        }
+        
+        "-v" | "-version" | "v" | "ver" | "version" | "-ver" => {
+            return Ok("version");
+        }
+
+        _ => {
+            return Err("unknown command");
+        }
+    }
+}
+
+// Function to determine whether the first argument is hexidecimal
+pub fn is_arg_hexidecimal(first: &str) -> Result<Vec<String>, &str> {
+    let mut ret: Vec<String> = Vec::new(); 
+    let split: Vec<&str> = first.split(",").collect();
+
+    for hexi in split {
+
+        let res = hexi_verify(hexi);
+        if res.is_err() {
+            return Err(res.err().unwrap());
+        }
+
+        ret.push(hexi.to_lowercase().trim().to_string());
+    }
+
+    Ok(ret)
+}
+
+// Function to determine whether the first argument is an ineteger
+pub fn is_arg_integer<'a>(first: &str) -> Result<Vec<i64>, &str> {
+    let mut ret: Vec<i64> = Vec::new(); 
+    let split: Vec<&str> = first.split(",").collect();
+    
+    for num in split {
+        let res_int = num.parse::<i64>();
+        if res_int.is_err() {
+            return Err("Not an integer");
+        }
+        ret.push(res_int.unwrap());
+    }
+    
+    Ok(ret)
+}
+
+// build the time tracking string e.g. P191DT6H43M35S
+pub fn make_timetracking_string(secs: i64) -> String {
+    if secs < 1 {
+        return "".to_string();
+    }
+
+    const DAY_SECS: i64    = 86_400;
+    const HOUR_SECS: i64   =  3_600;
+    const MINUTE_SECS: i64 =     60;
+
+    let days:i64;
+    let hours:i64;
+    let minutes:i64;
+    let mut ret:String = "P".to_string();
+    let mut remainder:i64;
+
+
+    // how many days
+    days = secs / DAY_SECS;
+    remainder = secs - (days * DAY_SECS);
+    
+    // how many hours
+    hours = remainder / HOUR_SECS;
+    remainder = remainder - ( hours * HOUR_SECS );
+    
+    // how many minutes
+    minutes = remainder / MINUTE_SECS;
+    remainder = remainder - ( minutes * MINUTE_SECS );
+
+    // lets build
+    match days {
+        0 => {
+            ret.push_str("T");
+        }
+        
+        _ => {
+            match remainder {
+                0 => {
+                    let temp = days.to_string() + "D";
+                    ret.push_str(&temp);
+                }
+
+                _ => {
+                    let temp = days.to_string() + "DT";
+                    ret.push_str(&temp);
+                }
+            }
+        }
+    }
+    
+    match hours {
+        0 => {
+        }
+        
+        _ => {
+            let temp = hours.to_string() + "H";
+            ret.push_str(&temp);
+        }
+    }
+    
+    match minutes {
+        0 => {
+        }
+        
+        _ => {
+            let temp = minutes.to_string() + "M";
+            ret.push_str(&temp);
+        }
+    }
+    
+    // how many seconds = remainder
+    match remainder {
+        0 => {
+        }
+        
+        _ => {
+            let temp = remainder.to_string() + "S";
+            ret.push_str(&temp);
+        }
+    }
+
+    return ret;
+}
+
+
+// Function to determine if first argument is a command
+pub fn is_arg_secondary_command(second: &str) -> Result< &str, &str> {
+    if second.len() < 3 {
+        return Err("second argument is too short");
+    }
+
+    let term = second.substring(0, 3);
+    match term {
+        "ann" => {
+            return Ok(term);
+        }
+        
+        "del" => {
+            return Ok(term);
+        }
+        
+        "den" => {
+            return Ok(term);
+        }
+
+        "don" => {
+            return Ok(term);
+        }
+
+        "dup" => {
+            return Ok(term);
+        }
+        
+        "hel" => {
+            return Ok(term);
+        }
+
+        "mod" => {
+            return Ok(term);
+        }
+        
+        "pur" => {
+            return Ok(term);
+        }
+        
+        "sta" => {
+            return Ok(term);
+        }
+        
+        "sto" => {
+            return Ok(term);
+        }
+
+        _ => {
+            return Err("unknown command");
+        }
+    }
+}
+
+// Show the task given by integer id
+pub fn report_single_id(){
+
+}
+
+
+// Show the task given by hexi uuiid
+pub fn report_single_uuiid(){
+
+}
+
+
 
 // shorten vec from the front by ... 
 pub fn shorten_front_of_vec_by_2<'a>(args: &'a Vec<String>) -> Result<Vec<&'a str>, &'static str> {
@@ -600,7 +693,42 @@ mod tests {
         assert_eq!(save.unwrap(),2);
         remove_file(destination).expect("Cleanup test failed");
     }
-
+    
+    // #[ignore]
+    #[test]
+    fn t012_time_tracking_string() {
+        let time_track = 3000 as i64;
+        let str = make_timetracking_string(time_track);
+        assert_eq!("PT50M",str);
+        
+        let time_track1 = 31_000_000 as i64;
+        let str1 = make_timetracking_string(time_track1);
+        assert_eq!("P358DT19H6M40S",str1);
+        
+        let time_track2 = 59 as i64;
+        let str2 = make_timetracking_string(time_track2);
+        assert_eq!("PT59S",str2);
+        
+        let time_track3 = 0 as i64;
+        let str3 = make_timetracking_string(time_track3);
+        assert_eq!("",str3);
+        
+        let time_track4 = 300 as i64;
+        let str4 = make_timetracking_string(time_track4);
+        assert_eq!("PT5M",str4);
+        
+        let time_track5 = 7200 as i64;
+        let str5 = make_timetracking_string(time_track5);
+        assert_eq!("PT2H",str5);
+        
+        let time_track6 = 1 as i64;
+        let str6 = make_timetracking_string(time_track6);
+        assert_eq!("PT1S",str6);
+        
+        let time_track7 = 172_800 as i64;
+        let str7 = make_timetracking_string(time_track7);
+        assert_eq!("P2D",str7);
+    }
 
 
 

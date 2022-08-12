@@ -47,7 +47,7 @@ fn main() {
     // let mut sub5 = None;
 
     let settings = load_settings(SETTINGS_FILE);
-    let data_dir = settings.map.get("dataDir").unwrap().to_string();
+    let data_dir = settings.clone().map.get("dataDir").unwrap().to_string();
     let pending_file = data_dir.clone() + "/pending.data";
     let completed_file = data_dir + "/completed.data";
     let mut pending_tasks:List    = List::new(&pending_file);
@@ -150,20 +150,19 @@ fn main() {
                         }
                         
                         "sto" => {
-                            let result = command_stop(arg_id, &mut pending_tasks);
+                            let result = command_stop(arg_id, &mut pending_tasks, &settings);
                             if result.is_err(){
                                 let message = result.err().unwrap().to_string();
                                 feedback(Feedback::Error, message);
                                 exit(17);
                             }
-                            let size = result.unwrap() as usize;
                             let save1 = pending_tasks.save();
                             if save1.is_err() {
                                 let message = "Problems saving pending data files".to_string();
                                 feedback(Feedback::Error, message);
                                 exit(17);
                             }
-                            println!("Stopped {} {}.",size, units("task",size));
+
                         }
                         
                         _ => {
@@ -260,8 +259,12 @@ fn main() {
 
 
 
-    println!("Hello Svenny!");
-    show_response(now)
+    // println!("Hello Svenny!");
+    // let show = settings.clone().get_bool("showResponseTimes");
+    let show = settings.get_bool("showResponseTimes");
+    if show.unwrap(){
+        show_response(now)
+    }
 
 
 

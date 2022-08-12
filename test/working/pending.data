@@ -1,4 +1,4 @@
-description:my first car	uuiid:0x000001	entry:1660169606	status:pending	due:1660169606	start:1660169954	timetrackingseconds:244
-description:first	uuiid:0x000002	entry:1660169615	status:pending	due:1672444800	start:1660169954	timetrackingseconds:242
-description:second	uuiid:0x000003	entry:1660169622	status:pending	due:1672444800	start:1660169954
-description:third	uuiid:0x000004	entry:1660169628	status:pending	due:1672444800	timetrackingseconds:21
+description:firstus	uuiid:0x000001	entry:1660252350	status:pending	due:1668124800	start:1660258856	tags:car	timetrackingseconds:6387
+description:secundus	uuiid:0x000002	entry:1660252359	status:pending	due:1668124800	start:1660258856	tags:car	timetrackingseconds:6387
+description:turdus	uuiid:0x000003	entry:1660252368	status:pending	due:1668124800	start:1660252415	tags:car
+description:quattro	uuiid:0x000004	entry:1660252377	status:pending	due:1668124800	start:1660252415	tags:car
