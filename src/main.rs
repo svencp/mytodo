@@ -39,16 +39,10 @@ fn main() {
     let mut command: String = "".to_string();
     let mut arg_id:   Vec<i64> = Vec::new();
     let mut arg_hex:  Vec<String> = Vec::new();
-    // let mut first_arg = None;
-    // let mut sub1 = None;
-    // let mut sub2 = None;
-    // let mut sub3 = None;
-    // let mut sub4 = None;
-    // let mut sub5 = None;
 
     let settings = load_settings(SETTINGS_FILE);
+    let terminal_width = get_terminal_width(&settings);
     let colors = load_colors(&settings);
-    // let data_dir = settings.clone().map.get("dataDir").unwrap().to_string();
     let data_dir = settings.map.get("dataDir").unwrap().to_string();
 
     let pending_file = data_dir.clone() + "/pending.data";

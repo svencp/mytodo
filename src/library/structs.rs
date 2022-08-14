@@ -14,13 +14,13 @@ use crate::library::my_utils::*;
 use chrono::prelude::*;
 use substring::Substring;
 use std::path::Path;
-use std::fs::*;
+use term_size::*;
 // use std::fs::remove_file;
 use std::io::{Write, LineWriter};
 use std::process::exit;
 use std::fmt::{Debug};
 use std::str::FromStr;
-use serde::{Serialize, Deserialize};
+// use serde::{Serialize, Deserialize};
 use std::time::{UNIX_EPOCH, Duration};
 use std::io::{BufRead, BufReader};
 
@@ -28,13 +28,19 @@ use std::io::{BufRead, BufReader};
 
 // Colors
 pub struct Colors {
+    pub active_bg: color::Rgb,
+    pub black: color::Rgb,
     pub orange_feedback: color::Rgb,
+    pub white: color::Rgb,
 }
 
 impl Colors {
     pub fn new() -> Colors {
         Colors { 
-            orange_feedback: color::Rgb (255,255,255) 
+            active_bg: color::Rgb (255,255,255),
+            black: color::Rgb (255,255,255),
+            orange_feedback: color::Rgb (255,255,255),
+            white: color::Rgb (255,255,255),
         }
     }
 
@@ -117,13 +123,42 @@ pub fn hexidecimal_to_string(num: i64) -> String {
 // load and return all my colors
 pub fn load_colors(settings: &SettingsMap) -> Colors {
     let mut ret = Colors::new();
-    let orange_feedback = settings.get_color("color_general_orange");
+
+    let active_bg = settings.get_color("color_active_bg");
+    if active_bg.is_err(){
+        let message = format!("Error in retrieving color from settings.");
+        feedback(Feedback::Error, message);
+        exit(17);
+    }
+    ret.active_bg = active_bg.unwrap();
+    
+    let black = settings.get_color("color_black");
+    if black.is_err(){
+        let message = format!("Error in retrieving color from settings.");
+        feedback(Feedback::Error, message);
+        exit(17);
+    }
+    ret.black = black.unwrap();
+    
+    let orange_feedback = settings.get_color("color_feedback_orange");
     if orange_feedback.is_err(){
         let message = format!("Error in retrieving color from settings.");
         feedback(Feedback::Error, message);
         exit(17);
     }
     ret.orange_feedback = orange_feedback.unwrap();
+    
+    let white = settings.get_color("color_white");
+    if white.is_err(){
+        let message = format!("Error in retrieving color from settings.");
+        feedback(Feedback::Error, message);
+        exit(17);
+    }
+    ret.white = white.unwrap();
+
+
+
+
 
     return ret;
 }

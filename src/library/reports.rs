@@ -55,9 +55,10 @@ pub fn show_nag(settings: &SettingsMap, colors: Colors) {
         feedback(Feedback::Error, message);
         exit(17);
     }
-    let line = settings.map.get("nag").unwrap().to_string() + "\n";
-    to_orange_feedback(&colors, &line);
-
+    if show.unwrap() {
+        let line = settings.map.get("nag").unwrap().to_string() + "\n";
+        to_orange_feedback(&colors, &line);
+    }
 }
 
 // function to return a message painted with fg and optional background

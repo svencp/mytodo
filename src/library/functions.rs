@@ -7,7 +7,8 @@
 
 
 use substring::Substring;
-use std::collections::BTreeSet;
+use term_size::dimensions;
+use std::process::exit;
 use termion::{color, style};
 use crate::library::task::*;
 use crate::library::list::*;
@@ -249,6 +250,18 @@ pub fn determine_second_arg(args: &Vec<String>, command: &mut String) -> ArgType
     return ArgType::Unknown;
 }
 
+// get the termianl width size in characters
+pub fn get_terminal_width(settings: &SettingsMap) -> i64 {
+    let res = settings.get_integer("useTerminalWidthOf");
+    if res.is_err(){
+        let message = format!("Cannot determine dimensions of terminal from settings.");
+        feedback(Feedback::Error, message);
+        exit(17);
+    }
+    return res.unwrap();
+}
+
+
 // function to verify my hexidecimal string
 pub fn hexi_verify(str: &str) -> Result<i64, &'static str> {
     let sub2 = "0x";
@@ -464,6 +477,69 @@ pub fn make_timetracking_string(secs: i64) -> String {
 
     return ret;
 }
+
+// make timetracking timeframe
+pub fn make_timetracking_timeframe(secs: i64) -> String {
+    let mut ret = "".to_string();
+
+    // 1 min
+    if secs < 60 {
+        ret = secs.to_string() + "s";
+        return ret;
+    }
+    
+    // 1 hour
+    if secs < 3600 {
+        let float = secs as f64 / 60 as f64;
+        let ans = float.round() as i64;
+
+        ret = ans.to_string() + "min";
+        return ret;
+    }
+    
+    // 1 day
+    if secs < 86_400 {
+        let float = secs as f64 / 3600 as f64;
+        let ans = float.round() as i64;
+
+        ret = ans.to_string() + "h";
+        return ret;
+    }
+    
+    // 2 weeks
+    if secs < 1_209_600 {
+        let float = secs as f64 / 86_400 as f64;
+        let ans = float.round() as i64;
+
+        ret = ans.to_string() + "d";
+        return ret;
+    }
+    
+    // 12 weeks
+    if secs < 7_257_600 {
+        let float = secs as f64 / 604_800 as f64;
+        let ans = float.round() as i64;
+
+        ret = ans.to_string() + "w";
+        return ret;
+    }
+    
+    // 12 months
+    if secs < 31_536_000 {
+        let float = secs as f64 / 2_592_000 as f64;
+        let ans = float.round() as i64;
+        
+        ret = ans.to_string() + "mo";
+        return ret;
+    }
+    
+    // years
+    let float = secs as f64 / 31_536_000 as f64;
+    ret = format!("{:.1}{}",float,"y");
+
+    return ret;
+}
+
 
 // Show the task given by integer id
 pub fn report_single_id(){
@@ -743,7 +819,47 @@ mod tests {
         let str7 = make_timetracking_string(time_track7);
         assert_eq!("P2D",str7);
     }
+    
+    // #[ignore]
+    #[test]
+    fn t013_time_tracking_timeframe() {
+        let tt = 17 as i64;
+        let tf = make_timetracking_timeframe(tt);
+        assert_eq!("17s",tf);
+        
+        let tt = 61 as i64;
+        let tf = make_timetracking_timeframe(tt);
+        assert_eq!("1min",tf);
+        
+        let tt = 3580 as i64;
+        let tf = make_timetracking_timeframe(tt);
+        assert_eq!("60min",tf);
+        
+        let tt = 8900 as i64;
+        let tf = make_timetracking_timeframe(tt);
+        assert_eq!("2h",tf);
+        
+        let tt = 85_200 as i64;
+        let tf = make_timetracking_timeframe(tt);
+        assert_eq!("24h",tf);
+        
+        let tt = 1_209_000 as i64;
+        let tf = make_timetracking_timeframe(tt);
+        assert_eq!("14d",tf);
+        
+        let tt = 7_257_000 as i64;
+        let tf = make_timetracking_timeframe(tt);
+        assert_eq!("12w",tf);
+        
+        let tt = 40_209_001 as i64;
+        let tf = make_timetracking_timeframe(tt);
+        assert_eq!("1.3y",tf);
+        
+        let tt = 235_752_000 as i64;
+        let tf = make_timetracking_timeframe(tt);
+        assert_eq!("7.5y",tf);
 
+    }
 
 
 

@@ -15,7 +15,7 @@ use std::io::{Write, LineWriter};
 use std::process::exit;
 use std::fmt::{Debug};
 use std::str::FromStr;
-use serde::{Serialize, Deserialize};
+// use serde::{Serialize, Deserialize};
 use std::collections::BTreeMap;
 use termion::{color, style};
 use std::time::{UNIX_EPOCH, Duration};
@@ -25,7 +25,8 @@ use std::io::{BufRead, BufReader};
 
 
 #[allow(non_snake_case)]
-#[derive(Clone, Debug, Serialize, Deserialize, derivative::Derivative)]
+// #[derive(Clone, Debug, Serialize, Deserialize, derivative::Derivative)]
+#[derive(Clone, Debug, derivative::Derivative)]
 pub struct SettingsMap {
     pub map: BTreeMap< String, String >
     // pub colors: BTreeMap< String, color::Rgb>
@@ -35,12 +36,16 @@ pub struct SettingsMap {
 impl SettingsMap {
     
     fn init_map(map: &mut BTreeMap<String,String>) {
-        map.insert("color_general_orange".to_string(), "(246,116,0)".to_string());
+        map.insert("color_active_bg".to_string(), "(215,95,0)".to_string());
+        map.insert("color_black".to_string(), "(0,0,0)".to_string());
+        map.insert("color_feedback_orange".to_string(), "(246,116,0)".to_string());
+        map.insert("color_white".to_string(), "(255,255,255)".to_string());
         map.insert("dataDir".to_string(), "/DATA/programming/Rust/mytodo/test/working".to_string());
         map.insert("nag".to_string(), "You go Sven".to_string());
         // map.insert("report_single_headings".to_string(), "Name,Value".to_string());
         map.insert("showNag".to_string(), "true".to_string());
         map.insert("showResponseTimes".to_string(), "true".to_string());
+        map.insert("useTerminalWidthOf".to_string(), "180".to_string());
     
     } 
 
@@ -86,6 +91,21 @@ impl SettingsMap {
         }
         
         Ok(termion::color::Rgb (r.unwrap(), g.unwrap(), b.unwrap()))
+    }
+
+    pub fn get_integer(&self, key: &str)  -> Result<i64, String> {
+        let res = self.map.get(key);
+        if res.is_none() {
+            let message = format!("Cannot read terminal width from settings file.");
+            return Err(message);
+        }
+
+        let ret = res.unwrap().parse::<i64>();
+        if ret.is_err() {
+            let message = format!("Cannot parse terminal width from settings file.");
+            return Err(message);
+        }
+        return Ok(ret.unwrap());
     }
 
     pub fn new() -> SettingsMap {
@@ -365,7 +385,7 @@ mod tests {
     #[test]
     fn t003_get_color() {
         let settings = SettingsMap::new();
-        let key = "color_general_orange";
+        let key = "color_feedback_orange";
         let color = settings.clone().get_color(key);
         let tuple = color.unwrap();
 
