@@ -28,19 +28,25 @@ use std::io::{BufRead, BufReader};
 
 // Colors
 pub struct Colors {
-    pub active_bg: color::Rgb,
-    pub black: color::Rgb,
-    pub orange_feedback: color::Rgb,
-    pub white: color::Rgb,
+    pub color_active_bg: color::Rgb,                            // Orange
+    pub color_black_bg: color::Rgb,                             // Black
+    pub color_complete_orphan: color::Rgb,                      // White
+    pub color_feedback_orange: color::Rgb,                      // Orange
+    pub color_recur_chain_fg: color::Rgb,                       // Light Blue
+    pub color_recur_period_fg: color::Rgb,                      // Dark Blue
+    pub color_tagged: color::Rgb,                               // Dark Green
 }
 
 impl Colors {
     pub fn new() -> Colors {
         Colors { 
-            active_bg: color::Rgb (255,255,255),
-            black: color::Rgb (255,255,255),
-            orange_feedback: color::Rgb (255,255,255),
-            white: color::Rgb (255,255,255),
+            color_active_bg: color::Rgb (255,255,255),
+            color_black_bg: color::Rgb (255,255,255),               
+            color_complete_orphan: color::Rgb (255,255,255),        
+            color_feedback_orange: color::Rgb (255,255,255),
+            color_recur_chain_fg: color::Rgb (255,255,255),
+            color_recur_period_fg: color::Rgb (255,255,255),
+            color_tagged: color::Rgb (255,255,255),
         }
     }
 
@@ -130,7 +136,7 @@ pub fn load_colors(settings: &SettingsMap) -> Colors {
         feedback(Feedback::Error, message);
         exit(17);
     }
-    ret.active_bg = active_bg.unwrap();
+    ret.color_active_bg = active_bg.unwrap();
     
     let black = settings.get_color("color_black");
     if black.is_err(){
@@ -138,7 +144,7 @@ pub fn load_colors(settings: &SettingsMap) -> Colors {
         feedback(Feedback::Error, message);
         exit(17);
     }
-    ret.black = black.unwrap();
+    ret.color_black_bg = black.unwrap();
     
     let orange_feedback = settings.get_color("color_feedback_orange");
     if orange_feedback.is_err(){
@@ -146,7 +152,7 @@ pub fn load_colors(settings: &SettingsMap) -> Colors {
         feedback(Feedback::Error, message);
         exit(17);
     }
-    ret.orange_feedback = orange_feedback.unwrap();
+    ret.color_feedback_orange = orange_feedback.unwrap();
     
     let white = settings.get_color("color_white");
     if white.is_err(){
@@ -154,11 +160,31 @@ pub fn load_colors(settings: &SettingsMap) -> Colors {
         feedback(Feedback::Error, message);
         exit(17);
     }
-    ret.white = white.unwrap();
-
-
-
-
+    ret.color_complete_orphan = white.unwrap();
+    
+    let light_blue = settings.get_color("color_recur_chain_fg");
+    if light_blue.is_err(){
+        let message = format!("Error in retrieving color from settings.");
+        feedback(Feedback::Error, message);
+        exit(17);
+    }
+    ret.color_recur_chain_fg = light_blue.unwrap();
+    
+    let dark_blue = settings.get_color("color_recur_period_fg");
+    if dark_blue.is_err(){
+        let message = format!("Error in retrieving color from settings.");
+        feedback(Feedback::Error, message);
+        exit(17);
+    }
+    ret.color_recur_period_fg = dark_blue.unwrap();
+    
+    let dark_green = settings.get_color("color_tagged");
+    if dark_green.is_err(){
+        let message = format!("Error in retrieving color from settings.");
+        feedback(Feedback::Error, message);
+        exit(17);
+    }
+    ret.color_tagged = dark_green.unwrap();
 
     return ret;
 }

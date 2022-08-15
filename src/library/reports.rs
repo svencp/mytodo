@@ -10,6 +10,7 @@
 use termion::{color, style};
 use std::process::exit;
 
+use crate::library::functions::make_timetracking_string;
 use crate::library::functions::make_timetracking_timeframe;
 use crate::library::lts::lts_now;
 use crate::library::lts::lts_to_date_time_string;
@@ -35,7 +36,7 @@ use crate::library::list::*;
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@           @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 pub fn color_test(colors: Colors) {
     let line1 = "This is my test of the orange_feedback color (123 000)";
-    let fg = colors.orange_feedback;
+    let fg = colors.color_feedback_orange;
     let bg:Option<color::Rgb> = None;
     to_color_message(fg, bg, line1);
 }
@@ -157,6 +158,18 @@ pub fn report_single(width: i64, colors: Colors, task: Task ) -> Result<(), &'st
         }
     }
     
+    // End
+    match task.end {
+        Some(e) => {
+            first = "End".to_string();
+            diff = now - e;
+            second = lts_to_date_time_string(e) + format!(" ({})",make_timetracking_timeframe(diff)).as_str(); 
+            b_vec.push(vec![first,second]);
+        }
+        None => {
+        }
+    }
+    
     // Tags
     match task.tags.len() {
         0 => {
@@ -173,13 +186,48 @@ pub fn report_single(width: i64, colors: Colors, task: Task ) -> Result<(), &'st
             
         }
     }
-
-
+    
+    // Virtual tags
+    match task.virtual_tags.len() {
+        0 => {
+        }
+        _ => {
+            first = "Virtual tags".to_string();
+            let mut vecco = "".to_string();
+            for tag in task.virtual_tags {
+                let t = tag.text().to_uppercase();
+                vecco.push_str(&t);
+                vecco.push_str(" ");
+            }
+            second = vecco.trim().to_string();
+            b_vec.push(vec![first,second]);
+            
+        }
+    }
+    
+    // UUIID
+    first = "UUIID".to_string();
+    second = task.uuiid;
+    b_vec.push(vec![first,second]);
+    
+    // Timetracking
+    match task.timetrackingseconds {
+        0 => {
+        }
+        _ => {
+            first = "Timetracking".to_string();
+            let vecco = "   ".to_string() + &make_timetracking_string(task.timetrackingseconds);
+            second = task.timetrackingseconds.to_string() + &vecco;
+            b_vec.push(vec![first,second]);
+        }
+    }
+    
+    // format_report_single(width, colors);
     
 
 
-
-
+    
+    
     println!("report single");
     Ok(())
 }
@@ -218,7 +266,7 @@ pub fn to_color_message(fg: color::Rgb, bg: Option<color::Rgb>, line: &str) {
 
 // my to Orange Feedback Message
 pub fn to_orange_feedback(colors: &Colors, line: &str) {
-    let fg = colors.orange_feedback;
+    let fg = colors.color_feedback_orange;
     let bg:Option<color::Rgb> = None;
     to_color_message(fg, bg, line);
 }

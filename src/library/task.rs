@@ -111,24 +111,38 @@ impl Task {
 
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Functions @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@           @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+// given a term like +3m -> return timestamp
+pub fn determine_due_start_wait(term: &str) -> Result<i64, &'static str> {
+    // now
+    if term.starts_with("now") {
+        return Ok(lts_now());
+    }
 
-
-
-
-// pub fn from_timestamp_to_date_str(num: i64) -> String {
-//     // Create a NaiveDateTime from the timestamp
-//     let naive = NaiveDateTime::from_timestamp(num, 0);
-
-//     // Create a normal DateTime from the NaiveDateTime
-//     let datetime: DateTime<Utc> = DateTime::from_utc(naive, Utc);
+    // 1600 000 000
+    let res_s64 = lts_from_str64_to_timestamp(term);
+    if res_s64.is_ok(){
+        return Ok(res_s64.unwrap())
+    }
     
-//     // Format the datetime how you want
-//     let newdate = naive.format("%Y-%m-%d %H:%M:%S");
+    // 2020-02-27
+    let res_date = lts_date_string_to_timestamp(term);
+    if res_date.is_ok(){
+        return Ok(res_date.unwrap())
+    }
+    
+    // +3m
+    if term.starts_with("+") {
+        let now = lts_now();
+        let res_term = lts_add_timestamp_to_recur_term(now, term);
+        if res_term.is_ok() {
+            return Ok(res_term.unwrap())
+        }
+    }
 
-//     return newdate.to_string()
-// }
+    Err("unknown term for due: start: wait:")
+}
 
-
+// Main make task function
 pub fn make_task(vec:Vec<&str>) -> Result<Task, &'static str> {
     let mut ret = Task::new();
     let now = lts_now();
@@ -364,6 +378,8 @@ pub fn make_task(vec:Vec<&str>) -> Result<Task, &'static str> {
 
     } // end of for elemnt
 
+    ret.status = update_status(now, ret.clone());
+
     ret.virtual_tags = make_virtual_tags(ret.clone());
 
 
@@ -412,18 +428,21 @@ pub fn make_virtual_tags(task: Task) -> Vec<VirtualTags> {
     }
     
     // Pending
-    match task.wait {
-        Some(w) => {
-            if now > w && task.start.is_none() {
-                ret.push(VirtualTags::Pending);
-            }
-        }
-        None => {
-            if task.start.is_none() {
-                ret.push(VirtualTags::Pending);
-            }
-        }
+    if task.status == Status::Pending {
+        ret.push(VirtualTags::Pending);
     }
+    // match task.wait {
+    //     Some(w) => {
+    //         if now > w && task.start.is_none() {
+    //             ret.push(VirtualTags::Pending);
+    //         }
+    //     }
+    //     None => {
+    //         if task.start.is_none() {
+    //             ret.push(VirtualTags::Pending);
+    //         }
+    //     }
+    // }
     
     // Tagged
     if task.tags.len() > 0 {
@@ -440,136 +459,34 @@ pub fn make_virtual_tags(task: Task) -> Vec<VirtualTags> {
     return ret;
 }
 
-
-
-// pub fn determine_timestamp(time: &i64, term: &str) -> Result< i64, &'static str> {
-//     let char_arr: Vec<char> = term.chars().collect();
-
-//     // if NOT +
-//     if char_arr[0] != '+' {
-
-//         // if now
-//         if term == "now" {
-//             let ret = chrono::offset::Local::now().timestamp();
-//             return Ok(ret);
-//         }
-
-//         // if date eg 2022-09-08
-//         let res_date = NaiveDate::parse_from_str(term, DATE_FORMAT);
-//         if res_date.is_err() {
-//             return Err("Error in parsing date (or maybe no + symbol)")
-//         }
-//         let date_time = res_date.unwrap().and_hms(0, 0, 0);
-//         let timestamp = date_time.timestamp();
-//         return Ok(timestamp);
-//     }
-
-//     // + 
-//     let str = term.replace("+", "");
-//     let mut n_arr:Vec<char> = Vec::new();
-//     let mut c_arr:Vec<char> = Vec::new();
-//     let str_arr: Vec<char> = str.chars().collect();
-//     for c in str_arr {
-//         if c.is_numeric() {
-//             n_arr.push(c);
-//             continue;
-//         }
-//         c_arr.push(c);
-//     }
-
-//     // is it a number
-//     let s_num: String = n_arr.iter().collect();
-//     let res_num = s_num.parse::<i64>();
-//     if res_num.is_err() {
-//         return Err("Number could not be parsed");
-//     }
-//     let num = res_num.unwrap();
-    
-//     // has the term got the right chars (only d,w,m,y)
-//     // let s_char: String = c_arr.iter().collect();
-//     if c_arr.len() > 1 {
-//         return Err("Too many characters in duration");
-//     }
-//     if c_arr.len() < 1 {
-//         return Err("No duration symbol given");
-//     }
-
-//     let time_ndt = NaiveDateTime::from_timestamp(*time, 0);
-
-//     match c_arr[0] {
-//         'd' => {
-//             let addition = num * DAY_SECS;
-//             let ret = time_ndt.timestamp() + addition;
-//             return Ok(ret);
-//         }
-//         'w' => {
-//             let addition = num * WEEK_SECS;
-//             let ret = time_ndt.timestamp() + addition;
-//             return Ok(ret);
-//         }
-//         'm' => {
-//             let delta = RelativeDuration::months(num as i32);
-//             let ndt = time_ndt + delta;
-//             return Ok(ndt.timestamp());
-//         }
-//         'y' => {
-//             let delta = RelativeDuration::years(num as i32);
-//             let ndt = time_ndt + delta;
-//             return Ok(ndt.timestamp());
-//         }
-//         _ => {
-//             return Err("Illegal duration symbol");
-//         }
-//     }
-    
-// } // end of determine_timestamp
-
-
-
-
-
-// pub fn make_naive_dt_from_str(date_str: &str) -> Result<NaiveDateTime, &'static str> {
-//     let res = NaiveDate::parse_from_str(date_str, DATE_FORMAT);
-//     if res.is_err() {
-//         return Err("Parse error from date string");
-//     } 
-//     let ret = res.unwrap().and_hms(0, 0, 0);
-//     return Ok(ret);
-// }
-
-
-
-
-// given a term like +3m -> return timestamp
-pub fn determine_due_start_wait(term: &str) -> Result<i64, &'static str> {
-    // now
-    if term.starts_with("now") {
-        return Ok(lts_now());
-    }
-
-    // 1600 000 000
-    let res_s64 = lts_from_str64_to_timestamp(term);
-    if res_s64.is_ok(){
-        return Ok(res_s64.unwrap())
-    }
-    
-    // 2020-02-27
-    let res_date = lts_date_string_to_timestamp(term);
-    if res_date.is_ok(){
-        return Ok(res_date.unwrap())
-    }
-    
-    // +3m
-    if term.starts_with("+") {
-        let now = lts_now();
-        let res_term = lts_add_timestamp_to_recur_term(now, term);
-        if res_term.is_ok() {
-            return Ok(res_term.unwrap())
+// update the status
+pub fn update_status(now: i64, task: Task) -> Status {
+    match task.status {
+        Status::Pending => {
+            if task.wait.is_some(){
+                if now < task.wait.unwrap() {
+                    return Status::Waiting;
+                }
+                return Status::Pending;
+            }
+            return Status::Pending;
+        }
+        Status::Waiting => {
+            if now > task.wait.unwrap() {
+                return Status::Pending;
+            }
+            return Status::Waiting;
+        }
+        _ => {
+            return task.status
         }
     }
-
-    Err("unknown term for due: start: wait:")
 }
+
+
+
+
+
 
 
 

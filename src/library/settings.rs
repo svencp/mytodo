@@ -37,15 +37,17 @@ impl SettingsMap {
     
     fn init_map(map: &mut BTreeMap<String,String>) {
         map.insert("color_active_bg".to_string(), "(215,95,0)".to_string());
-        map.insert("color_black".to_string(), "(0,0,0)".to_string());
+        map.insert("color_black_bg".to_string(), "(0,0,0)".to_string());
+        map.insert("color_complete_orphan".to_string(), "(252,252,252)".to_string());
         map.insert("color_feedback_orange".to_string(), "(246,116,0)".to_string());
-        map.insert("color_white".to_string(), "(255,255,255)".to_string());
+        map.insert("color_recur_chain_fg".to_string(), "(29,153,243)".to_string());
+        map.insert("color_recur_period_fg".to_string(), "(0,95,175)".to_string());
+        map.insert("color_tagged".to_string(), "(0,175,95)".to_string());
         map.insert("dataDir".to_string(), "/DATA/programming/Rust/mytodo/test/working".to_string());
         map.insert("nag".to_string(), "You go Sven".to_string());
-        // map.insert("report_single_headings".to_string(), "Name,Value".to_string());
         map.insert("showNag".to_string(), "true".to_string());
         map.insert("showResponseTimes".to_string(), "true".to_string());
-        map.insert("useTerminalWidthOf".to_string(), "180".to_string());
+        map.insert("useTerminalWidthOf".to_string(), "180".to_string()); 
     
     } 
 

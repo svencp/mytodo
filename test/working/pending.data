@@ -1,7 +1,1 @@
-description:quattro	uuiid:0x000004	entry:1660252377	status:pending	due:1668124800	start:1660317414	tags:car	timetrackingseconds:53059
-description:helloahhhh	uuiid:0x00000a	entry:1660310740	status:pending	due:1660310740	start:1660310764	timetrackingseconds:8
-description:yet another one	uuiid:0x00000c	entry:1660317422	status:pending	due:2208988800	start:1660414165	tags:yebo	wait:2177452800
-description:yet another one	uuiid:0x00000d	entry:1660317428	status:pending	due:2208988800	start:1660414165	tags:yebo	wait:2177452800
-description:yet another one	uuiid:0x00000f	entry:1660414143	status:pending	due:2208988800	start:1660414165	tags:yebo	wait:2177452800
-description:yet another one	uuiid:0x000010	entry:1660414146	status:pending	due:2208988800	start:1660414165	tags:yebo	wait:2177452800
-description:heck	uuiid:0x000012	entry:1660433368	status:pending	start:1660433368	recur:+4m	rtype:chained	parent:0x000010	prodigy:0	due:2022-12-31	wait:2022-11-11	tags:car,house,plant
+description:heck	uuiid:0x000012	entry:1660433368	status:pending	due:1672444800	parent:0x000010	prodigy:0	recur:+4m	rtype:chained	start:1660433368	tags:car,house,plant	timetrackingseconds:8888	wait:2022-09-01
