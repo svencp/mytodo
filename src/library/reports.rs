@@ -10,9 +10,14 @@
 use termion::{color, style};
 use std::process::exit;
 
+use crate::library::functions::make_timetracking_timeframe;
+use crate::library::lts::lts_now;
+use crate::library::lts::lts_to_date_time_string;
 use crate::library::structs::*;
 use crate::library::settings::*;
 use crate::library::my_utils::*;
+use crate::library::task::*;
+use crate::library::list::*;
 
 
 
@@ -37,7 +42,140 @@ pub fn color_test(colors: Colors) {
 
 
 // show a single id report 'lets hardcode these variables'
-pub fn report_single(settings: &SettingsMap, colors: Colors, vec_id: Vec<i64> ) -> Result<(), &'static str> {
+pub fn report_single(width: i64, colors: Colors, task: Task ) -> Result<(), &'static str> {
+    let mut b_vec:Vec<Vec<String>> = Vec::new();
+    let mut first = "Name".to_string();
+    let mut second = "Value".to_string();
+    let mut diff = 0 as i64;
+    let now = lts_now();
+    let mut date_string = "".to_string();
+    let mut vec = vec![ first , second ];
+    b_vec.push(vec);
+    
+    // ID
+    first = "ID".to_string();
+    match task.id {
+        Some(i) => {
+            second = i.to_string();
+        }
+        None => {
+            second = "-".to_string();
+        }
+    }
+    b_vec.push(vec![first,second]);
+    
+    // Description
+    first = "Description".to_string();
+    second = task.description;
+    b_vec.push(vec![first,second]);
+    
+    // Status
+    first = "Status".to_string();
+    second = task.status.text().to_string();
+    b_vec.push(vec![first,second]);
+    
+    // Recurrence
+    match task.recur {
+        Some(i) => {
+            first = "Recurrence".to_string();
+            second = i.to_string();
+            b_vec.push(vec![first,second]);
+        }
+        None => {
+        }
+    }
+    
+    // Parent
+    match task.parent {
+        Some(h) => {
+            first = "Parent task".to_string();
+            second = h.to_string();
+            b_vec.push(vec![first,second]);
+        }
+        None => {
+        }
+    }
+    
+    // Prodigy
+    match task.prodigy {
+        Some(h) => {
+            first = "Prodigy".to_string();
+            second = h.to_string();
+            b_vec.push(vec![first,second]);
+        }
+        None => {
+        }
+    }
+    
+    // Recurrence type
+    match task.rtype {
+        Some(h) => {
+            first = "Recurrence type".to_string();
+            second = h.text().to_string();
+            b_vec.push(vec![first,second]);
+        }
+        None => {
+        }
+    }
+    
+    // Entered
+    first = "Entered".to_string();
+    diff = now - task.entry;
+    second = lts_to_date_time_string(task.entry) + format!(" ({})",make_timetracking_timeframe(diff)).as_str(); 
+    b_vec.push(vec![first,second]);
+    
+    // Waiting until
+    match task.wait {
+        Some(h) => {
+            first = "Waiting until".to_string();
+            second = lts_to_date_time_string(h);
+            b_vec.push(vec![first,second]);
+        }
+        None => {
+        }
+    }
+    
+    // Start
+    match task.start {
+        Some(h) => {
+            first = "Start".to_string();
+            second = lts_to_date_time_string(h);
+            b_vec.push(vec![first,second]);
+        }
+        None => {
+        }
+    }
+    
+    // Due
+    match task.due {
+        Some(h) => {
+            first = "Due".to_string();
+            second = lts_to_date_time_string(h);
+            b_vec.push(vec![first,second]);
+        }
+        None => {
+        }
+    }
+    
+    // Tags
+    match task.tags.len() {
+        0 => {
+        }
+        _ => {
+            first = "Tags".to_string();
+            let mut vecco = "".to_string();
+            for tag in task.tags {
+                vecco.push_str(&tag);
+                vecco.push_str(" ");
+            }
+            second = vecco.trim().to_string();
+            b_vec.push(vec![first,second]);
+            
+        }
+    }
+
+
+    
 
 
 
@@ -111,15 +249,16 @@ mod tests {
     
     // #[ignore]
     #[test]
-    fn t001_task_new() {
-        // let mut t1 = Task::new();
-        // t1.id = Some(23);
-        // t1.description = "This is a description".to_string();
-        // t1.status = Status::Pending;
-        
+    fn t001_report_single() {
+        let line = "description:how do i get the konsole that i have now\tdue:1658513756\t\
+                        entry:1658513756\tstart:1658513756\tstatus:pending\tuuiid:0x0011";
+        let vec2:Vec<_> = line.split("\t").collect();
+        let task = make_task(vec2);
+        // let hexi = task.unwrap().uuiid_int
 
-        // let yebo: bool = t1.entry > 1650000000;
-        // assert_eq!(yebo, true);
+
+
+
     }
 
 

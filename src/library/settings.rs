@@ -114,7 +114,37 @@ impl SettingsMap {
         SettingsMap { map: map }
     }
     
+    // save settings to the path
+    pub fn save(&self, path: &str) -> Result<(), &'static str> {
+        let path = Path::new(path);
     
+        // gets rid of old file
+        if remove_file(path).is_err() {
+            let message = format!("No worries: old settings file was not found, a new one will be created.");
+            feedback(Feedback::Info, message)
+        }
+    
+        let vec = make_file_string(self.map.clone());
+        // let serialized = serde_json::to_string_pretty(map);
+        let mut file = match OpenOptions::new()
+                                .read(false)
+                                .write(true)
+                                .create(true)
+                                .open(path)  {
+            
+            Err(_) => { return Err("Problems opening text file in 'write_settings'"); } 
+            Ok(file)   => { file }
+        };
+    
+        for line in vec {
+            let res = file.write(line.as_bytes());
+            if res.is_err() {
+                return Err("Error in writing settings file")
+            }
+        }
+        
+        Ok(())
+    }
     
     
     
@@ -129,37 +159,37 @@ impl SettingsMap {
 
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Functions @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@           @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-// Writes the settings to disk in local folder
-// I have decided to make this text and not json
-pub fn export( map: &BTreeMap<String,String>,  path: &str) -> Result<(), &'static str> {
-    let path = Path::new(path);
+// // Writes the settings to disk in local folder
+// // I have decided to make this text and not json
+// pub fn export( map: &BTreeMap<String,String>,  path: &str) -> Result<(), &'static str> {
+//     let path = Path::new(path);
     
-    if remove_file(path).is_err() {
-        let message = format!("No worries: old settings file was not found, a new one will be created.");
-        feedback(Feedback::Info, message)
-    }
+//     if remove_file(path).is_err() {
+//         let message = format!("No worries: old settings file was not found, a new one will be created.");
+//         feedback(Feedback::Info, message)
+//     }
 
-    let vec = make_file_string(map.clone());
-    // let serialized = serde_json::to_string_pretty(map);
-    let mut file = match OpenOptions::new()
-                            .read(false)
-                            .write(true)
-                            .create(true)
-                            .open(path)  {
+//     let vec = make_file_string(map.clone());
+//     // let serialized = serde_json::to_string_pretty(map);
+//     let mut file = match OpenOptions::new()
+//                             .read(false)
+//                             .write(true)
+//                             .create(true)
+//                             .open(path)  {
         
-        Err(_) => { return Err("Problems opening text file in 'write_settings'"); } 
-        Ok(file)   => { file }
-    };
+//         Err(_) => { return Err("Problems opening text file in 'write_settings'"); } 
+//         Ok(file)   => { file }
+//     };
 
-    for line in vec {
-        let res = file.write(line.as_bytes());
-        if res.is_err() {
-            return Err("Error in writing settings file")
-        }
-    }
+//     for line in vec {
+//         let res = file.write(line.as_bytes());
+//         if res.is_err() {
+//             return Err("Error in writing settings file")
+//         }
+//     }
     
-    Ok(())
-} 
+//     Ok(())
+// } 
 
 
 
@@ -273,7 +303,8 @@ pub fn load_settings(file: &str)  -> SettingsMap {
     // if the settings file does NOT exist
     if ! Path::new(&path_to_settings).exists() {
         let default = SettingsMap::new();
-        let res_save = export(&default.map, &path_to_settings);
+        // let res_save = export(&default.map, &path_to_settings);
+        let res_save = default.save(&path_to_settings);
         if res_save.is_err() {
             let message = format!("Error in saving settings file");
             feedback(Feedback::Error, message);
@@ -365,20 +396,20 @@ mod tests {
     // #[ignore]
     #[test]
     fn t002_make_file_string() {
-        let path = "./tempo.txt";
-        let mut map: BTreeMap<String,String> = BTreeMap::new();
-        map.insert("dataDir".to_string(), "/DATA/myToDo".to_string());
-        map.insert("lastSpeciesViewed".to_string(), "0".to_string());
+        // let path = "./tempo.txt";
+        // let mut map: BTreeMap<String,String> = BTreeMap::new();
+        // map.insert("dataDir".to_string(), "/DATA/myToDo".to_string());
+        // map.insert("lastSpeciesViewed".to_string(), "0".to_string());
         
-        let res = make_file_string(map.clone());
-        let len = res.len();
-        assert_eq!(len, 9);
+        // let res = make_file_string(map.clone());
+        // let len = res.len();
+        // assert_eq!(len, 9);
         
-        let _res_wri = export(&map, path);
-        let file = File::open(path);
-        let x = file.unwrap().metadata().unwrap().len();
-        remove_file(path).expect("Cleanup test failed");
-        assert_eq!(x, 138);
+        // let _res_wri = export(&map, path);
+        // let file = File::open(path);
+        // let x = file.unwrap().metadata().unwrap().len();
+        // remove_file(path).expect("Cleanup test failed");
+        // assert_eq!(x, 138);
     }
 
     // #[ignore]

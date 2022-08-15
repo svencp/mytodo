@@ -173,7 +173,18 @@ fn main() {
                 } // end of ArgType::Command
 
                 ArgType::None => {
-                    let result = report_single(&settings, colors, arg_id);
+                    if arg_id.len() != 1 {
+                        let message = "No match -> too many tasks".to_string();
+                        feedback(Feedback::Warning, message);
+                        exit(17);
+                    }
+                    let id = *arg_id.get(0).unwrap();
+                    let result = get_integer_single_report(&settings, colors, id, &pending_tasks);
+                    if result.is_err() {
+                        let message = result.err().unwrap().to_string();
+                        feedback(Feedback::Warning, message);
+                        exit(17);
+                    }
                 }
                 
                 ArgType::Unknown => {

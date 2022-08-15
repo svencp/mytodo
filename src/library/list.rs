@@ -237,12 +237,21 @@ pub fn load_task_file(task_file: &str, the_list: &mut List, hexi_set: &mut Hdeci
             return Err(message);
         }
         task = res_task.unwrap();
-        task.id = Some(line_counter);
+
+        // only assign id if not completed
+        match task.end {
+            Some(_e) => {
+                task.id = None;
+            }
+            None => {
+                task.id = Some(line_counter);
+            }
+        }
 
         hexi_set.add(task.uuiid_int);
 
-        // // we have to do the virtual tags as well
-        // task.virtual_tags = make_virtual_tags(task.clone());
+        // we have to do the virtual tags as well
+        task.virtual_tags = make_virtual_tags(task.clone());
 
         the_list.list.push(task);
     }

@@ -250,6 +250,38 @@ pub fn determine_second_arg(args: &Vec<String>, command: &mut String) -> ArgType
     return ArgType::Unknown;
 }
 
+pub fn get_integer_single_report(settings: &SettingsMap, colors: Colors, id: i64, pending: &List)
+                                -> Result<(), &'static str> {
+    let mut found = false;
+    let mut task:Task = Task::new();
+
+    for t in pending.clone().list {
+        let t_id = t.id.unwrap();
+        if id == t_id {
+            found = true;
+            task = t;
+            break;
+        }
+    }
+
+    if ! found {
+        return Err("Task id does not exist.")
+    }
+
+    let width = settings.get_integer("useTerminalWidthOf");
+    if width.is_err() {
+        return Err("Cannot find terminal width.")
+    }
+
+    let result = report_single(width.unwrap(), colors, task);
+    if result.is_err() {
+        return Err(result.err().unwrap());
+    }
+
+    Ok(())
+}
+
+
 // get the termianl width size in characters
 pub fn get_terminal_width(settings: &SettingsMap) -> i64 {
     let res = settings.get_integer("useTerminalWidthOf");
@@ -860,7 +892,44 @@ mod tests {
         assert_eq!("7.5y",tf);
 
     }
+    
+    // #[ignore]
+    #[test]
+    fn t014_get_report_single() {
+        let colors = Colors::new();
+        let settings = SettingsMap::new();
+        let mut hd_set: Hdeci         = Hdeci::new();
+        let dest1 = "./test/pending.data";
+        let dest2 = "./test/settings.txt";
+        let mut pen = List::new(dest1);
+        let _res_sett = settings.save(dest2);
 
+        //from line in file
+        let line = "description:how do i get the konsole that i have now\tdue:1658513756\t\
+                            entry:1658513756\tstart:1658513756\tstatus:pending\tuuiid:0x0011";
+        let line2 = "description:how do i do\tdue:1658513756\t\
+                            entry:1658512756\tstart:1658513756\tstatus:pending\tuuiid:0x0001";
+        let vec:Vec<_> = line.split("\t").collect();
+        let vec2:Vec<_> = line2.split("\t").collect();
+        let task = make_task(vec);
+        let task2 = make_task(vec2);
+        pen.list.push(task.unwrap());
+        pen.list.push(task2.unwrap());
+        pen.save();
+        pen.list.clear();
+        
+        let res_load = load_task_file(dest1, &mut pen, &mut hd_set);
+        remove_file(dest1).expect("Cleanup test failed");
+        remove_file(dest2).expect("Cleanup test failed");
+
+
+        let result = get_integer_single_report(&settings, colors, 1, &pen);
+
+
+
+
+        assert_eq!(result.is_err(), false);
+    }
 
 
 

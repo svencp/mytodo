@@ -305,7 +305,7 @@ pub fn make_task(vec:Vec<&str>) -> Result<Task, &'static str> {
                     }
                     
                     "tags" => {
-                        let split_comma:Vec<_> = split_colon[1].split(":").collect();
+                        let split_comma:Vec<_> = split_colon[1].split(",").collect();
                         for tag in split_comma {
                             ret.tags.push(tag.to_string());
                         }
