@@ -46,31 +46,6 @@ pub fn feedback(status: Feedback, message: String){
     print!("  {}\n",message);
 }
 
-
-// Function to show response times
-pub fn show_response(now: SystemTime){
-    // let my_normal_gray = color::Rgb (177, 177, 177);
-    let duration = now.elapsed().unwrap().as_millis();
-    let message = format!("Program runtime is: {:?}ms", duration);
-    print!("{}{}{}", color::Fg(MY_NORMAL_GRAY), message, style::Reset); 
-}  
-
-
-/*
-    A function that returns a string with repeated char (although
-    in this function it is a string).
-*/
-pub fn repeat_char(ch: String, num: usize) -> String {
-    let mut ret = String::new();
-    for i in 0..num {
-        match i {
-            _ => { ret.push_str(&ch) }
-        }
-    }
-    ret
-}
-
-
 #[allow(dead_code)]
 // A function that justifies a phrase in a given number of characters
 pub fn justify(phrase: String, num: usize, which: Justify) -> String {
@@ -105,6 +80,38 @@ pub fn justify(phrase: String, num: usize, which: Justify) -> String {
 }
 
 
+// A function that returns a string with repeated char (although
+// in this function it is a string).
+pub fn repeat_char(ch: String, num: usize) -> String {
+    let mut ret = String::new();
+    for i in 0..num {
+        match i {
+            _ => { ret.push_str(&ch) }
+        }
+    }
+    ret
+}
+
+
+// Function to show response times
+pub fn show_response(now: SystemTime){
+    // let my_normal_gray = color::Rgb (177, 177, 177);
+    let duration = now.elapsed().unwrap().as_millis();
+    let message = format!("Program runtime is: {:?}ms", duration);
+    print!("{}{}{}", color::Fg(MY_NORMAL_GRAY), message, style::Reset); 
+}  
+
+
+// Underline the whole string
+pub fn underline_string(str: String){
+    print!("{}",style::Underline);
+    for ch in str.chars() {
+        print!("{}",ch);
+    }
+    print!("{}",style::NoUnderline);
+}
+
+
 // tried to transcribe my units eg. task -> tasks
 pub fn units(unit: &str, how_many: usize) -> String {
     if how_many > 1 {
@@ -132,8 +139,13 @@ mod tests {                   //     DONT RUN THE TESTS ABOVE THIS LINE
 
     // #[ignore]
     #[test]
-    fn t001_make_10x_int_1() {
+    fn t001_underline() {
+        let s = justify("Hello Svenny!".to_string(), 40, Justify::Center);
+        underline_string(s.clone());
+        print!("\n");
+        let len = s.clone().len();
 
+        assert_eq!(len, 40);
     }
 
 

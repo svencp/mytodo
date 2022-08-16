@@ -41,16 +41,100 @@ pub fn color_test(colors: Colors) {
     to_color_message(fg, bg, line1);
 }
 
+// get the total of maximum column widths
+pub fn get_max_col_widths(big: Vec<Vec<String>>) -> Result<Vec<usize>, &'static str> {
+    let num_columns = big[0].len() as i64;
+    let mut max:Vec<usize> = vec![0;num_columns as usize];
+    // let mut total_max:i64 = 0;
+    let mut col_num = 0;
+
+    if big.len() == 0 {
+        return Err("Cannot obtain maximum column width");
+    }
+
+    for item in big {
+        col_num = 0;
+
+        for column in item {
+            let len = column.len();
+            if len > max[col_num] {
+                max[col_num] = len;
+            }
+
+            col_num += 1;
+        }
+    }
+
+    Ok(max)
+}
+
+pub fn format_report_single(cols: Vec<usize>, big: Vec<Vec<String>>, desc: Vec<String>, task: Task, colors: Colors) {
+    let mut col_num = 0 as i64;
+    let mut fg = colors.color_complete_orphan;
+    let mut bg:Option<color::Rgb> = None;
+
+    // lets do the header
+    let mut first = justify(big[0][0].clone(), cols[0], Justify::Left);
+    underline_string(first);
+    print!(" ");
+    let mut second = justify(big[0][1].clone(), cols[1], Justify::Left);
+    underline_string(second);
+    print!("\n");
+    
+    // 222222222222222222222222222222222222222
+    first = justify(big[1][0].clone(), cols[0], Justify::Left);
+    second = justify(big[1][1].clone(), cols[1], Justify::Left);
+    bg = Some(colors.color_black_bg);
+    make_dark_print(&first,&second,fg,bg);
+
+    // 3333333333333333333333333333333333333333
+    let fgbg: Vec<Option<color::Rgb>> = 
+
+
+
+
+
+
+
+
+
+
+
+let rr= 99;
+
+    // for item in big {
+    //     col_num = 0;
+
+    //     for column in item {
+    //         print!("{}",column);
+    //         if col_num == 1 {
+                
+    //             print!("\n");
+    //         }
+    //         col_num += 1;
+    //     }
+    // }
+    
+}
+
+// make the dark sting (the alternate fro single report)
+pub fn make_dark_print(first: &str, second: &str, fg: color::Rgb, bg: Option<color::Rgb>){
+    print!("{}{}",color::Fg(fg), color::Bg(bg.unwrap()));
+    print!("{} {}",first,second);
+    print!("{}\n",style::Reset);
+}
+
 
 // show a single id report 'lets hardcode these variables'
-pub fn report_single(width: i64, colors: Colors, task: Task ) -> Result<(), &'static str> {
+pub fn report_single(width: usize, colors: Colors, task: Task ) -> Result<(), &'static str> {
     let mut b_vec:Vec<Vec<String>> = Vec::new();
     let mut first = "Name".to_string();
     let mut second = "Value".to_string();
-    let mut diff = 0 as i64;
+    let mut diff:i64;
     let now = lts_now();
+    let mut desc: Vec<String> = Vec::new();
     let mut date_string = "".to_string();
-    let mut vec = vec![ first , second ];
+    let vec = vec![ first , second ];
     b_vec.push(vec);
     
     // ID
@@ -65,10 +149,22 @@ pub fn report_single(width: i64, colors: Colors, task: Task ) -> Result<(), &'st
     }
     b_vec.push(vec![first,second]);
     
-    // Description
-    first = "Description".to_string();
-    second = task.description;
-    b_vec.push(vec![first,second]);
+    // lets put description into separate vector
+    desc.push(task.description.clone());
+    if task.ann.len() > 0 {
+        let v_anno = task.ann.clone();
+        for a in v_anno {
+            let date = lts_to_date_time_string(a.date);
+            let pusha = "  ".to_string() + &date + " " + &a.desc;
+            desc.push(pusha);
+        }
+    }
+
+
+    // // Description
+    // first = "Description".to_string();
+    // second = task.description.clone();
+    // b_vec.push(vec![first,second]);
     
     // Status
     first = "Status".to_string();
@@ -76,7 +172,7 @@ pub fn report_single(width: i64, colors: Colors, task: Task ) -> Result<(), &'st
     b_vec.push(vec![first,second]);
     
     // Recurrence
-    match task.recur {
+    match task.recur.clone() {
         Some(i) => {
             first = "Recurrence".to_string();
             second = i.to_string();
@@ -87,7 +183,7 @@ pub fn report_single(width: i64, colors: Colors, task: Task ) -> Result<(), &'st
     }
     
     // Parent
-    match task.parent {
+    match task.parent.clone() {
         Some(h) => {
             first = "Parent task".to_string();
             second = h.to_string();
@@ -109,7 +205,7 @@ pub fn report_single(width: i64, colors: Colors, task: Task ) -> Result<(), &'st
     }
     
     // Recurrence type
-    match task.rtype {
+    match task.rtype.clone() {
         Some(h) => {
             first = "Recurrence type".to_string();
             second = h.text().to_string();
@@ -122,7 +218,7 @@ pub fn report_single(width: i64, colors: Colors, task: Task ) -> Result<(), &'st
     // Entered
     first = "Entered".to_string();
     diff = now - task.entry;
-    second = lts_to_date_time_string(task.entry) + format!(" ({})",make_timetracking_timeframe(diff)).as_str(); 
+    second = lts_to_date_time_string(task.entry.clone()) + format!(" ({})",make_timetracking_timeframe(diff)).as_str(); 
     b_vec.push(vec![first,second]);
     
     // Waiting until
@@ -177,7 +273,7 @@ pub fn report_single(width: i64, colors: Colors, task: Task ) -> Result<(), &'st
         _ => {
             first = "Tags".to_string();
             let mut vecco = "".to_string();
-            for tag in task.tags {
+            for tag in task.tags.clone() {
                 vecco.push_str(&tag);
                 vecco.push_str(" ");
             }
@@ -194,7 +290,7 @@ pub fn report_single(width: i64, colors: Colors, task: Task ) -> Result<(), &'st
         _ => {
             first = "Virtual tags".to_string();
             let mut vecco = "".to_string();
-            for tag in task.virtual_tags {
+            for tag in task.virtual_tags.clone() {
                 let t = tag.text().to_uppercase();
                 vecco.push_str(&t);
                 vecco.push_str(" ");
@@ -207,7 +303,7 @@ pub fn report_single(width: i64, colors: Colors, task: Task ) -> Result<(), &'st
     
     // UUIID
     first = "UUIID".to_string();
-    second = task.uuiid;
+    second = task.uuiid.clone();
     b_vec.push(vec![first,second]);
     
     // Timetracking
@@ -222,9 +318,31 @@ pub fn report_single(width: i64, colors: Colors, task: Task ) -> Result<(), &'st
         }
     }
     
-    // format_report_single(width, colors);
-    
+    // b_vec is too small
+    if b_vec.clone().len() < 4 {
+        return Err("Cannot get 4 lines out of the task");
+    }
 
+    let res_max  = get_max_col_widths(b_vec.clone()); 
+    if res_max.is_err() {
+        return Err(res_max.err().unwrap());
+    }
+
+    // get total
+    let mut total_max = 0;
+    for num in res_max.clone().unwrap() {
+        total_max += num;
+    }
+
+    // add the number of spaces
+    let total_len = total_max + 1;
+
+    // Check the width, code later if needed
+    if total_len > width {
+        return Err("We have the width problem");
+    }
+    
+    format_report_single(res_max.unwrap(), b_vec, desc,  task, colors);
 
     
     

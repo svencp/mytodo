@@ -7,7 +7,7 @@
 
 
 use substring::Substring;
-use term_size::dimensions;
+use std::convert::TryFrom;
 use std::process::exit;
 use termion::{color, style};
 use crate::library::task::*;
@@ -272,8 +272,9 @@ pub fn get_integer_single_report(settings: &SettingsMap, colors: Colors, id: i64
     if width.is_err() {
         return Err("Cannot find terminal width.")
     }
+    let u_width = usize::try_from(width.unwrap()).unwrap();
 
-    let result = report_single(width.unwrap(), colors, task);
+    let result = report_single(u_width, colors, task);
     if result.is_err() {
         return Err(result.err().unwrap());
     }

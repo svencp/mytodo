@@ -93,6 +93,16 @@ impl Task {
         }
     }
 
+    
+    pub fn is_active(&self) -> bool {
+        for v in self.virtual_tags.clone() {
+            if v == VirtualTags::Active {
+                return true;
+            }
+        } 
+        return false;
+    }
+
 
 
 
@@ -376,7 +386,7 @@ pub fn make_task(vec:Vec<&str>) -> Result<Task, &'static str> {
             }
         }
 
-    } // end of for elemnt
+    } // end of for element
 
     ret.status = update_status(now, ret.clone());
 

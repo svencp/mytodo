@@ -138,7 +138,7 @@ pub fn load_colors(settings: &SettingsMap) -> Colors {
     }
     ret.color_active_bg = active_bg.unwrap();
     
-    let black = settings.get_color("color_black");
+    let black = settings.get_color("color_black_bg");
     if black.is_err(){
         let message = format!("Error in retrieving color from settings.");
         feedback(Feedback::Error, message);
@@ -154,7 +154,7 @@ pub fn load_colors(settings: &SettingsMap) -> Colors {
     }
     ret.color_feedback_orange = orange_feedback.unwrap();
     
-    let white = settings.get_color("color_white");
+    let white = settings.get_color("color_complete_orphan");
     if white.is_err(){
         let message = format!("Error in retrieving color from settings.");
         feedback(Feedback::Error, message);
