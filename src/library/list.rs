@@ -1,6 +1,6 @@
 /*
-    Module for everything to do with a list consisting of tasks
-    2022.07.24      Sven Ponelat
+Module for everything to do with a list consisting of tasks
+2022.07.24      Sven Ponelat
 
 */
 
@@ -33,50 +33,27 @@ pub struct List<'a> {
 
 impl<'a> List<'a> {
     
-    // make an empty task for compilers sake
-    pub fn new(file: &str) -> List {
-        List { 
-            list: Vec::new(),
-            file: file,
-        }
-    }
-
-
-    // return the id of the new task
-    pub fn save(&self)  {
-        // let path = Path::new(data_file);
-        let path = Path::new(self.file);
-        let big_str = self.make_big_string();
-
-        // let serialized = serde_json::to_string(&self.list);
-        let mut file = match OpenOptions::new()
-                                .read(false)
-                                .write(true)
-                                .create(true)
-                                .truncate(true)
-                                .open(path)  {
-            
-            Err(_) => { 
-                let message = "Problems opening data files".to_string();
-                feedback(Feedback::Error, message);
-                exit(17);
+    // get task from given id
+    pub fn get_task_from_id(&self, id: i64) -> Result<Task, &'static str> {
+        for task in self.list.clone() {
+            if task.id.is_some() {
+                if id == task.id.unwrap() {
+                    return Ok(task)
+                }
             }
-
-            Ok(file)   => { file }
-        };
-        
-        match file.write_all(big_str.as_bytes()) {
-            Err(_)      => { 
-                let message = "Problem writing data file".to_string();
-                feedback(Feedback::Error, message);
-                exit(17);
-            } 
-            Ok(file) => { file }
         }
-
-        // Ok(self.list.len() as i64)
+        Err("Task not found with given id")
     }
     
+    pub fn get_task_from_uuiid(&self, uuiid: String) -> Result<Task, &'static str> {
+        for task in self.list.clone() {
+            if uuiid == task.uuiid {
+                return Ok(task)
+            }
+        }
+        Err("Task not found with given uuiid")
+    }
+
     // make a big string to save to a text file
     pub fn make_big_string(&self) -> String {
         let mut ret:String =  "".to_string();
@@ -93,7 +70,7 @@ impl<'a> List<'a> {
             ret.push_str("\t");
             ret.push_str("status:");
             ret.push_str(&task.status.text().to_lower_case());
-
+    
             if task.ann.len() != 0 {
                 for a in task.ann.clone() {
                     ret.push_str("\tannotation_");
@@ -153,14 +130,73 @@ impl<'a> List<'a> {
                 ret.push_str("\twait:");
                 ret.push_str(&task.wait.unwrap().to_string());
             }
-
+    
             ret.push_str("\n")
+    
+        }
+    
+        return ret;
+    
+    } // end of make_big_string 
 
+    // append another list to this one
+    pub fn append(&mut self, other: List){
+        for task in other.list {
+            self.list.push(task);
+        }
+    }
+
+    // make an empty task for compilers sake
+    pub fn new(file: &str) -> List {
+        List { 
+            list: Vec::new(),
+            file: file,
+        }
+    }
+    
+    // create a list with no reference to a file
+    pub fn new_no_file() -> List<'a> {
+        List { 
+            list: Vec::new(),
+            file: "",
+        }
+    }
+    
+    // return the id of the new task
+    pub fn save(&self)  {
+        // let path = Path::new(data_file);
+        let path = Path::new(self.file);
+        let big_str = self.make_big_string();
+        
+        // let serialized = serde_json::to_string(&self.list);
+        let mut file = match OpenOptions::new()
+                                .read(false)
+                                .write(true)
+                                .create(true)
+                                .truncate(true)
+                                .open(path)  {
+            
+            Err(_) => { 
+                let message = "Problems opening data files".to_string();
+                feedback(Feedback::Error, message);
+                exit(17);
+            }
+
+            Ok(file)   => { file }
+        };
+        
+        match file.write_all(big_str.as_bytes()) {
+            Err(_)      => { 
+                let message = "Problem writing data file".to_string();
+                feedback(Feedback::Error, message);
+                exit(17);
+            } 
+            Ok(file) => { file }
         }
 
-        return ret;
-
-    } // end of make_big_string 
+        // Ok(self.list.len() as i64)
+    }
+    
 
 
 

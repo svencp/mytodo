@@ -250,22 +250,21 @@ pub fn determine_second_arg(args: &Vec<String>, command: &mut String) -> ArgType
     return ArgType::Unknown;
 }
 
-pub fn get_integer_single_report(settings: &SettingsMap, colors: Colors, id: i64, pending: &List)
+pub fn get_integer_single_report(settings: &SettingsMap, colors: Colors, uuiid_int: i64, all: &List)
                                 -> Result<(), &'static str> {
     let mut found = false;
     let mut task:Task = Task::new();
 
-    for t in pending.clone().list {
-        let t_id = t.id.unwrap();
-        if id == t_id {
+    for tasky in all.clone().list {
+        if uuiid_int == tasky.uuiid_int {
             found = true;
-            task = t;
+            task = tasky;
             break;
         }
     }
 
     if ! found {
-        return Err("Task id does not exist.")
+        return Err("Task id or uuiid does not exist.")
     }
 
     let width = settings.get_integer("useTerminalWidthOf");

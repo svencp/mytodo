@@ -10,7 +10,7 @@ use std::str::FromStr;
 
 
 
-#[derive(Clone, Debug, PartialEq  )]
+#[derive(Clone, Debug, Ord, PartialOrd, Eq, PartialEq )]
 #[allow(non_snake_case)]
 pub enum Status {
     Deleted,
@@ -56,7 +56,7 @@ impl FromStr for Status {
 
 
 // enum for recurring type
-#[derive(Clone, Debug, PartialEq  )]
+#[derive(Clone, Debug, Ord, PartialOrd, Eq, PartialEq  )]
 #[allow(non_snake_case)]
 pub enum Rtype {
     Periodic,
@@ -112,7 +112,7 @@ pub enum ArgType {
             
 
 //enum for argument type
-#[derive(Debug, Clone, Eq, PartialEq  )]
+#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq  )]
 #[allow(non_snake_case)]
 pub enum VirtualTags {
     Active,

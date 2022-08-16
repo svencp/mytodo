@@ -50,9 +50,15 @@ fn main() {
 
     let mut pending_tasks:List    = List::new(&pending_file);
     let mut completed_tasks:List  = List::new(&completed_file);
+    let mut all_tasks:List        = List::new_no_file();
     let mut hd_set: Hdeci         = Hdeci::new();
-
+    
     load_all_tasks( &pending_file,&completed_file, &mut pending_tasks, &mut completed_tasks, &mut hd_set);
+    all_tasks.append(pending_tasks.clone());
+    all_tasks.append(completed_tasks.clone());
+    // let all_tasks= &mut completed_tasks.list;
+    // all_tasks.append(&mut pending_tasks.clone().list);
+    // all_tasks.sort();
 
     // let mut next_hexi = get_next_hexidecimal(hexi_set);
 
@@ -73,7 +79,7 @@ fn main() {
             println!("No arguments")
         }
         
-        ArgType::Integer => {
+        ArgType::Integer | ArgType::Hexidecimal => {
             let matcho2: ArgType = determine_second_arg(&arguments, &mut command);
 
             match matcho2 {
@@ -173,17 +179,56 @@ fn main() {
                 } // end of ArgType::Command
 
                 ArgType::None => {
-                    if arg_id.len() != 1 {
-                        let message = "No match -> too many tasks".to_string();
-                        feedback(Feedback::Warning, message);
-                        exit(17);
-                    }
-                    let id = *arg_id.get(0).unwrap();
-                    let result = get_integer_single_report(&settings, colors, id, &pending_tasks);
-                    if result.is_err() {
-                        let message = result.err().unwrap().to_string();
-                        feedback(Feedback::Warning, message);
-                        exit(17);
+
+                    match matcho {
+                        ArgType::Hexidecimal => {
+                            if arg_hex.len() != 1 {
+                                let message = "No match -> too many tasks".to_string();
+                                feedback(Feedback::Warning, message);
+                                exit(17);
+                            }
+                            let uuiid = arg_hex.clone().get(0).unwrap().to_string();
+                            let res_task = all_tasks.clone().get_task_from_uuiid(uuiid);
+                            if res_task.is_err() {
+                                let message = res_task.err().unwrap().to_string();
+                                feedback(Feedback::Warning, message);
+                                exit(17);
+                            }
+                            let uuiid_int = res_task.unwrap().uuiid_int;
+                            let result = get_integer_single_report(&settings, colors, uuiid_int, &all_tasks);
+                            if result.is_err() {
+                                let message = result.err().unwrap().to_string();
+                                feedback(Feedback::Warning, message);
+                                exit(17);
+                            }
+                            
+                        }
+                        ArgType::Integer => {
+                            if arg_id.len() != 1 {
+                                let message = "No match -> too many tasks".to_string();
+                                feedback(Feedback::Warning, message);
+                                exit(17);
+                            }
+
+                            let id = *arg_id.get(0).unwrap();
+                            let res_task = pending_tasks.get_task_from_id(id);
+                            if res_task.is_err() {
+                                let message = res_task.err().unwrap().to_string();
+                                feedback(Feedback::Warning, message);
+                                exit(17);
+                            }
+                            let uuiid_int = res_task.unwrap().uuiid_int;
+                            let result = get_integer_single_report(&settings, colors, uuiid_int, &all_tasks);
+                            if result.is_err() {
+                                let message = result.err().unwrap().to_string();
+                                feedback(Feedback::Warning, message);
+                                exit(17);
+                            }
+
+                        }
+                        _ => {
+
+                        }
                     }
                 }
                 
@@ -208,9 +253,9 @@ fn main() {
             println!("Integer arguments")
         }
         
-        ArgType::Hexidecimal => {
-            println!("Hexidecimal arguments")
-        }
+        // ArgType::Hexidecimal => {
+        //     println!("Hexidecimal arguments")
+        // }
         
         ArgType::Command => {
             match command.as_str() {

@@ -39,7 +39,7 @@ impl Annotation {
 
 
 
-#[derive(Clone )]
+#[derive(Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub struct Task {
     pub ann: Vec<Annotation>, 
     pub description: String,
@@ -100,6 +100,37 @@ impl Task {
                 return true;
             }
         } 
+        return false;
+    }
+    
+    pub fn is_annotated(&self) -> bool {
+        if self.ann.len() > 0 {
+            return true;
+        }
+        return false;
+    }
+
+    pub fn is_periodic(&self) -> bool {
+        if self.rtype.is_some(){
+            if self.clone().rtype.unwrap() == Rtype::Periodic {
+                return true;
+            }
+            return false;
+        }
+        return false;
+    }
+
+    pub fn is_recurring(&self) -> bool {
+        if self.status == Status::Recurring {
+            return true;
+        }
+        return false;
+    }
+    
+    pub fn is_tagged(&self) -> bool {
+        if self.tags.len() > 0 {
+            return true;
+        }
         return false;
     }
 
@@ -296,20 +327,6 @@ pub fn make_task(vec:Vec<&str>) -> Result<Task, &'static str> {
                             return Err(res.err().unwrap())
                         }
                         ret.start = Some(res.unwrap());
-
-                        // let res= split_colon[1].parse::<i64>();
-                        // if res.is_err(){
-                        //     let term = split_colon[1].trim().to_lowercase();
-                        //     if term.starts_with("now") {
-                        //         ret.start = Some(chrono::offset::Local::now().timestamp());
-                        //     }
-                        //     else {
-                        //         return Err("Integer parsing error");           
-                        //     }
-                        // } 
-                        // else {
-                        //     ret.start = Some(res.unwrap());
-                        // }
                     }
                     
                     "status" => {
@@ -317,15 +334,15 @@ pub fn make_task(vec:Vec<&str>) -> Result<Task, &'static str> {
                         if res.is_err(){
                             return Err("Status parsing error");         
                         }
-                        let status = res.clone().unwrap();
+                        // let status = res.clone().unwrap();
                         ret.status = res.unwrap();
 
-                        if status == Status::Waiting {
-                            let wait = ret.wait.unwrap();
-                            if now > wait  {
-                                ret.status = Status::Pending
-                            }
-                        }
+                        // if status == Status::Waiting {
+                        //     let wait = ret.wait.unwrap();
+                        //     if now > wait  {
+                        //         ret.status = Status::Pending
+                        //     }
+                        // }
                     }
                     
                     "tags" => {

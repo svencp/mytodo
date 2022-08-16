@@ -9,10 +9,11 @@
 
 use termion::{color, style};
 use std::process::exit;
-
+use std::cmp;
 use crate::library::functions::make_timetracking_string;
 use crate::library::functions::make_timetracking_timeframe;
 use crate::library::lts::lts_now;
+use crate::library::lts::lts_to_date_string;
 use crate::library::lts::lts_to_date_time_string;
 use crate::library::structs::*;
 use crate::library::settings::*;
@@ -41,39 +42,76 @@ pub fn color_test(colors: Colors) {
     to_color_message(fg, bg, line1);
 }
 
+// get the color scheme according to virtual tags
+pub fn get_colour_scheme(task: Task, colors: Colors) -> Vec<Option<color::Rgb>> {
+    match task.is_active() {
+        true => {
+            let fg = Some(colors.color_complete_orphan);
+            let bg = Some(colors.color_active_bg);
+            return vec![fg,bg];
+        }
+        false => {
+            match task.is_recurring() {
+                true => {
+                    match task.is_periodic() {
+                        true => {
+                            let fg = Some(colors.color_recur_period_fg);
+                            let bg = None;
+                            return vec![fg,bg];
+                        }
+                        false => {
+                            let fg = Some(colors.color_recur_chain_fg);
+                            let bg = None;
+                            return vec![fg,bg];
+                        }
+                    }
+                }
+                false => {
+                    match task.is_tagged() {
+                        true => {
+                            let fg = Some(colors.color_tagged);
+                            let bg = None;
+                            return vec![fg,bg];
+                        }
+                        false => {
+                            let fg = Some(colors.color_complete_orphan);
+                            let bg = None;
+                            return vec![fg,bg];
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 // get the total of maximum column widths
 pub fn get_max_col_widths(big: Vec<Vec<String>>) -> Result<Vec<usize>, &'static str> {
-    let num_columns = big[0].len() as i64;
-    let mut max:Vec<usize> = vec![0;num_columns as usize];
-    // let mut total_max:i64 = 0;
-    let mut col_num = 0;
+    let num_lines = big.len() as i64;
+    let num_columns = big[0].len();
+    let mut v_max:Vec<usize> = vec![0;num_columns];
 
-    if big.len() == 0 {
+    if num_lines == 0 {
         return Err("Cannot obtain maximum column width");
     }
 
-    for item in big {
-        col_num = 0;
-
-        for column in item {
-            let len = column.len();
-            if len > max[col_num] {
-                max[col_num] = len;
-            }
-
-            col_num += 1;
+    for lines in 0..big.len() {
+        for col in 0..big[lines].len() {
+            let len = big[lines][col].len();
+            let prev = v_max[col];
+            v_max[col] = cmp::max(len, prev);
         }
     }
 
-    Ok(max)
+    Ok(v_max)
 }
 
-pub fn format_report_single(cols: Vec<usize>, big: Vec<Vec<String>>, desc: Vec<String>, task: Task, colors: Colors) {
-    let mut col_num = 0 as i64;
-    let mut fg = colors.color_complete_orphan;
-    let mut bg:Option<color::Rgb> = None;
+pub fn format_report_single(cols: Vec<usize>, big: Vec<Vec<String>>, desc: Vec<Vec<String>>, task: Task, colors: Colors) {
+    let fg = colors.color_complete_orphan;
+    let bg = colors.color_black_bg;
 
     // lets do the header
+    print!("\n\n");
     let mut first = justify(big[0][0].clone(), cols[0], Justify::Left);
     underline_string(first);
     print!(" ");
@@ -84,46 +122,91 @@ pub fn format_report_single(cols: Vec<usize>, big: Vec<Vec<String>>, desc: Vec<S
     // 222222222222222222222222222222222222222
     first = justify(big[1][0].clone(), cols[0], Justify::Left);
     second = justify(big[1][1].clone(), cols[1], Justify::Left);
-    bg = Some(colors.color_black_bg);
+    // bg = Some(colors.color_black_bg);
     make_dark_print(&first,&second,fg,bg);
 
     // 3333333333333333333333333333333333333333
-    let fgbg: Vec<Option<color::Rgb>> = 
+    let fgbg = get_colour_scheme(task,colors);
 
+    for i in 0..desc.len() {
+        match i {
+            0 => {
+                match fgbg.get(1).unwrap() {
+                    Some(bg) => {
+                        let d = justify("Description".to_string(), cols[0], Justify::Left);
+                        print!("{} ",d);
+                        let value = desc[i][0].clone();        
+                        let v = justify(value, cols[1], Justify::Left);
+                        print!("{}{}{}",color::Fg(fgbg[0].unwrap()), color::Bg(*bg),v);
+                        print!("{}\n",style::Reset);
+                    }
+                    None => {
+                        let d = justify("Description".to_string(), cols[0], Justify::Left);
+                        print!("{} ",d);
+                        let value = desc[i][0].clone();  
+                        let v = justify(value, cols[1], Justify::Left);
+                        print!("{}{}",color::Fg(fgbg[0].unwrap()),v);
+                        print!("{}\n",style::Reset);
+                    }
+                }
+            }
 
+            _ => {
+                match fgbg.get(1).unwrap() {
+                    Some(bg) => {
+                        let d = repeat_char(" ".to_string(), cols[0]);
+                        print!("{} ",d);
+                        let value = desc[i][0].clone(); 
+                        // remember to take 2 spaces away again for the tab
+                        let v = justify(value, cols[1]-2, Justify::Left);
+                        print!("{}{}  {}",color::Fg(fgbg[0].unwrap()), color::Bg(*bg),v);
+                        print!("{}\n",style::Reset);
+                    }
+                    None => {
+                        let d = repeat_char(" ".to_string(), cols[0]);
+                        print!("{} ",d);
+                        let value = desc[i][0].clone(); 
+                        // remember to take 2 spaces away again for the tab
+                        let v = justify(value, cols[1]-2, Justify::Left);
+                        print!("{}  {}",color::Fg(fgbg[0].unwrap()),v);
+                        print!("{}\n",style::Reset);
+                    }
+                }
+            }
+        }
+    }
 
-
-
-
-
-
-
-
-
-let rr= 99;
-
-    // for item in big {
-    //     col_num = 0;
-
-    //     for column in item {
-    //         print!("{}",column);
-    //         if col_num == 1 {
-                
-    //             print!("\n");
-    //         }
-    //         col_num += 1;
-    //     }
-    // }
-    
+    // 4444444444444444444444444444444444444444444444444444444444444444444444444 onwards
+    for i in 2..big.len() {
+        first = justify(big[i][0].clone(), cols[0], Justify::Left);
+        second = justify(big[i][1].clone(), cols[1], Justify::Left);
+        
+        let remainder = i % 2;
+        match remainder {
+            0 => {
+                make_dark_print(&first,&second,fg,bg);
+            }
+            _ => {
+                make_print(&first, &second, fg);
+            }
+        }
+    }
+    print!("\n\n");
 }
 
 // make the dark sting (the alternate fro single report)
-pub fn make_dark_print(first: &str, second: &str, fg: color::Rgb, bg: Option<color::Rgb>){
-    print!("{}{}",color::Fg(fg), color::Bg(bg.unwrap()));
+pub fn make_dark_print(first: &str, second: &str, fg: color::Rgb, bg:color::Rgb){
+    print!("{}{}",color::Fg(fg), color::Bg(bg));
     print!("{} {}",first,second);
     print!("{}\n",style::Reset);
 }
 
+// make the dark sting (the alternate fro single report)
+pub fn make_print(first: &str, second: &str, fg: color::Rgb){
+    print!("{}",color::Fg(fg));
+    print!("{} {}",first,second);
+    print!("{}\n",style::Reset);
+}
 
 // show a single id report 'lets hardcode these variables'
 pub fn report_single(width: usize, colors: Colors, task: Task ) -> Result<(), &'static str> {
@@ -132,7 +215,7 @@ pub fn report_single(width: usize, colors: Colors, task: Task ) -> Result<(), &'
     let mut second = "Value".to_string();
     let mut diff:i64;
     let now = lts_now();
-    let mut desc: Vec<String> = Vec::new();
+    let mut desc: Vec<Vec<String>> = Vec::new();
     let mut date_string = "".to_string();
     let vec = vec![ first , second ];
     b_vec.push(vec);
@@ -149,14 +232,15 @@ pub fn report_single(width: usize, colors: Colors, task: Task ) -> Result<(), &'
     }
     b_vec.push(vec![first,second]);
     
-    // lets put description into separate vector
-    desc.push(task.description.clone());
+    // lets put description into separate vector  && only give the date (not the time as well)
+    desc.push(vec![task.description.clone()]);
     if task.ann.len() > 0 {
         let v_anno = task.ann.clone();
         for a in v_anno {
-            let date = lts_to_date_time_string(a.date);
-            let pusha = "  ".to_string() + &date + " " + &a.desc;
-            desc.push(pusha);
+            let date = lts_to_date_string(a.date);
+            // let date = lts_to_date_time_string(a.date);
+            let pusha = "".to_string() + &date + " " + &a.desc;
+            desc.push(vec![pusha]);
         }
     }
 
@@ -323,14 +407,27 @@ pub fn report_single(width: usize, colors: Colors, task: Task ) -> Result<(), &'
         return Err("Cannot get 4 lines out of the task");
     }
 
-    let res_max  = get_max_col_widths(b_vec.clone()); 
-    if res_max.is_err() {
-        return Err(res_max.err().unwrap());
+    // get max column widths
+    let result_max_desc = get_max_col_widths(desc.clone()); 
+    if result_max_desc.is_err() {
+        return Err(result_max_desc.err().unwrap());
     }
+    let result_max_bvec = get_max_col_widths(b_vec.clone()); 
+    if result_max_bvec.is_err() {
+        return Err(result_max_bvec.err().unwrap());
+    }
+    // and combine totals; if annotated and a tab of 2 spaces
+    let first_col = result_max_bvec.clone().unwrap()[0];
+    let mut desc_2nd_col = result_max_desc.clone().unwrap()[0];
+    if task.is_annotated(){
+        desc_2nd_col += 2;
+    }
+    let second_col = cmp::max(desc_2nd_col,result_max_bvec.clone().unwrap()[1]);
+    let col_sizes = vec![first_col,second_col];
 
     // get total
     let mut total_max = 0;
-    for num in res_max.clone().unwrap() {
+    for num in col_sizes.clone() {
         total_max += num;
     }
 
@@ -342,7 +439,7 @@ pub fn report_single(width: usize, colors: Colors, task: Task ) -> Result<(), &'
         return Err("We have the width problem");
     }
     
-    format_report_single(res_max.unwrap(), b_vec, desc,  task, colors);
+    format_report_single(col_sizes, b_vec, desc.clone(),  task, colors);
 
     
     

@@ -19,7 +19,7 @@
                     "kind": "bin"
                 }
             },
-            "args": [ "1"  ],
+            "args": [ "0x000009"  ],
             "cwd": "${workspaceFolder}"
         },
         {
