@@ -33,6 +33,24 @@ pub struct List<'a> {
 
 impl<'a> List<'a> {
     
+    // append another list to this one
+    pub fn append(&mut self, other: List){
+        for task in other.list {
+            self.list.push(task);
+        }
+    }
+
+    pub fn get_index_of_task_with_uuiid_int(&self, uuiid_int: i64) -> i64 {
+        let mut index = 0 as i64;
+        for task in self.list.clone() {
+            if task.uuiid_int == uuiid_int {
+                return index;
+            }
+            index += 1;
+        }
+        return -1;
+    }
+
     // get task from given id
     pub fn get_task_from_id(&self, id: i64) -> Result<Task, &'static str> {
         for task in self.list.clone() {
@@ -52,6 +70,15 @@ impl<'a> List<'a> {
             }
         }
         Err("Task not found with given uuiid")
+    }
+    
+    pub fn get_task_from_uuiid_int(&self, uuiid_int: i64) -> Result<Task, &'static str> {
+        for task in self.list.clone() {
+            if uuiid_int == task.uuiid_int {
+                return Ok(task)
+            }
+        }
+        Err("Task not found with given uuiid_int")
     }
 
     // make a big string to save to a text file
@@ -139,12 +166,7 @@ impl<'a> List<'a> {
     
     } // end of make_big_string 
 
-    // append another list to this one
-    pub fn append(&mut self, other: List){
-        for task in other.list {
-            self.list.push(task);
-        }
-    }
+
 
     // make an empty task for compilers sake
     pub fn new(file: &str) -> List {

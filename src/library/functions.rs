@@ -49,19 +49,95 @@ pub fn command_add_task(args: &Vec<String>,  pending: &mut List, hdeci: &mut Hde
 
     pending.list.push(task);
     pending.save();
-    // if save.is_err(){
-    //     let message = save.err().unwrap();
-    //     return Err(message);
-    // }
 
     Ok(pending.list.len() as i64)
+}
+
+// function to add annotations
+pub fn command_add_annotation(args: &Vec<String>, v_int: &Vec<i64>, v_hex: &Vec<String>,
+                                pend: &mut List, comp: &mut List, allt: &List) -> Result<(), &'static str> {
+    if args.len() < 4 {
+        let message = "No annotation(s) given.".to_string();
+        feedback(Feedback::Error, message);
+        exit(17); 
+    }
+    let annotation = &args[3];
+    let mut v_uuiid_int:Vec<i64> = Vec::new();
+
+    match v_int.len() {
+        0 => {
+            // @@@@@@@@@@@@@@@@@@@@ HEXIDECIMAL @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+            for hexi in v_hex {
+                let uuiid_int = allt.get_task_from_uuiid(hexi.clone());
+                if uuiid_int.is_err() {
+                    let message = uuiid_int.err().unwrap().to_string();
+                    feedback(Feedback::Error, message);
+                    exit(17);
+                }
+                v_uuiid_int.push(uuiid_int.unwrap().uuiid_int);
+            }
+            println!("This command will alter {} {}.",v_uuiid_int.len(), units("task", v_uuiid_int.len()));
+            
+            for int in v_uuiid_int.clone() {
+                let found = comp.get_index_of_task_with_uuiid_int(int);
+                if found == -1 {
+                    return Err("Task does not exist in hexidecimal set.");
+                }
+                let u = found as usize;
+                let task = &mut comp.list.remove(u);
+                let mut anno = Annotation::new();
+                anno.date = lts_now();
+                anno.desc = annotation.to_string();
+                task.ann.push(anno);
+                
+                comp.list.insert(u, task.clone());
+                println!("Annotating task {} '{}'.",task.uuiid, task.description);
+            }
+            
+            comp.save();
+        }
+        _ => {
+            // @@@@@@@@@@@@@@@@@@@@ INTEGERS @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+            for inty in v_int {
+                let uuiid_int = allt.get_task_from_id(inty.clone());
+                if uuiid_int.is_err() {
+                    let message = uuiid_int.err().unwrap().to_string();
+                    feedback(Feedback::Error, message);
+                    exit(17);
+                }
+                v_uuiid_int.push(uuiid_int.unwrap().uuiid_int);
+            }
+            println!("This command will alter {} {}.",v_uuiid_int.len(), units("task", v_uuiid_int.len()));
+            
+            for int in v_uuiid_int.clone() {
+                let found = pend.get_index_of_task_with_uuiid_int(int);
+                if found == -1 {
+                    return Err("Task does not exist in hexidecimal set.");
+                }
+                let u = found as usize;
+                let task = &mut pend.list.remove(u);
+                let mut anno = Annotation::new();
+                anno.date = lts_now();
+                anno.desc = annotation.to_string();
+                task.ann.push(anno);
+                
+                pend.list.insert(u, task.clone());
+                println!("Annotating task {} '{}'.",task.uuiid, task.description);
+            }
+            pend.save();
+            
+        } // end of _
+    } // end of match
+    
+    println!("Annotated {} {}.", v_uuiid_int.clone().len(), units("task", v_uuiid_int.clone().len()));
+
+    Ok(())
 }
 
 //function to complete tasks; return number of tasks completed
 pub fn command_done(colors: &Colors, vec_int:Vec<i64>, pending: &mut List, completed: &mut List ) -> Result<i64, &'static str> {
     // remember that tasks are not zero based
     let len = pending.list.len() as i64;
-    let mut vec_mess:Vec<String> = Vec::new();
 
     for element in vec_int.clone() {
         if element > len {

@@ -89,8 +89,17 @@ fn main() {
                     
                     match term {
                         "ann" => {
+
+                            let result = command_add_annotation(&arguments, &arg_id, &arg_hex,
+                                                        &mut pending_tasks, &mut completed_tasks, &all_tasks);
+                            if result.is_err() {
+                                let message = result.err().unwrap().to_string();
+                                feedback(Feedback::Error, message);
+                                exit(17); 
+                            }
+
                             println!("{}",term);
-                        }
+                        } // end of ann
                         
                         "del" => {
                             println!("{}",term);

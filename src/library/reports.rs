@@ -243,13 +243,7 @@ pub fn report_single(width: usize, colors: Colors, task: Task ) -> Result<(), &'
             desc.push(vec![pusha]);
         }
     }
-
-
-    // // Description
-    // first = "Description".to_string();
-    // second = task.description.clone();
-    // b_vec.push(vec![first,second]);
-    
+  
     // Status
     first = "Status".to_string();
     second = task.status.text().to_string();
@@ -416,8 +410,11 @@ pub fn report_single(width: usize, colors: Colors, task: Task ) -> Result<(), &'
     if result_max_bvec.is_err() {
         return Err(result_max_bvec.err().unwrap());
     }
+    // let the first column have a minimum of 14
+    // let first_col = result_max_bvec.clone().unwrap()[0];
+    let first_col = 14;
+
     // and combine totals; if annotated and a tab of 2 spaces
-    let first_col = result_max_bvec.clone().unwrap()[0];
     let mut desc_2nd_col = result_max_desc.clone().unwrap()[0];
     if task.is_annotated(){
         desc_2nd_col += 2;
@@ -441,7 +438,6 @@ pub fn report_single(width: usize, colors: Colors, task: Task ) -> Result<(), &'
     
     format_report_single(col_sizes, b_vec, desc.clone(),  task, colors);
 
-    
     
     println!("report single");
     Ok(())

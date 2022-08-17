@@ -1,3 +1,1 @@
-  2022-06-20 16:58:24 look at conky in arch wiki
-  2021-02-28 02:27:43 brave looks good but has slow scrolling speed
-  
+Virtual tags 
