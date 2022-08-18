@@ -208,6 +208,40 @@ pub fn make_print(first: &str, second: &str, fg: color::Rgb){
     print!("{}\n",style::Reset);
 }
 
+// my active report
+pub fn report_active(pend: &List) -> Result<(),&'static str> {
+    let mut col_sizes = vec![2,10,8,10,0];
+    let headers = vec!["ID", "Started", "Active", "Due", "Description" ];
+    let mut tasks: Vec<Task> = Vec::new();
+    let mut v_desc: Vec<String> = Vec::new();
+
+    // lets get the set of tasks
+    for t in pend.list.clone() {
+        if t.is_active() || t.is_overdue() {
+            tasks.push(t.clone());
+            v_desc.push(t.description);
+            if t.ann.len() > 0 {
+                for a in t.ann {
+                    let line = lts_to_date_string(a.date) + " " + &a.desc;
+                    v_desc.push(line);
+                }
+            }
+        }
+    }
+
+    // do we have anything
+    if tasks.len() == 0 {
+        return Err("no matches");
+    }
+
+
+
+
+
+    Ok(())
+}
+
+
 // show a single id report 'lets hardcode these variables'
 pub fn report_single(width: usize, colors: Colors, task: Task ) -> Result<(), &'static str> {
     let mut b_vec:Vec<Vec<String>> = Vec::new();
@@ -216,7 +250,6 @@ pub fn report_single(width: usize, colors: Colors, task: Task ) -> Result<(), &'
     let mut diff:i64;
     let now = lts_now();
     let mut desc: Vec<Vec<String>> = Vec::new();
-    let mut date_string = "".to_string();
     let vec = vec![ first , second ];
     b_vec.push(vec);
     
@@ -445,7 +478,7 @@ pub fn report_single(width: usize, colors: Colors, task: Task ) -> Result<(), &'
 
 
 // show Nag
-pub fn show_nag(settings: &SettingsMap, colors: Colors) {
+pub fn show_nag(settings: &SettingsMap) {
     let show = settings.get_bool("showNag");
     if show.is_err(){
         let message = "Problems retrieving bool 'showNag' from settings".to_string();
@@ -454,7 +487,7 @@ pub fn show_nag(settings: &SettingsMap, colors: Colors) {
     }
     if show.unwrap() {
         let line = settings.map.get("nag").unwrap().to_string() + "\n";
-        to_orange_feedback(&colors, &line);
+        to_orange_feedback(&line);
     }
 }
 
@@ -464,20 +497,20 @@ pub fn to_color_message(fg: color::Rgb, bg: Option<color::Rgb>, line: &str) {
         Some(c) => {
             print!("{}{}",color::Fg(fg), color::Bg(c));
             print!("{}",line);
-            print!("{}",style::Reset);
+            print!("{}\n",style::Reset);
         }
 
         None => {
             print!("{}",color::Fg(fg));
             print!("{}",line);
-            print!("{}",style::Reset);
+            print!("{}\n",style::Reset);
         }
     }
 }
 
 // my to Orange Feedback Message
-pub fn to_orange_feedback(colors: &Colors, line: &str) {
-    let fg = colors.color_feedback_orange;
+pub fn to_orange_feedback(line: &str) {
+    let fg = crate::COLOR_ORANGE;
     let bg:Option<color::Rgb> = None;
     to_color_message(fg, bg, line);
 }

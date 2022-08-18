@@ -135,145 +135,367 @@ pub fn command_add_annotation(args: &Vec<String>, v_int: &Vec<i64>, v_hex: &Vec<
 }
 
 //function to complete tasks; return number of tasks completed
-pub fn command_done(colors: &Colors, vec_int:Vec<i64>, pending: &mut List, completed: &mut List ) -> Result<i64, &'static str> {
+pub fn command_done(v_id:Vec<i64>, pend: &mut List, comp: &mut List, settings: &SettingsMap  ) -> Result<(), &'static str> {
     // remember that tasks are not zero based
-    let len = pending.list.len() as i64;
+    let mut v_uu_int:Vec<i64> = Vec::new();
+    let mut v_task:Vec<Task>  = Vec::new();
+    let mut mess: Vec<String> = Vec::new();
+    let now               = lts_now();
 
-    for element in vec_int.clone() {
-        if element > len {
-            return Err("Included task number greater than number of tasks")
+    //lets see if all are valid
+    for id in v_id {
+        let task = pend.get_task_from_id(id);
+        if task.is_err() {
+            return Err("One or more id's are not valid.");
         }
+        v_uu_int.push(task.unwrap().uuiid_int);
+    }
 
-        let index = ( element - 1) as usize;
-        let mut task = &mut pending.list[index];
-        // let mut task = *pending.list.clone().get(index).unwrap();
-        if task.id.unwrap() != ( index + 1 ) as i64 {
-            return Err("a task has been fetched whose id's don't match")
-        }
+    println!("This command will alter {} {}.", v_uu_int.len(), units("task", v_uu_int.len()));
 
-        task.end = Some(lts_now());
-        task.status = Status::Completed;
-        
-        let start:i64;
-        match task.start {
+    for uu in v_uu_int.clone() {
+        let index = pend.get_index_of_task_with_uuiid_int(uu);
+        let mut task = pend.list.remove(index as usize);
+
+        match task.start.clone() {
+            Some(secs) => {
+                let diff = now - secs;
+                task.timetrackingseconds +=  diff;
+            }
             None => {
-                start = task.entry;
-            }
-            Some(i) => {
-                start = i;
+                let diff = now - task.entry;
+                task.timetrackingseconds +=  diff;
             }
         }
-
-        task.timetrackingseconds = task.timetrackingseconds + (task.end.unwrap() - start);
         task.start = None;
-
-        // copy to completed
-        let c_task = task.clone();
-        completed.list.insert(0, c_task);
-
-        // give message
-        println!("Completed task {} '{}'",task.uuiid, task.description);
+        
 
 
-    } //end of for element
+        println!("Completed task {} '{}'.", task.clone().uuiid, task.clone().description);
+        let pt = make_timetracking_string(task.timetrackingseconds);
+        v_task.push(task.clone());
+        mess.push(pt);
+    }
 
-    let size = vec_int.len();
-    println!("Completed {} {}",size, units("task",size));
+    pend.save();
+    println!("Completed {} {}.", v_uu_int.clone().len(), units("task", v_uu_int.clone().len()));
+
+    for m in mess.clone() {
+        let line = format!("Total Time Tracked: {}\n", m);
+        to_orange_feedback(&line);
+    }
+
+    for task in v_task {
+        comp.list.push(task);
+    }
+    comp.save();
+    show_nag(settings);
+
+    Ok(())
+
+    // let len = pending.list.len() as i64;
+
+    // for element in vec_int.clone() {
+    //     if element > len {
+    //         return Err("Included task number greater than number of tasks")
+    //     }
+
+    //     let index = ( element - 1) as usize;
+    //     let mut task = &mut pending.list[index];
+    //     // let mut task = *pending.list.clone().get(index).unwrap();
+    //     if task.id.unwrap() != ( index + 1 ) as i64 {
+    //         return Err("a task has been fetched whose id's don't match")
+    //     }
+
+    //     task.end = Some(lts_now());
+    //     task.status = Status::Completed;
+        
+    //     let start:i64;
+    //     match task.start {
+    //         None => {
+    //             start = task.entry;
+    //         }
+    //         Some(i) => {
+    //             start = i;
+    //         }
+    //     }
+
+    //     task.timetrackingseconds = task.timetrackingseconds + (task.end.unwrap() - start);
+    //     task.start = None;
+
+    //     // copy to completed
+    //     let c_task = task.clone();
+    //     completed.list.insert(0, c_task);
+
+    //     // give message
+    //     println!("Completed task {} '{}'",task.uuiid, task.description);
 
 
-    //loop over vector while deciding to remove element
-    pending.list.retain(|task| {
-        let mut remove = false;
-        if task.status == Status::Completed {
-            remove = true;
-            let line = format!("Total Time Tracked: {}\n",make_timetracking_string(task.timetrackingseconds));
-            to_orange_feedback(colors, &line);
-        }
-        !remove
-    });
+    // } //end of for element
 
-    Ok(vec_int.len() as i64)
+    // let size = vec_int.len();
+    // println!("Completed {} {}",size, units("task",size));
+
+
+    // //loop over vector while deciding to remove element
+    // pending.list.retain(|task| {
+    //     let mut remove = false;
+    //     if task.status == Status::Completed {
+    //         remove = true;
+    //         let line = format!("Total Time Tracked: {}\n",make_timetracking_string(task.timetrackingseconds));
+    //         to_orange_feedback(&line);
+    //     }
+    //     !remove
+    // });
+
+    // Ok(vec_int.len() as i64)
 }
 
 
 // start the given tasks
-pub fn command_start(vec_int:Vec<i64>, pending: &mut List ) -> Result<i64, &'static str> {
-    // remember that tasks are not zero based
-    let len = pending.list.len() as i64;
-    let mut num_started = 0 as i64;
+pub fn command_start(v_int: &Vec<i64>, v_hex: &Vec<String>,
+                        pend: &mut List, comp: &mut List) -> Result<(), &'static str> {
+    let mut v_indeces: Vec<usize> = Vec::new();
 
-    for element in vec_int.clone() {
-        if element > len {
-            return Err("Included task number greater than number of tasks")
+    // we can do one hexidecimal start, but balk at more than one
+    match v_hex.len() {
+        // do one or more integers
+        0 => {
+            // lets see if they are all valid
+            for id in v_int.clone() {
+                let task = pend.get_task_from_id(id);
+                if task.is_err() {
+                    return Err("Invalid task id's given.")
+                }
+                match task.clone().unwrap().start {
+                    None => {
+                        let index = pend.get_index_of_task_with_uuiid_int(task.unwrap().uuiid_int) as usize;
+                        v_indeces.push(index);
+                    }
+                    Some(s) => {
+                        let now = lts_now();
+                        let in_future = s > now;
+                        match in_future {
+                            true => {
+                                println!("Task {} has already been scheduled to start.", task.clone().unwrap().id.unwrap() );
+                                let index = pend.get_index_of_task_with_uuiid_int(task.clone().unwrap().uuiid_int) as usize;
+                                v_indeces.push(index);
+                            }
+                            false => {
+                                println!("Task {} already started.", task.clone().unwrap().id.unwrap() );
+                            }
+                        }
+                    }
+                }
+            }
+
+            println!("This command will alter {} {}", v_indeces.len(), units("task", v_indeces.len()));
+
+            for u in v_indeces.clone() {
+                pend.start_task(u);
+            }
+
+            // save if changes have been made
+            if v_indeces.len() > 0 {
+                pend.save();
+            }
+            println!("Started {} {}", v_indeces.len(), units("task", v_indeces.len()));
         }
+        1 => {
+            // lets see if they are all valid
+            for hex in v_hex.clone() {
+                let task = comp.get_task_from_uuiid(hex);
+                if task.is_err() {
+                    return Err("Invalid task hexidecimal given (or not in completed tasks).")
+                }
+                let index = comp.get_index_of_task_with_uuiid_int(task.unwrap().uuiid_int) as usize;
+                v_indeces.push(index);
+            }
 
-        let index = ( element - 1) as usize;
-        let mut task = &mut pending.list[index];
-        if task.id.unwrap() != ( index + 1 ) as i64 {
-            return Err("a task has been fetched whose id's don't match")
+            println!("This command will alter {} {}", v_indeces.len(), units("task", v_indeces.len()));
+
+            for u in v_indeces.clone() {
+                comp.start_task(u);
+            }
+
+            // swap out task and save changes
+            if v_indeces.len() > 0 {
+                let t = comp.list.remove(v_indeces[0]);
+                comp.save();
+                pend.list.push(t);
+                pend.save();
+            }
+            println!("Started {} {}", v_indeces.len(), units("task", v_indeces.len()));
         }
-
-        if task.start.is_some() {
-            println!("Task {} '{}' already started.",task.id.unwrap(), task.description);
-            continue;
+        // too many hexidecimals
+        _ => {
+            return Err("Too many hexidecimal tasks are started.")
         }
-
-        task.start = Some(lts_now());
-        num_started += 1;
     }
 
-    Ok( num_started )
+    Ok(())
 }
 
 // stop the given tasks
-pub fn command_stop(vec_int:Vec<i64>, pending: &mut List, sett: &SettingsMap ) -> Result<(), &'static str> {
+pub fn command_stop(v_int: &Vec<i64>, v_hex: &Vec<String>,
+                    pend: &mut List, allt: &List) -> Result<(), &'static str> {
     // remember that tasks are not zero based
-    let len = pending.list.len() as i64;
-    let mut num_stopped = 0 as i64;
-    let stop = lts_now();
-    let mut vec_mess:Vec<String> = Vec::new();
+    let mut v_index: Vec<usize> = Vec::new();
+    let mut mess: Vec<String> = Vec::new();
+    let now = lts_now();
 
-    for element in vec_int.clone() {
-        if element > len {
-            return Err("Included task number greater than number of tasks")
+    match v_hex.len() {
+        0 => {
+            // assume all are id's
+            for id in v_int.clone() {
+                let res_index = pend.get_index_of_task_with_id(id);
+                if res_index < 0 {
+                    return Err("One (or all) of the given id's are not valid.")
+                }
+                let task = pend.list.get(res_index as usize).unwrap();
+                match task.clone().start {
+                    Some(_s) => {
+                        v_index.push(res_index as usize);
+                    }
+                    None => {
+                        println!("Task {} '{}' has not started",task.clone().id.unwrap(), task.clone().description);
+                    }
+                }
+            }
+            
+            // lets stop the tasks
+            for t in v_index.clone() {
+                let mut task = pend.list.remove(t);
+                // let now = lts_now();
+                let diff = now - task.start.unwrap();
+                task.timetrackingseconds +=  diff;
+                task.start = None;
+                
+                println!("Stopping task {} '{}'.", task.clone().uuiid, task.clone().description);
+                let pt = make_timetracking_string(task.timetrackingseconds);
+                mess.push(pt);
+                pend.list.insert(t, task.clone());
+            }
+            
+            println!("Stopped {} {}.", v_index.clone().len(), units("task", v_index.clone().len()));
+            for m in mess.clone() {
+                let line = format!("Total Time Tracked: {}\n", m);
+                to_orange_feedback(&line);
+            }
+            
+            if mess.clone().len() > 0 {
+                pend.save()
+            }
         }
-
-        let index = ( element - 1) as usize;
-        let mut task = &mut pending.list[index];
-        if task.id.unwrap() != ( index + 1 ) as i64 {
-            return Err("a task has been fetched whose id's don't match")
+        1 => {
+            // assume one hex
+            // let mut changed = false;
+            let index = allt.get_index_of_task_with_uuiid(&v_hex[0]);
+            if index < 0 {
+                return Err("The given hexidecimal string is not valid.")
+            }
+            let temp = allt.list.get(index as usize).unwrap();
+            match temp.is_complete() {
+                true => {
+                    println!("Task {} '{}' not started.",temp.uuiid, temp.description);
+                }
+                false => {
+                    let ii = pend.get_index_of_task_with_uuiid_int(temp.uuiid_int);
+                    if ii < 0 {
+                        return Err("Seems an invalid index somewhere here.")
+                    }
+                    let mut task = pend.list.remove(ii as usize);
+                    // let now = lts_now();
+                    let diff = now - task.start.unwrap();
+                    task.timetrackingseconds +=  diff;
+                    task.start = None;
+                    
+                    println!("Stopping task {} '{}'.", task.clone().uuiid, task.clone().description);
+                    let pt = make_timetracking_string(task.timetrackingseconds);
+                    mess.push(pt);
+                    pend.list.insert(ii as usize, task.clone());
+                }
+            }
+            
+            println!("Stopped {} {}.", mess.clone().len(), units("task", mess.clone().len()));
+            for m in mess.clone() {
+                let line = format!("Total Time Tracked: {}\n", m);
+                to_orange_feedback(&line);
+            }
+            
+            if mess.clone().len() > 0 {
+                pend.save()
+            }
         }
-
-        if task.start.is_none() {
-            println!("Task {} '{}' has not started.",task.id.unwrap(), task.description);
-            continue;
+        _ => {
+            return Err("Too many hexidecimal strings - abandoned.");
         }
-        
-        task.timetrackingseconds = task.timetrackingseconds + ( stop - task.start.unwrap());
-        task.status = Status::Pending;
-        task.start = None;
-        
-        println!("Stopping task {} '{}'.",task.uuiid, task.description);
-
-        num_stopped += 1;
-
-        let mess = "Total Time Tracked: ".to_string() + &make_timetracking_string(task.timetrackingseconds);
-        vec_mess.push(mess);
     }
 
-    let s1 = sett.clone().get_color("color_general_orange");
-    if s1.is_err(){
-        return Err("Colour missing in settings file.")
-    }
 
-    println!("Stopped {} {}.",num_stopped.to_string(), units("task",num_stopped as usize));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // let len = pending.list.len() as i64;
+    // let mut num_stopped = 0 as i64;
+    // let stop = lts_now();
+    // let mut vec_mess:Vec<String> = Vec::new();
+
+    // for element in vec_int.clone() {
+    //     if element > len {
+    //         return Err("Included task number greater than number of tasks")
+    //     }
+
+    //     let index = ( element - 1) as usize;
+    //     let mut task = &mut pending.list[index];
+    //     if task.id.unwrap() != ( index + 1 ) as i64 {
+    //         return Err("a task has been fetched whose id's don't match")
+    //     }
+
+    //     if task.start.is_none() {
+    //         println!("Task {} '{}' has not started.",task.id.unwrap(), task.description);
+    //         continue;
+    //     }
+        
+    //     task.timetrackingseconds = task.timetrackingseconds + ( stop - task.start.unwrap());
+    //     task.status = Status::Pending;
+    //     task.start = None;
+        
+    //     println!("Stopping task {} '{}'.",task.uuiid, task.description);
+
+    //     num_stopped += 1;
+
+    //     let mess = "Total Time Tracked: ".to_string() + &make_timetracking_string(task.timetrackingseconds);
+    //     vec_mess.push(mess);
+    // }
+
+    // let s1 = sett.clone().get_color("color_general_orange");
+    // if s1.is_err(){
+    //     return Err("Colour missing in settings file.")
+    // }
+
+    // println!("Stopped {} {}.",num_stopped.to_string(), units("task",num_stopped as usize));
     
-    let my_report_orange: color::Rgb = s1.unwrap();
-    for line in vec_mess {
-        print!("{}",color::Fg(my_report_orange));
-        print!("{}.", line.to_string()); 
-        print!("{}\n", style::Reset);  
-    }
+    // let my_report_orange: color::Rgb = s1.unwrap();
+    // for line in vec_mess {
+    //     print!("{}",color::Fg(my_report_orange));
+    //     print!("{}.", line.to_string()); 
+    //     print!("{}\n", style::Reset);  
+    // }
 
     Ok(())
 }
@@ -390,8 +612,16 @@ pub fn hexi_verify(str: &str) -> Result<i64, &'static str> {
 pub fn is_arg_command(first: &str) -> Result< &str, &str> {
     
     match first {
+        "active" | "-a" | "a" => {
+            return Ok("active");
+        }
+
         "add" => {
             return Ok(first);
+        }
+
+        "-c" | "-color_test" | "c" | "color" | "color_test" | "-color" | "colortest" => {
+            return Ok("colortest");
         }
         
         "mycompleted" => {
@@ -400,10 +630,6 @@ pub fn is_arg_command(first: &str) -> Result< &str, &str> {
         
         "-v" | "-version" | "v" | "ver" | "version" | "-ver" => {
             return Ok("version");
-        }
-        
-        "-c" | "-color_test" | "c" | "color" | "color_test" | "-color" => {
-            return Ok("colortest");
         }
 
         _ => {

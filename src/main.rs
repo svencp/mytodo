@@ -25,10 +25,11 @@ use thousands::{Separable};
 use std::time::{SystemTime};
 
 
-pub const VERSION: &str         = env!("CARGO_PKG_VERSION");
-pub const PENDING: &str         = "./test/working/pending.data";
-pub const COMPLETED: &str       = "./test/working/completed.data";
-pub const SETTINGS_FILE: &str   = "settings.txt";
+pub const VERSION: &str            = env!("CARGO_PKG_VERSION");
+pub const PENDING: &str            = "./test/working/pending.data";
+pub const COMPLETED: &str          = "./test/working/completed.data";
+pub const SETTINGS_FILE: &str      = "settings.txt";
+pub const COLOR_ORANGE: color::Rgb = color::Rgb(246,116,0);
 
 
 
@@ -41,7 +42,7 @@ fn main() {
     let mut arg_hex:  Vec<String> = Vec::new();
 
     let settings = load_settings(SETTINGS_FILE);
-    let terminal_width = get_terminal_width(&settings);
+    // let terminal_width = get_terminal_width(&settings);
     let colors = load_colors(&settings);
     let data_dir = settings.map.get("dataDir").unwrap().to_string();
 
@@ -89,7 +90,6 @@ fn main() {
                     
                     match term {
                         "ann" => {
-
                             let result = command_add_annotation(&arguments, &arg_id, &arg_hex,
                                                         &mut pending_tasks, &mut completed_tasks, &all_tasks);
                             if result.is_err() {
@@ -111,22 +111,12 @@ fn main() {
                         
                         // done
                         "don" => {
-                            let result = command_done(&colors,arg_id, 
-                                                            &mut pending_tasks, &mut completed_tasks);
+                            let result = command_done(arg_id, &mut pending_tasks, &mut completed_tasks, &settings);
                             if result.is_err(){
                                 let message = result.err().unwrap().to_string();
                                 feedback(Feedback::Error, message);
                                 exit(17);
                             }
-                            // let size = result.unwrap() as usize;
-                            pending_tasks.save();
-                            completed_tasks.save();
-                            // if save1.is_err() || save2.is_err() {
-                            //     let message = "Problems saving data files".to_string();
-                            //     feedback(Feedback::Error, message);
-                            //     exit(17);
-                            // }
-                            show_nag(&settings,colors);
                         }
                         
                         "dup" => {
@@ -147,36 +137,24 @@ fn main() {
 
                         // start
                         "sta" => {
-                            let result = command_start(arg_id, &mut pending_tasks);
+                            let result = command_start( &arg_id, &arg_hex,
+                                                        &mut pending_tasks, &mut completed_tasks);
                             if result.is_err(){
                                 let message = result.err().unwrap().to_string();
                                 feedback(Feedback::Error, message);
                                 exit(17);
                             }
-                            let size = result.unwrap() as usize;
-                            pending_tasks.save();
-                            // if save1.is_err() {
-                            //     let message = "Problems saving pending data files".to_string();
-                            //     feedback(Feedback::Error, message);
-                            //     exit(17);
-                            // }
-                            println!("Started {} {}.",size, units("task",size));
                         }
                         
+                        // stop
                         "sto" => {
-                            let result = command_stop(arg_id, &mut pending_tasks, &settings);
+                            let result = command_stop( &arg_id, &arg_hex,
+                                        &mut pending_tasks, &all_tasks);
                             if result.is_err(){
                                 let message = result.err().unwrap().to_string();
                                 feedback(Feedback::Error, message);
                                 exit(17);
                             }
-                            pending_tasks.save();
-                            // if save1.is_err() {
-                            //     let message = "Problems saving pending data files".to_string();
-                            //     feedback(Feedback::Error, message);
-                            //     exit(17);
-                            // }
-
                         }
                         
                         _ => {
@@ -262,12 +240,18 @@ fn main() {
             println!("Integer arguments")
         }
         
-        // ArgType::Hexidecimal => {
-        //     println!("Hexidecimal arguments")
-        // }
         
         ArgType::Command => {
             match command.as_str() {
+                "active" => {
+                    let result = report_active(&pending_tasks);
+                    if result.is_err() {
+                        let message = result.err().unwrap().to_string();
+                        feedback(Feedback::Warning, message);
+                        // exit(17);
+                    }
+                }
+
                 "add" => {
                     let result_add = command_add_task(&arguments ,&mut pending_tasks, &mut hd_set);
                     if result_add.is_err(){
@@ -276,10 +260,6 @@ fn main() {
                         exit(17);
                     }
                     println!("Created task {}",result_add.unwrap());
-                    // for i in hd_set.set {
-                    //     println!(" {}",hexidecimal_to_string(i));
-                    // }
-
                 }
 
                 "colortest" => {

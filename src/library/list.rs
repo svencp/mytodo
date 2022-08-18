@@ -20,6 +20,8 @@ use std::io::prelude::*;
 use std::collections::{BTreeSet, BTreeMap};
 use std::process::exit;
 
+use super::lts::lts_now;
+
 
 
 
@@ -38,6 +40,30 @@ impl<'a> List<'a> {
         for task in other.list {
             self.list.push(task);
         }
+    }
+
+    pub fn get_index_of_task_with_id(&self, id: i64) -> i64 {
+        let mut index = 0 as i64;
+        for task in self.list.clone() {
+            if task.id.is_some() {
+                if task.id.unwrap() == id {
+                    return index;
+                }
+            }
+            index += 1;
+        }
+        return -1;
+    }
+    
+    pub fn get_index_of_task_with_uuiid(&self, uuiid: &str) -> i64 {
+        let mut index = 0 as i64;
+        for task in self.list.clone() {
+            if task.uuiid == uuiid {
+                return index;
+            }
+            index += 1;
+        }
+        return -1;
     }
 
     pub fn get_index_of_task_with_uuiid_int(&self, uuiid_int: i64) -> i64 {
@@ -219,8 +245,22 @@ impl<'a> List<'a> {
         // Ok(self.list.len() as i64)
     }
     
+    // start the task
+    pub fn start_task(&mut self, index: usize) {
+        let mut task = self.list.remove(index);
+        if task.end.is_some() {
+            task.end = None;
+        }
+        task.status = Status::Pending;
+        task.start = Some(lts_now());
+        if task.timetrackingseconds < 0 {
+            task.timetrackingseconds = 0;
+        }
 
+        println!("Starting task {} '{}'.",task.uuiid,task.description);
 
+        self.list.insert(index, task.clone());
+    }
 
 
 
@@ -625,8 +665,40 @@ mod tests {
 
         assert_eq!(pen.list.len(), 2);
     }
+    
+    // #[ignore]
+    #[test]
+    fn t004_get_index_of_task_with_id() {
 
+        // let mut completed: List = List::new();
+        // let mut h_set:BTreeSet<i64> = BTreeSet::new();
+        let mut hd_set: Hdeci         = Hdeci::new();
+        let destination = "./test/trial.data";
+        let mut pen = List::new(destination);
 
+        //from line in file
+        let line = "description:how do i get the konsole that i have now\tdue:1658513756\t\
+                            entry:1658513756\tstart:1658513756\tstatus:pending\tuuiid:0x0011";
+        let line2 = "description:how do i do\tdue:1658513756\t\
+                            entry:1658512756\tstart:1658513756\tstatus:pending\tuuiid:0x0001";
+        let vec:Vec<_> = line.split("\t").collect();
+        let vec2:Vec<_> = line2.split("\t").collect();
+        let task = make_task(vec);
+        let task2 = make_task(vec2);
+        pen.list.push(task.unwrap());
+        pen.list.push(task2.unwrap());
+        pen.save();
+
+        let mut pending_tasks = List::new(&destination);
+        let res = load_task_file(pending_tasks.file, &mut pending_tasks, &mut hd_set);
+        remove_file(destination).expect("Cleanup test failed");
+        
+        let index = pending_tasks.get_index_of_task_with_id(2);
+        assert_eq!(1, index);
+        
+        let ii = pending_tasks.get_index_of_task_with_uuiid("0x0011");
+        assert_eq!(ii, 0);
+    }
 
 
 

@@ -68,32 +68,6 @@ pub struct Task {
 
 impl Task {
     
-    // make an empty task for compilers sake
-    pub fn new() -> Task {
-        Task { 
-            ann: Vec::new(),
-            description: "".to_string(),
-            due: None,
-            end: None,
-            entry: lts_now(),
-            id: None,
-            parent_int: None,
-            parent: None,
-            prodigy: None,
-            recur: None,
-            rtype: None,
-            start: None,
-            status: Status::Pending, 
-            tags: Vec::new(),
-            timetrackingseconds: 0,
-            uuiid_int: 0,
-            uuiid: "".to_string(),
-            virtual_tags: Vec::new(),
-            wait: None,
-        }
-    }
-
-    
     pub fn is_active(&self) -> bool {
         for v in self.virtual_tags.clone() {
             if v == VirtualTags::Active {
@@ -107,6 +81,22 @@ impl Task {
         if self.ann.len() > 0 {
             return true;
         }
+        return false;
+    }
+    
+    pub fn is_complete(&self) -> bool {
+        if self.end.is_some() {
+            return true;
+        }
+        return false;
+    }
+
+    pub fn is_overdue(&self) -> bool {
+        for v in self.virtual_tags.clone() {
+            if v == VirtualTags::Overdue {
+                return true;
+            }
+        } 
         return false;
     }
 
@@ -133,6 +123,32 @@ impl Task {
         }
         return false;
     }
+
+    // make an empty task for compilers sake
+    pub fn new() -> Task {
+        Task { 
+            ann: Vec::new(),
+            description: "".to_string(),
+            due: None,
+            end: None,
+            entry: lts_now(),
+            id: None,
+            parent_int: None,
+            parent: None,
+            prodigy: None,
+            recur: None,
+            rtype: None,
+            start: None,
+            status: Status::Pending, 
+            tags: Vec::new(),
+            timetrackingseconds: 0,
+            uuiid_int: 0,
+            uuiid: "".to_string(),
+            virtual_tags: Vec::new(),
+            wait: None,
+        }
+    }
+
 
 
 
