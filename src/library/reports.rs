@@ -674,6 +674,8 @@ pub fn report_single(settings: &SettingsMap, colors: &Colors, task: &Task ) -> R
     let headers = vec![ "Name", "Value" ];
     let mut first_col:Vec<String>  = Vec::new(); 
     let mut second_col:Vec<String> = Vec::new(); 
+    let mut diff:i64;
+    let now = lts_now();
 
     // ID
     first_col.push("ID".to_string());
@@ -685,8 +687,66 @@ pub fn report_single(settings: &SettingsMap, colors: &Colors, task: &Task ) -> R
             second_col.push("-".to_string());
         }
     }
-
+    
     // Description
+    first_col.push("Description".to_string());
+    second_col.push(task.clone().description.to_string());
+    
+    // & Annotations
+    for anno in task.clone().ann {
+        first_col.push("".to_string());
+        let line = lts_to_date_time_string(anno.date) + " " + &anno.desc;
+        second_col.push(line);
+    }
+
+    // Status
+    first_col.push("Status".to_string());
+    second_col.push(task.status.text().to_string());
+
+    // Recurrence
+    if task.has_recur(){
+        first_col.push("Recurrence".to_string());
+        second_col.push(task.clone().recur.unwrap().to_string());
+    }
+    
+    // Parent
+    if task.is_child(){
+        first_col.push("Parent task".to_string());
+        second_col.push(task.clone().parent.unwrap().to_string());
+    }
+    
+    // Prodigy
+    if task.has_prodigy(){
+        first_col.push("Prodigy".to_string());
+        second_col.push(task.clone().prodigy.unwrap().to_string());
+    }
+    
+    // Recurrence type
+    if task.has_recur(){
+        first_col.push("Recurrence type".to_string());
+        second_col.push(task.clone().rtype.unwrap().text().to_string());
+    }
+    
+    // Entered
+    first_col.push("Entered".to_string());
+    diff = now - task.entry;
+    let second = lts_to_date_time_string(task.entry.clone()) + format!(" ({})",make_timetracking_timeframe(diff)).as_str(); 
+    second_col.push(second);
+    
+
+    // Waiting until
+    if task.has_wait(){
+        first_col.push("Waiting until".to_string());
+        second_col.push(task.clone().wait.unwrap().to_string());
+    }
+
+    // Start
+    if task.has_start(){
+        first_col.push("Start".to_string());
+        second_col.push(task.clone().start.unwrap().to_string());
+    }
+
+
 
 
 

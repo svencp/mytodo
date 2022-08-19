@@ -68,8 +68,29 @@ pub struct Task {
 
 impl Task {
     
+    pub fn has_prodigy(&self) -> bool {
+        if self.prodigy.is_some(){
+            return true;
+        }
+        return false;
+    }
+
     pub fn has_recur(&self) -> bool {
         if self.recur.is_some(){
+            return true;
+        }
+        return false;
+    }
+    
+    pub fn has_start(&self) -> bool {
+        if self.start.is_some(){
+            return true;
+        }
+        return false;
+    }
+
+    pub fn has_wait(&self) -> bool {
+        if self.wait.is_some(){
             return true;
         }
         return false;
@@ -91,6 +112,15 @@ impl Task {
         return false;
     }
     
+    pub fn is_child(&self) -> bool {
+        if self.has_recur() {
+            if self.parent.is_some() {
+                return true;
+            }
+        }
+        return false;
+    }
+
     pub fn is_complete(&self) -> bool {
         if self.end.is_some() {
             return true;
@@ -104,6 +134,15 @@ impl Task {
                 return true;
             }
         } 
+        return false;
+    }
+
+    pub fn is_parent(&self) -> bool {
+        if self.has_recur() {
+            if self.parent.is_none(){
+                return true;
+            }
+        }
         return false;
     }
 
