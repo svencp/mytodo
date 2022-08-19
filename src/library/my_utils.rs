@@ -147,7 +147,13 @@ mod tests {                   //     DONT RUN THE TESTS ABOVE THIS LINE
 
         assert_eq!(len, 40);
     }
-
+    
+    // #[ignore]
+    #[test]
+    fn t002_justify() {
+        let s = justify("1.5y".to_string(), 7, Justify::Right);
+        assert_eq!(s.len(), 7);
+    }
 
 
 

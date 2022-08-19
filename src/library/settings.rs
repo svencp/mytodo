@@ -40,6 +40,7 @@ impl SettingsMap {
         map.insert("color_black_bg".to_string(), "(28,28,28)".to_string());
         map.insert("color_complete_orphan".to_string(), "(255,255,255)".to_string());
         map.insert("color_feedback_orange".to_string(), "(246,116,0)".to_string());
+        map.insert("color_overdue".to_string(), "(192,57,43)".to_string());
         map.insert("color_recur_chain_fg".to_string(), "(29,153,243)".to_string());
         map.insert("color_recur_period_fg".to_string(), "(0,95,175)".to_string());
         map.insert("color_tagged".to_string(), "(0,175,95)".to_string());

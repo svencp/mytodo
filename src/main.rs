@@ -244,11 +244,10 @@ fn main() {
         ArgType::Command => {
             match command.as_str() {
                 "active" => {
-                    let result = report_active(&pending_tasks);
+                    let result = report_active(&settings, &pending_tasks);
                     if result.is_err() {
                         let message = result.err().unwrap().to_string();
                         feedback(Feedback::Warning, message);
-                        // exit(17);
                     }
                 }
 
@@ -266,8 +265,12 @@ fn main() {
                     color_test(colors);
                 }
 
-                "mycompleted" => {
-
+                "completed" => {
+                    let result = report_completed(&settings, &completed_tasks);
+                    if result.is_err() {
+                        let message = result.err().unwrap().to_string();
+                        feedback(Feedback::Warning, message);
+                    }
                 }
                 
                 "version" => {
@@ -284,7 +287,7 @@ fn main() {
 
 
         _ => {
-            println!("What happened here!")
+            println!("Garbage in -> garbage out!")
         }
 
     }//end of match

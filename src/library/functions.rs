@@ -20,6 +20,30 @@ use crate::library::enums::*;
 use crate::library::reports::*;
 
 
+// align the timeframe like ' 1.5y  '   and       '   7min'
+pub fn align_timeframe(secs: i64) -> String {
+    let tf = &make_timetracking_timeframe(secs);
+
+    // currently only looking for strings of length 7
+    let padded = justify(tf.to_string(), 7, Justify::Right);
+    
+    if  tf.contains("h") ||
+        tf.contains("w") ||
+        tf.contains("s") ||
+        tf.contains("d") ||
+        tf.contains("y") {
+            let mut shortened = padded[2..].to_string();
+            shortened.push_str("  ");
+            return shortened
+        }
+        
+    if tf.contains("mo") {
+        let mut shortened = padded[1..].to_string();
+        shortened.push_str(" ");
+        return shortened
+    }
+    return padded.to_string()
+}
 
 // function to add task from command line
 pub fn command_add_task(args: &Vec<String>,  pending: &mut List, hdeci: &mut Hdeci ) -> Result<i64, String> {
@@ -168,9 +192,9 @@ pub fn command_done(v_id:Vec<i64>, pend: &mut List, comp: &mut List, settings: &
             }
         }
         task.start = None;
+        task.end = Some(now);
+        task.status = Status::Completed;
         
-
-
         println!("Completed task {} '{}'.", task.clone().uuiid, task.clone().description);
         let pt = make_timetracking_string(task.timetrackingseconds);
         v_task.push(task.clone());
@@ -192,63 +216,6 @@ pub fn command_done(v_id:Vec<i64>, pend: &mut List, comp: &mut List, settings: &
     show_nag(settings);
 
     Ok(())
-
-    // let len = pending.list.len() as i64;
-
-    // for element in vec_int.clone() {
-    //     if element > len {
-    //         return Err("Included task number greater than number of tasks")
-    //     }
-
-    //     let index = ( element - 1) as usize;
-    //     let mut task = &mut pending.list[index];
-    //     // let mut task = *pending.list.clone().get(index).unwrap();
-    //     if task.id.unwrap() != ( index + 1 ) as i64 {
-    //         return Err("a task has been fetched whose id's don't match")
-    //     }
-
-    //     task.end = Some(lts_now());
-    //     task.status = Status::Completed;
-        
-    //     let start:i64;
-    //     match task.start {
-    //         None => {
-    //             start = task.entry;
-    //         }
-    //         Some(i) => {
-    //             start = i;
-    //         }
-    //     }
-
-    //     task.timetrackingseconds = task.timetrackingseconds + (task.end.unwrap() - start);
-    //     task.start = None;
-
-    //     // copy to completed
-    //     let c_task = task.clone();
-    //     completed.list.insert(0, c_task);
-
-    //     // give message
-    //     println!("Completed task {} '{}'",task.uuiid, task.description);
-
-
-    // } //end of for element
-
-    // let size = vec_int.len();
-    // println!("Completed {} {}",size, units("task",size));
-
-
-    // //loop over vector while deciding to remove element
-    // pending.list.retain(|task| {
-    //     let mut remove = false;
-    //     if task.status == Status::Completed {
-    //         remove = true;
-    //         let line = format!("Total Time Tracked: {}\n",make_timetracking_string(task.timetrackingseconds));
-    //         to_orange_feedback(&line);
-    //     }
-    //     !remove
-    // });
-
-    // Ok(vec_int.len() as i64)
 }
 
 
@@ -432,71 +399,6 @@ pub fn command_stop(v_int: &Vec<i64>, v_hex: &Vec<String>,
         }
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    // let len = pending.list.len() as i64;
-    // let mut num_stopped = 0 as i64;
-    // let stop = lts_now();
-    // let mut vec_mess:Vec<String> = Vec::new();
-
-    // for element in vec_int.clone() {
-    //     if element > len {
-    //         return Err("Included task number greater than number of tasks")
-    //     }
-
-    //     let index = ( element - 1) as usize;
-    //     let mut task = &mut pending.list[index];
-    //     if task.id.unwrap() != ( index + 1 ) as i64 {
-    //         return Err("a task has been fetched whose id's don't match")
-    //     }
-
-    //     if task.start.is_none() {
-    //         println!("Task {} '{}' has not started.",task.id.unwrap(), task.description);
-    //         continue;
-    //     }
-        
-    //     task.timetrackingseconds = task.timetrackingseconds + ( stop - task.start.unwrap());
-    //     task.status = Status::Pending;
-    //     task.start = None;
-        
-    //     println!("Stopping task {} '{}'.",task.uuiid, task.description);
-
-    //     num_stopped += 1;
-
-    //     let mess = "Total Time Tracked: ".to_string() + &make_timetracking_string(task.timetrackingseconds);
-    //     vec_mess.push(mess);
-    // }
-
-    // let s1 = sett.clone().get_color("color_general_orange");
-    // if s1.is_err(){
-    //     return Err("Colour missing in settings file.")
-    // }
-
-    // println!("Stopped {} {}.",num_stopped.to_string(), units("task",num_stopped as usize));
-    
-    // let my_report_orange: color::Rgb = s1.unwrap();
-    // for line in vec_mess {
-    //     print!("{}",color::Fg(my_report_orange));
-    //     print!("{}.", line.to_string()); 
-    //     print!("{}\n", style::Reset);  
-    // }
-
     Ok(())
 }
 
@@ -612,7 +514,7 @@ pub fn hexi_verify(str: &str) -> Result<i64, &'static str> {
 pub fn is_arg_command(first: &str) -> Result< &str, &str> {
     
     match first {
-        "active" | "-a" | "a" => {
+        "a" | "-a" | "active" => {
             return Ok("active");
         }
 
@@ -620,15 +522,19 @@ pub fn is_arg_command(first: &str) -> Result< &str, &str> {
             return Ok(first);
         }
 
-        "-c" | "-color_test" | "c" | "color" | "color_test" | "-color" | "colortest" => {
+        "-color_test" | "col" | "color" | "color_test" | "-color" | "colortest" => {
             return Ok("colortest");
         }
         
-        "mycompleted" => {
-            return Ok(first);
+        "c" | "-c" | "-completed" | "completed" | "comp" | "-comp" => {
+            return Ok("completed");
         }
+
+        // "mycompleted" => {
+        //     return Ok(first);
+        // }
         
-        "-v" | "-version" | "v" | "ver" | "version" | "-ver" => {
+        "v" | "-v" | "-version" | "ver" | "version" | "-ver" => {
             return Ok("version");
         }
 
@@ -812,9 +718,9 @@ pub fn make_timetracking_string(secs: i64) -> String {
     return ret;
 }
 
-// make timetracking timeframe
+// make timetracking timeframe like   1.5y
 pub fn make_timetracking_timeframe(secs: i64) -> String {
-    let mut ret = "".to_string();
+    let ret:String;
 
     // 1 min
     if secs < 60 {
@@ -875,16 +781,6 @@ pub fn make_timetracking_timeframe(secs: i64) -> String {
 }
 
 
-// Show the task given by integer id
-pub fn report_single_id(){
-    
-}
-
-
-// Show the task given by hexi uuiid
-pub fn report_single_uuiid(){
-
-}
 
 
 
@@ -1224,15 +1120,41 @@ mod tests {
         remove_file(dest1).expect("Cleanup test failed");
         remove_file(dest2).expect("Cleanup test failed");
 
-
         let result = get_integer_single_report(&settings, colors, 1, &pen);
-
-
-
-
         assert_eq!(result.is_err(), false);
     }
-
+    
+    // #[ignore]
+    #[test]
+    fn t015_align_timeframe() {
+        let t:i64 = 100_000;
+        let res = align_timeframe(t);
+        assert_eq!(res, "   1d  ");
+        
+        let t:i64 = 1_900_000;
+        let res = align_timeframe(t);
+        assert_eq!(res, "   3w  ");
+        
+        let t:i64 = 10_900_000;
+        let res = align_timeframe(t);
+        assert_eq!(res, "   4mo ");
+        
+        let t:i64 = 57;
+        let res = align_timeframe(t);
+        assert_eq!(res, "  57s  ");
+        
+        let t:i64 = 129;
+        let res = align_timeframe(t);
+        assert_eq!(res, "   2min");
+        
+        let t:i64 = 35_000_000;
+        let res = align_timeframe(t);
+        assert_eq!(res, " 1.1y  ");
+        
+        let t:i64 = 10_000;
+        let res = align_timeframe(t);
+        assert_eq!(res, "   3h  ");
+    }
 
 
 

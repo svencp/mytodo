@@ -690,7 +690,7 @@ mod tests {
         pen.save();
 
         let mut pending_tasks = List::new(&destination);
-        let res = load_task_file(pending_tasks.file, &mut pending_tasks, &mut hd_set);
+        let _res = load_task_file(pending_tasks.file, &mut pending_tasks, &mut hd_set);
         remove_file(destination).expect("Cleanup test failed");
         
         let index = pending_tasks.get_index_of_task_with_id(2);

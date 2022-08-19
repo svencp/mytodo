@@ -8,8 +8,10 @@
 
 
 use termion::{color, style};
+use std::cmp::Ordering;
 use std::process::exit;
 use std::cmp;
+use crate::library::functions::align_timeframe;
 use crate::library::functions::make_timetracking_string;
 use crate::library::functions::make_timetracking_timeframe;
 use crate::library::lts::lts_now;
@@ -35,6 +37,20 @@ use crate::library::list::*;
 
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Functions @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@           @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+// a function to determine the width (number of spaces) for the annotation block
+pub fn determine_block_width(col_sizes: &Vec<usize>) -> usize {
+    let mut width:usize = 0;
+
+    // only do up to the last coloumn
+    let end = col_sizes.len() - 1;
+    for i in 0..end  {
+        width += col_sizes[i] + 1;
+    }
+
+    // take the last space away
+    return width - 1;
+}
+
 pub fn color_test(colors: Colors) {
     let line1 = "This is my test of the orange_feedback color (123 000)";
     let fg = colors.color_feedback_orange;
@@ -106,6 +122,89 @@ pub fn get_max_col_widths(big: Vec<Vec<String>>) -> Result<Vec<usize>, &'static 
     Ok(v_max)
 }
 
+pub fn format_report_active(col_sizes: &Vec<usize>, headers: Vec<&str>, tasks: &Vec<Task>, settings: &SettingsMap) {
+    let res_fg = settings.get_color("color_complete_orphan");
+    if res_fg.is_err() {
+        let message = "Problems retrieving color from settings".to_string();
+        feedback(Feedback::Error, message);
+        exit(17);
+    }
+    let res_fg_overdue = settings.get_color("color_overdue");
+    if res_fg_overdue.is_err() {
+        let message = "Problems retrieving color from settings".to_string();
+        feedback(Feedback::Error, message);
+        exit(17);
+    }
+    let res_bg_overdue = settings.get_color("color_black_bg");
+    if res_bg_overdue.is_err() {
+        let message = "Problems retrieving color from settings".to_string();
+        feedback(Feedback::Error, message);
+        exit(17);
+    }
+    let res_bg = settings.get_color("color_active_bg");
+    if res_bg.is_err() {
+        let message = "Problems retrieving color from settings".to_string();
+        feedback(Feedback::Error, message);
+        exit(17);
+    }
+    let fg   = res_fg.unwrap();
+    let bg   = res_bg.unwrap();
+    let fgov = res_fg_overdue.unwrap();
+    let bgov = res_bg_overdue.unwrap();
+    let anno_block = make_annotation_block(col_sizes);
+
+    make_heading(col_sizes,headers,settings);
+    
+    for task in tasks {
+
+        match task.is_active() {
+            true => {
+                print!("{}{}",color::Fg(fg), color::Bg(bg));
+            }
+            
+            // assume that it is overdue
+            false => {
+                print!("{}{}",color::Fg(fgov), color::Bg(bgov));
+            }
+        }
+
+        match task.ann.len() {
+            // No annotations
+            0 => {
+                print_description_line(col_sizes, task);
+            }
+
+            _ => {
+                print_description_line(col_sizes, &task);
+
+                // Annotations
+                for ann in task.ann.clone() {
+
+                    match task.is_active() {
+                        true => {
+                            make_active(settings);
+                        }
+                        false => {
+                            make_overdue(settings);
+                        }
+                    }
+
+                    let desc = lts_to_date_string(ann.date) + " " + &ann.desc;
+                    let d = justify(desc.clone(), col_sizes[4]-2, Justify::Left);
+                    print!("{}   {}",anno_block, d);
+                    print!("{}\n",style::Reset);
+                }
+            }
+        }
+    }
+
+    print!("\n\n");
+}
+
+pub fn format_report_completed(col_sizes: &Vec<usize>, headers: Vec<&str>, tasks: &Vec<Task> ,settings: &SettingsMap) {
+
+}
+
 pub fn format_report_single(cols: Vec<usize>, big: Vec<Vec<String>>, desc: Vec<Vec<String>>, task: Task, colors: Colors) {
     let fg = colors.color_complete_orphan;
     let bg = colors.color_black_bg;
@@ -122,7 +221,6 @@ pub fn format_report_single(cols: Vec<usize>, big: Vec<Vec<String>>, desc: Vec<V
     // 222222222222222222222222222222222222222
     first = justify(big[1][0].clone(), cols[0], Justify::Left);
     second = justify(big[1][1].clone(), cols[1], Justify::Left);
-    // bg = Some(colors.color_black_bg);
     make_dark_print(&first,&second,fg,bg);
 
     // 3333333333333333333333333333333333333333
@@ -194,11 +292,76 @@ pub fn format_report_single(cols: Vec<usize>, big: Vec<Vec<String>>, desc: Vec<V
     print!("\n\n");
 }
 
+pub fn make_active(settings: &SettingsMap) {
+    let res_fg = settings.get_color("color_complete_orphan");
+    if res_fg.is_err() {
+        let message = "Problems retrieving color from settings".to_string();
+        feedback(Feedback::Error, message);
+        exit(17);
+    }
+    let res_bg = settings.get_color("color_active_bg");
+    if res_bg.is_err() {
+        let message = "Problems retrieving color from settings".to_string();
+        feedback(Feedback::Error, message);
+        exit(17);
+    }
+    let fg   = res_fg.unwrap();
+    let bg   = res_bg.unwrap();
+
+    print!("{}{}", color::Fg(fg), color::Bg(bg));
+}
+
+// this function makes a width of spaces to fill when a task has an annotation
+pub fn make_annotation_block(col_sizes: &Vec<usize>) -> String {
+    let bl = determine_block_width(col_sizes);
+    let ret = repeat_char(" ".to_string(), bl);
+
+    return ret;
+}
+
 // make the dark sting (the alternate fro single report)
 pub fn make_dark_print(first: &str, second: &str, fg: color::Rgb, bg:color::Rgb){
     print!("{}{}",color::Fg(fg), color::Bg(bg));
     print!("{} {}",first,second);
     print!("{}\n",style::Reset);
+}
+
+// make the header line
+pub fn make_heading(col_sizes: &Vec<usize>, headers: Vec<&str>, settings: &SettingsMap) {
+    let res_fg = settings.get_color("color_complete_orphan");
+    if res_fg.is_err() {
+        let message = "Problems retrieving color from settings".to_string();
+        feedback(Feedback::Error, message);
+        exit(17);
+    }
+    let fg = res_fg.unwrap();
+    print!("\n\n{}", color::Fg(fg));
+    
+    for i in 0..headers.len() {
+        let h = justify(headers[i].to_string(), col_sizes[i], Justify::Left);
+        underline_string(h);
+        print!(" ");
+    }    
+    print!("{}\n", style::Reset);
+}
+
+pub fn make_overdue(settings: &SettingsMap){
+    let res_fg_overdue = settings.get_color("color_overdue");
+    if res_fg_overdue.is_err() {
+        let message = "Problems retrieving color from settings".to_string();
+        feedback(Feedback::Error, message);
+        exit(17);
+    }
+    let res_bg_overdue = settings.get_color("color_black_bg");
+    if res_bg_overdue.is_err() {
+        let message = "Problems retrieving color from settings".to_string();
+        feedback(Feedback::Error, message);
+        exit(17);
+    }
+    let fgov = res_fg_overdue.unwrap();
+    let bgov = res_bg_overdue.unwrap();
+
+    print!("{}{}", color::Fg(fgov), color::Bg(bgov));
 }
 
 // make the dark sting (the alternate fro single report)
@@ -208,12 +371,59 @@ pub fn make_print(first: &str, second: &str, fg: color::Rgb){
     print!("{}\n",style::Reset);
 }
 
+// pub fn print_annotation_lines(block: String, col_sizes: &Vec<usize>, task: &Task) {
+
+
+
+
+
+//     for ann in task.ann.clone() {
+//         let desc = lts_to_date_string(ann.date) + " " + &ann.desc;
+//         let d = justify(desc.clone(), col_sizes[4]-2, Justify::Left);
+//         print!("{}   {}\n",block, d);
+//     }
+//     print!("{}",style::Reset);
+// }
+
+pub fn print_description_line(col_sizes: &Vec<usize>, task: &Task) {
+    let now = lts_now();
+
+    let id = justify(task.id.unwrap().to_string(), col_sizes[0], Justify::Right);
+    print!("{} ",id);
+
+    match task.start {
+        Some(secs) => {
+            print!("{} ",lts_to_date_string(secs));
+            let diff = now - secs;
+            print!("{} ",align_timeframe(diff));
+        }
+        None => {
+            print!("{} ",repeat_char(" ".to_string(),col_sizes[1]));                              
+            print!("{} ",repeat_char(" ".to_string(),col_sizes[2]));                              
+        }
+    }
+    
+    match task.due {
+        Some(secs) => {
+            print!("{} ",lts_to_date_string(secs));
+        }
+        None => {
+            print!("{} ",repeat_char(" ".to_string(),col_sizes[3]));                              
+        }
+    }
+    
+    let desc = justify(task.clone().description, col_sizes[4], Justify::Left);
+    print!("{}{}\n",desc, style::Reset);
+    // print!("{}\n",desc);
+}
+
 // my active report
-pub fn report_active(pend: &List) -> Result<(),&'static str> {
-    let mut col_sizes = vec![2,10,8,10,0];
+pub fn report_active(settings: &SettingsMap, pend: &List) -> Result<(),&'static str> {
+    let mut col_sizes = vec![2,10,7,10];
     let headers = vec!["ID", "Started", "Active", "Due", "Description" ];
     let mut tasks: Vec<Task> = Vec::new();
     let mut v_desc: Vec<String> = Vec::new();
+    let mut max_col: usize = 0;
 
     // lets get the set of tasks
     for t in pend.list.clone() {
@@ -223,10 +433,28 @@ pub fn report_active(pend: &List) -> Result<(),&'static str> {
             if t.ann.len() > 0 {
                 for a in t.ann {
                     let line = lts_to_date_string(a.date) + " " + &a.desc;
-                    v_desc.push(line);
+                    v_desc.push(line.clone());
+                    if line.len() > max_col {
+                        max_col = line.len();
+                    }
                 }
             }
         }
+    }
+
+    // add max_col to col_sizes with two spaces
+    col_sizes.push(max_col + 2);
+    let mut total_width = 0;
+    for s in col_sizes.clone() {
+        total_width += s;
+    }
+    // add the separator spaces
+    total_width += col_sizes.len() - 1;
+
+    // Width problem
+    let width = settings.get_integer("useTerminalWidthOf");
+    if total_width > width.unwrap() as usize {
+        return Err("We have the width problem");
     }
 
     // do we have anything
@@ -234,13 +462,88 @@ pub fn report_active(pend: &List) -> Result<(),&'static str> {
         return Err("no matches");
     }
 
+    // lets sort the wanted vector to due date if some
+    tasks.sort_by(|a, b| {
+        match &a.due {
+            Some(secs) => {
+                if b.due.is_none() {
+                    return Ordering::Less;
+                }
+                return secs.cmp(&b.due.unwrap())
+            }
+            None => {
+                if b.due.is_some() {
+                    return Ordering::Greater;
+                }
+                return Ordering::Equal;
+            }
+        }
+    });
+
+    format_report_active(&col_sizes, headers, &tasks, &settings);
+
+    Ok(())
+}
+
+pub fn report_completed(settings: &SettingsMap, comp: &List ) -> Result<(), &'static str> {
+    let mut col_sizes = vec![8,7,16,11,10];
+    let headers = vec!["UUIID", "Age", "Duration", "Tags", "Completed" ];
+    let mut tasks: Vec<Task> = Vec::new();
+    let mut v_desc: Vec<String> = Vec::new();
+    let mut max_col: usize = 0;
+
+
+    // check for lengths of description
+    for t in comp.list.clone() {
+        v_desc.push(t.description);
+        if t.ann.len() > 0 {
+            for a in t.ann {
+                let line = lts_to_date_string(a.date) + " " + &a.desc;
+                v_desc.push(line.clone());
+                if line.len() > max_col {
+                    max_col = line.len();
+                }
+            }
+        }
+    }
+
+
+    // add max_col to col_sizes with two spaces
+    col_sizes.push(max_col + 2);
+    let mut total_width = 0;
+    for s in col_sizes.clone() {
+        total_width += s;
+    }
+    // add the separator spaces
+    total_width += col_sizes.len() - 1;
+
+    // Width problem
+    let width = settings.get_integer("useTerminalWidthOf");
+    if total_width > width.unwrap() as usize {
+        return Err("We have the width problem");
+    }
+
+    // do we have anything
+    if tasks.len() == 0 {
+        return Err("no matches");
+    }
+
+    format_report_completed(&col_sizes, headers, &tasks, &settings);
+
+
+
+
+
+
+
+
+
 
 
 
 
     Ok(())
 }
-
 
 // show a single id report 'lets hardcode these variables'
 pub fn report_single(width: usize, colors: Colors, task: Task ) -> Result<(), &'static str> {
@@ -464,7 +767,7 @@ pub fn report_single(width: usize, colors: Colors, task: Task ) -> Result<(), &'
     // add the number of spaces
     let total_len = total_max + 1;
 
-    // Check the width, code later if needed
+    // Check the width, code later if needed !! Width problem
     if total_len > width {
         return Err("We have the width problem");
     }
@@ -497,13 +800,13 @@ pub fn to_color_message(fg: color::Rgb, bg: Option<color::Rgb>, line: &str) {
         Some(c) => {
             print!("{}{}",color::Fg(fg), color::Bg(c));
             print!("{}",line);
-            print!("{}\n",style::Reset);
+            print!("{}",style::Reset);
         }
 
         None => {
             print!("{}",color::Fg(fg));
             print!("{}",line);
-            print!("{}\n",style::Reset);
+            print!("{}",style::Reset);
         }
     }
 }
