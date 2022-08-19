@@ -35,6 +35,7 @@ pub struct Colors {
     pub color_recur_chain_fg: color::Rgb,                       // Light Blue
     pub color_recur_period_fg: color::Rgb,                      // Dark Blue
     pub color_tagged: color::Rgb,                               // Dark Green
+    pub color_overdue: color::Rgb,                               // Dark Red
 }
 
 impl Colors {
@@ -47,6 +48,7 @@ impl Colors {
             color_recur_chain_fg: color::Rgb (255,255,255),
             color_recur_period_fg: color::Rgb (255,255,255),
             color_tagged: color::Rgb (255,255,255),
+            color_overdue: color::Rgb (255,255,255),
         }
     }
 
@@ -185,6 +187,14 @@ pub fn load_colors(settings: &SettingsMap) -> Colors {
         exit(17);
     }
     ret.color_tagged = dark_green.unwrap();
+    
+    let overdue = settings.get_color("color_overdue");
+    if overdue.is_err(){
+        let message = format!("Error in retrieving color from settings.");
+        feedback(Feedback::Error, message);
+        exit(17);
+    }
+    ret.color_overdue = overdue.unwrap();
 
     return ret;
 }

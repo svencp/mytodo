@@ -244,7 +244,7 @@ fn main() {
         ArgType::Command => {
             match command.as_str() {
                 "active" => {
-                    let result = report_active(&settings, &pending_tasks);
+                    let result = report_active(&colors, &settings, &pending_tasks);
                     if result.is_err() {
                         let message = result.err().unwrap().to_string();
                         feedback(Feedback::Warning, message);
@@ -266,7 +266,7 @@ fn main() {
                 }
 
                 "completed" => {
-                    let result = report_completed(&settings, &completed_tasks);
+                    let result = report_completed(&colors, &settings, &completed_tasks);
                     if result.is_err() {
                         let message = result.err().unwrap().to_string();
                         feedback(Feedback::Warning, message);

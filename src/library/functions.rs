@@ -467,13 +467,14 @@ pub fn get_integer_single_report(settings: &SettingsMap, colors: Colors, uuiid_i
         return Err("Task id or uuiid does not exist.")
     }
 
-    let width = settings.get_integer("useTerminalWidthOf");
-    if width.is_err() {
-        return Err("Cannot find terminal width.")
-    }
-    let u_width = usize::try_from(width.unwrap()).unwrap();
+    // let width = settings.get_integer("useTerminalWidthOf");
+    // if width.is_err() {
+    //     return Err("Cannot find terminal width.")
+    // }
+    // let u_width = usize::try_from(width.unwrap()).unwrap();
 
-    let result = report_single(u_width, colors, task);
+    // let result = report_single(u_width, colors, task);
+    let result = report_single(settings, &colors, &task);
     if result.is_err() {
         return Err(result.err().unwrap());
     }
@@ -481,6 +482,51 @@ pub fn get_integer_single_report(settings: &SettingsMap, colors: Colors, uuiid_i
     Ok(())
 }
 
+pub fn get_task_lines_completed(col_sizes: &Vec<usize>, block: &str, task: &Task) -> Vec<String> {
+    let mut ret:Vec<String> = Vec::new();
+    let mut line:String;
+    let now = lts_now();
+
+    // task line
+    line = justify(task.clone().uuiid, col_sizes[0], Justify::Right) + " ";
+    let diff = now - task.clone().entry;
+    line += &align_timeframe(diff);                                                           // col size = 7
+    line += " ";
+    line += &justify(make_timetracking_string(task.clone().timetrackingseconds), col_sizes[2], Justify::Right);
+    line += " ";
+    let num_tags = task.clone().tags.len();
+    match num_tags {
+        0 => {
+            line += &repeat_char(" ".to_string(), col_sizes[3])
+        }
+        1 => {
+            line += &justify(task.clone().tags[0].to_string(), col_sizes[3], Justify::Left);
+        }
+        _ => {
+            let temp = format!("[{}]",task.clone().tags.len());
+            line += &justify(temp, col_sizes[3], Justify::Center);
+        }
+    }
+    line += " ";
+    line += &lts_to_date_string(task.clone().end.unwrap());
+    line += " ";
+    line += &justify(task.clone().description, col_sizes[5], Justify::Left);
+    ret.push(line);
+    
+    // lets do the annotations
+    for anno in task.clone().ann {
+        line = block.to_string();
+        line += &lts_to_date_string(anno.date);
+        line += " ";
+
+        // take into account: date length(10) and three extra spaces (i know two, dunno three)
+        let len_anno = col_sizes[5] - 10 - 3;
+        line += &justify(anno.desc, len_anno, Justify::Left);
+        ret.push(line);
+    }
+    
+    return ret;
+}
 
 // get the termianl width size in characters
 pub fn get_terminal_width(settings: &SettingsMap) -> i64 {

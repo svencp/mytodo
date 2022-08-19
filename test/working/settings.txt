@@ -1,6 +1,6 @@
 ##################
 #                #
-#   2022-08-17   #
+#   2022-08-19   #
 #                #
 ##################
 
@@ -9,6 +9,7 @@ color_active_bg	(215,95,0)
 color_black_bg	(28,28,28)
 color_complete_orphan	(255,255,255)
 color_feedback_orange	(246,116,0)
+color_overdue	(192,57,43)
 color_recur_chain_fg	(29,153,243)
 color_recur_period_fg	(0,95,175)
 color_tagged	(0,175,95)

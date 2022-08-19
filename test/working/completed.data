@@ -1,16 +1,4 @@
-description:three and maybe more to come	uuiid:0x000004	entry:1660676757	status:completed	annotation_1660689716:one & three only	annotation_1660690007:all these lovely tasks should have this annotation	annotation_1660690147:Sven Ponelat	annotation_1660690185:Sven Ponelat ok another one	annotation_1660691764:shoob shoob	annotation_1660692278:POSTE HASTE	annotation_1660758439:another	due:1665273600	end:1660758546	timetrackingseconds:97419
-description:two	uuiid:0x00000b	entry:1660751298	status:completed	end:1660758546	timetrackingseconds:24049
-description:one	uuiid:0x00000a	entry:1660751289	status:completed	end:1660758546	timetrackingseconds:24094
-description:nope	uuiid:0x000008	entry:1660725358	status:completed	annotation_1660736309:hello again	due:1660725358	end:1660758546	timetrackingseconds:55477
-description:eleven	uuiid:0x000007	entry:1660690342	status:completed	end:1660758546	timetrackingseconds:90493
-description:another one to use but not for too long	uuiid:0x000006	entry:1660689912	status:completed	annotation_1660690007:all these lovely tasks should have this annotation	due:1660689912	end:1660758546	timetrackingseconds:137249
-description:another one to use	uuiid:0x000005	entry:1660689856	status:completed	annotation_1660690007:all these lovely tasks should have this annotation	annotation_1660691764:shoob shoob	annotation_1660691788:shoob shoob	end:1660758546	timetrackingseconds:4193617
-description:try 1	uuiid:0x000009	entry:1660744637	status:completed	end:1660745056	timetrackingseconds:81
-description:two	uuiid:0x000003	entry:1660676685	status:completed	annotation_1660690007:all these lovely tasks should have this annotation	annotation_1660690562:done	annotation_1660690616:done again	annotation_1660691301:done again	annotation_1660691764:shoob shoob	annotation_1660692278:POSTE HASTE	due:1665273600	end:1660692232	tags:car	timetrackingseconds:15547
-description:one	uuiid:0x000018	entry:1660821136	status:completed	due:1672531200	end:1660859476	timetrackingseconds:38340
-description:two	uuiid:0x000019	entry:1660821173	status:completed	annotation_1660845719:just because	annotation_1660852146:bay you're a rich man, baby you are a rich man too	annotation_1660855547:==================================================================	due:1640995200	end:1660859476	timetrackingseconds:38135
-description:three	uuiid:0x00001a	entry:1660821203	status:completed	annotation_1660821998:this is one long annotation, yo bro!	annotation_1660845301:I said I should add another annotation line, just because.	end:1660859476	timetrackingseconds:38273
-description:five	uuiid:0x00001c	entry:1660821506	status:completed	due:1659312000	end:1660859476	timetrackingseconds:5352
-description:one	uuiid:0x000016	entry:1660821056	status:completed	end:1660859476	timetrackingseconds:112
-description:two	uuiid:0x000017	entry:1660821062	status:completed	end:1660859476	timetrackingseconds:802
-description:four	uuiid:0x00001b	entry:1660821299	status:completed	annotation_1660822076:another long ass hopefully not too long, cracked up but somehow stable line?	annotation_1660859584:after completion	annotation_1660859651:go go go --> box box box	end:1660859668	timetrackingseconds:38187
+description:why not	uuiid:0x000001	entry:1660914855	status:recurring	annotation_1660914875:just annotate something!	due:1660914855	end:1660915557	prodigy:0	recur:+2m	rtype:periodic	timetrackingseconds:702
+description:one heart	uuiid:0x000002	entry:1660914906	status:completed	annotation_1660918025:k;l dlkfg ;ldkf g;lk ;ldfkg ;ldfk g;ldkf g; df;lkg;dflkg ;dfl kg;dlkg;dlfkg ;dlfgd;lfk 	end:1660915640	timetrackingseconds:734
+description:one heart	uuiid:0x000003	entry:1660915626	status:recurring	annotation_1660916934:++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++	due:1660915626	end:1660915640	prodigy:0	recur:+11m	rtype:chained	tags:car,house	timetrackingseconds:14
+description:just a tagged heart	uuiid:0x000004	entry:1660915727	status:completed	annotation_1660915739:annotation rules ok	annotation_1660916893:=================================================	end:1660915752	tags:tag	timetrackingseconds:25

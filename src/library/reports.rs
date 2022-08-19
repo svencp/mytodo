@@ -11,12 +11,9 @@ use termion::{color, style};
 use std::cmp::Ordering;
 use std::process::exit;
 use std::cmp;
-use crate::library::functions::align_timeframe;
-use crate::library::functions::make_timetracking_string;
-use crate::library::functions::make_timetracking_timeframe;
-use crate::library::lts::lts_now;
-use crate::library::lts::lts_to_date_string;
-use crate::library::lts::lts_to_date_time_string;
+use crate::library::enums::Rtype;
+use crate::library::functions::*;
+use crate::library::lts::*;
 use crate::library::structs::*;
 use crate::library::settings::*;
 use crate::library::my_utils::*;
@@ -47,8 +44,8 @@ pub fn determine_block_width(col_sizes: &Vec<usize>) -> usize {
         width += col_sizes[i] + 1;
     }
 
-    // take the last space away
-    return width - 1;
+    // add two for annotation tab
+    return width + 2;
 }
 
 pub fn color_test(colors: Colors) {
@@ -122,38 +119,40 @@ pub fn get_max_col_widths(big: Vec<Vec<String>>) -> Result<Vec<usize>, &'static 
     Ok(v_max)
 }
 
-pub fn format_report_active(col_sizes: &Vec<usize>, headers: Vec<&str>, tasks: &Vec<Task>, settings: &SettingsMap) {
-    let res_fg = settings.get_color("color_complete_orphan");
-    if res_fg.is_err() {
-        let message = "Problems retrieving color from settings".to_string();
-        feedback(Feedback::Error, message);
-        exit(17);
-    }
-    let res_fg_overdue = settings.get_color("color_overdue");
-    if res_fg_overdue.is_err() {
-        let message = "Problems retrieving color from settings".to_string();
-        feedback(Feedback::Error, message);
-        exit(17);
-    }
-    let res_bg_overdue = settings.get_color("color_black_bg");
-    if res_bg_overdue.is_err() {
-        let message = "Problems retrieving color from settings".to_string();
-        feedback(Feedback::Error, message);
-        exit(17);
-    }
-    let res_bg = settings.get_color("color_active_bg");
-    if res_bg.is_err() {
-        let message = "Problems retrieving color from settings".to_string();
-        feedback(Feedback::Error, message);
-        exit(17);
-    }
-    let fg   = res_fg.unwrap();
-    let bg   = res_bg.unwrap();
-    let fgov = res_fg_overdue.unwrap();
-    let bgov = res_bg_overdue.unwrap();
+pub fn format_report_active(col_sizes: &Vec<usize>, headers: Vec<&str>, tasks: &Vec<Task>, colors: &Colors, settings: &SettingsMap) {
+    // let res_fg = settings.get_color("color_complete_orphan");
+    // if res_fg.is_err() {
+    //     let message = "Problems retrieving color from settings".to_string();
+    //     feedback(Feedback::Error, message);
+    //     exit(17);
+    // }
+    // let res_fg_overdue = settings.get_color("color_overdue");
+    // if res_fg_overdue.is_err() {
+    //     let message = "Problems retrieving color from settings".to_string();
+    //     feedback(Feedback::Error, message);
+    //     exit(17);
+    // }
+    // let res_bg_overdue = settings.get_color("color_black_bg");
+    // if res_bg_overdue.is_err() {
+    //     let message = "Problems retrieving color from settings".to_string();
+    //     feedback(Feedback::Error, message);
+    //     exit(17);
+    // }
+    // let res_bg = settings.get_color("color_active_bg");
+    // if res_bg.is_err() {
+    //     let message = "Problems retrieving color from settings".to_string();
+    //     feedback(Feedback::Error, message);
+    //     exit(17);
+    // }
+    // let fg   = res_fg.unwrap();
+    let fg   = colors.clone().color_complete_orphan;
+    let bg   = colors.clone().color_active_bg;
+    let fgov = colors.clone().color_overdue;
+    let bgov = colors.clone().color_black_bg;
     let anno_block = make_annotation_block(col_sizes);
 
-    make_heading(col_sizes,headers,settings);
+    // make_heading(col_sizes,headers,settings);
+    make_heading(col_sizes,headers,colors);
     
     for task in tasks {
 
@@ -201,8 +200,117 @@ pub fn format_report_active(col_sizes: &Vec<usize>, headers: Vec<&str>, tasks: &
     print!("\n\n");
 }
 
-pub fn format_report_completed(col_sizes: &Vec<usize>, headers: Vec<&str>, tasks: &Vec<Task> ,settings: &SettingsMap) {
+pub fn format_report_completed(col_sizes: &Vec<usize>, headers: Vec<&str>, tasks: &Vec<Task>, colors: &Colors ,settings: &SettingsMap) {
+    let normal_fg   = colors.clone().color_complete_orphan;
+    let tagged_fg   = colors.clone().color_tagged;
+    let rperiod_fg  = colors.clone().color_recur_period_fg;
+    let rchained_fg = colors.clone().color_recur_chain_fg;
+    let black_bg    = colors.clone().color_black_bg;
+    let anno_block = make_annotation_block(col_sizes);
 
+    let mut remainder: i64;
+    let mut index: i64 = 1;
+    let mut v_lines:Vec<String>;
+
+    make_heading(col_sizes, headers, colors);
+
+    for task in tasks {
+        index += 1;
+        remainder = index % 2;
+
+        v_lines = get_task_lines_completed(col_sizes, &anno_block, &task);
+
+        match remainder {
+            // dark black background
+            0 => {
+                match task.is_recurring() {
+                    true => {
+                        match task.clone().rtype.unwrap() {
+                            Rtype::Periodic => {
+                                make_dark_print(v_lines, rperiod_fg, black_bg);
+                            }
+                            Rtype::Chained => {
+                                make_dark_print(v_lines, rchained_fg, black_bg);
+                            }
+                        }
+                    }
+                    false => {
+                        match task.is_tagged() {
+                            true => {
+                                make_dark_print(v_lines, tagged_fg, black_bg);
+                            }
+                            false => {
+                                make_dark_print(v_lines, normal_fg, black_bg);
+                            }
+                        }
+                    }
+                }
+            }
+            // normal background
+            _ => {
+                match task.is_recurring() {
+                    true => {
+                        match task.clone().rtype.unwrap() {
+                            Rtype::Periodic => {
+                                make_print(v_lines, rperiod_fg);
+                            }
+                            Rtype::Chained => {
+                                make_print(v_lines, rchained_fg)
+                            }
+                        }
+                    }
+                    false => {
+                        match task.is_tagged() {
+                            true => {
+                                make_print(v_lines, tagged_fg)
+                            }
+                            false => {
+                                make_print(v_lines, normal_fg)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+
+
+    // for i in 0..tasks.len() {
+    //     let remainder = i % 2;
+    //     match remainder {
+    //         // dark black background
+    //         0 => {
+    //             match tasks[i].cloned().is_recurring() {
+    //                 true => {
+    //                     match tasks.cloned()[i].rtype.unwrap() {
+    //                         Rtype::Periodic => {
+
+    //                         }
+    //                         Rtype::Chained => {
+
+    //                         }
+    //                     }
+    //                 }
+    //                 false => {
+
+    //                 }
+    //             }
+    //         }
+    //         // normal background
+    //         _ => {
+
+    //         }
+    //     }
+    // }
+
+
+
+
+
+
+    print!("\n\n")
 }
 
 pub fn format_report_single(cols: Vec<usize>, big: Vec<Vec<String>>, desc: Vec<Vec<String>>, task: Task, colors: Colors) {
@@ -221,7 +329,7 @@ pub fn format_report_single(cols: Vec<usize>, big: Vec<Vec<String>>, desc: Vec<V
     // 222222222222222222222222222222222222222
     first = justify(big[1][0].clone(), cols[0], Justify::Left);
     second = justify(big[1][1].clone(), cols[1], Justify::Left);
-    make_dark_print(&first,&second,fg,bg);
+    make_dark_print_single(&first,&second,fg,bg);
 
     // 3333333333333333333333333333333333333333
     let fgbg = get_colour_scheme(task,colors);
@@ -282,10 +390,10 @@ pub fn format_report_single(cols: Vec<usize>, big: Vec<Vec<String>>, desc: Vec<V
         let remainder = i % 2;
         match remainder {
             0 => {
-                make_dark_print(&first,&second,fg,bg);
+                make_dark_print_single(&first,&second,fg,bg);
             }
             _ => {
-                make_print(&first, &second, fg);
+                make_print2(&first, &second, fg);
             }
         }
     }
@@ -319,22 +427,31 @@ pub fn make_annotation_block(col_sizes: &Vec<usize>) -> String {
     return ret;
 }
 
+pub fn make_dark_print(v_lines:Vec<String>, fg: color::Rgb, bg: color::Rgb) {
+    for line in v_lines {
+        print!("{}{}",color::Fg(fg), color::Bg(bg));
+        print!("{}",line);
+        print!("{}\n",style::Reset);
+    }
+}
+
 // make the dark sting (the alternate fro single report)
-pub fn make_dark_print(first: &str, second: &str, fg: color::Rgb, bg:color::Rgb){
+pub fn make_dark_print_single(first: &str, second: &str, fg: color::Rgb, bg:color::Rgb){
     print!("{}{}",color::Fg(fg), color::Bg(bg));
     print!("{} {}",first,second);
     print!("{}\n",style::Reset);
 }
 
 // make the header line
-pub fn make_heading(col_sizes: &Vec<usize>, headers: Vec<&str>, settings: &SettingsMap) {
-    let res_fg = settings.get_color("color_complete_orphan");
-    if res_fg.is_err() {
-        let message = "Problems retrieving color from settings".to_string();
-        feedback(Feedback::Error, message);
-        exit(17);
-    }
-    let fg = res_fg.unwrap();
+pub fn make_heading(col_sizes: &Vec<usize>, headers: Vec<&str>, colors: &Colors) {
+    // let res_fg = settings.get_color("color_complete_orphan");
+    // if res_fg.is_err() {
+    //     let message = "Problems retrieving color from settings".to_string();
+    //     feedback(Feedback::Error, message);
+    //     exit(17);
+    // }
+    // let fg = res_fg.unwrap();
+    let fg = colors.color_complete_orphan;
     print!("\n\n{}", color::Fg(fg));
     
     for i in 0..headers.len() {
@@ -364,8 +481,16 @@ pub fn make_overdue(settings: &SettingsMap){
     print!("{}{}", color::Fg(fgov), color::Bg(bgov));
 }
 
-// make the dark sting (the alternate fro single report)
-pub fn make_print(first: &str, second: &str, fg: color::Rgb){
+pub fn make_print(v_lines:Vec<String>, fg: color::Rgb) {
+    for line in v_lines {
+        print!("{}",color::Fg(fg));
+        print!("{}",line);
+        print!("{}\n",style::Reset);
+    }
+}
+
+// make the dark string (the alternate fro single report)
+pub fn make_print2(first: &str, second: &str, fg: color::Rgb){
     print!("{}",color::Fg(fg));
     print!("{} {}",first,second);
     print!("{}\n",style::Reset);
@@ -418,7 +543,7 @@ pub fn print_description_line(col_sizes: &Vec<usize>, task: &Task) {
 }
 
 // my active report
-pub fn report_active(settings: &SettingsMap, pend: &List) -> Result<(),&'static str> {
+pub fn report_active(colors: &Colors, settings: &SettingsMap, pend: &List) -> Result<(),&'static str> {
     let mut col_sizes = vec![2,10,7,10];
     let headers = vec!["ID", "Started", "Active", "Due", "Description" ];
     let mut tasks: Vec<Task> = Vec::new();
@@ -429,7 +554,11 @@ pub fn report_active(settings: &SettingsMap, pend: &List) -> Result<(),&'static 
     for t in pend.list.clone() {
         if t.is_active() || t.is_overdue() {
             tasks.push(t.clone());
-            v_desc.push(t.description);
+            v_desc.push(t.description.clone());
+            let l1 = t.description.len();
+            if l1 > max_col {
+                max_col = l1;
+            }
             if t.ann.len() > 0 {
                 for a in t.ann {
                     let line = lts_to_date_string(a.date) + " " + &a.desc;
@@ -480,14 +609,14 @@ pub fn report_active(settings: &SettingsMap, pend: &List) -> Result<(),&'static 
         }
     });
 
-    format_report_active(&col_sizes, headers, &tasks, &settings);
+    format_report_active(&col_sizes, headers, &tasks, colors, &settings);
 
     Ok(())
 }
 
-pub fn report_completed(settings: &SettingsMap, comp: &List ) -> Result<(), &'static str> {
+pub fn report_completed(colors: &Colors, settings: &SettingsMap, comp: &List ) -> Result<(), &'static str> {
     let mut col_sizes = vec![8,7,16,11,10];
-    let headers = vec!["UUIID", "Age", "Duration", "Tags", "Completed" ];
+    let headers = vec!["UUIID", "Age", "Duration", "Tags", "Completed", "Description" ];
     let mut tasks: Vec<Task> = Vec::new();
     let mut v_desc: Vec<String> = Vec::new();
     let mut max_col: usize = 0;
@@ -495,10 +624,16 @@ pub fn report_completed(settings: &SettingsMap, comp: &List ) -> Result<(), &'st
 
     // check for lengths of description
     for t in comp.list.clone() {
-        v_desc.push(t.description);
+        tasks.push(t.clone());
+        v_desc.push(t.description.clone());
+        let l1 = t.description.clone().len();
+        if l1 > max_col {
+            max_col = l1;
+        }
+
         if t.ann.len() > 0 {
             for a in t.ann {
-                let line = lts_to_date_string(a.date) + " " + &a.desc;
+                let line = "  ".to_string() + &lts_to_date_string(a.date) + " " + &a.desc;
                 v_desc.push(line.clone());
                 if line.len() > max_col {
                     max_col = line.len();
@@ -507,9 +642,9 @@ pub fn report_completed(settings: &SettingsMap, comp: &List ) -> Result<(), &'st
         }
     }
 
-
     // add max_col to col_sizes with two spaces
-    col_sizes.push(max_col + 2);
+    // col_sizes.push(max_col + 2);
+    col_sizes.push(max_col);
     let mut total_width = 0;
     for s in col_sizes.clone() {
         total_width += s;
@@ -528,255 +663,266 @@ pub fn report_completed(settings: &SettingsMap, comp: &List ) -> Result<(), &'st
         return Err("no matches");
     }
 
-    format_report_completed(&col_sizes, headers, &tasks, &settings);
-
-
-
-
-
-
-
-
-
-
-
-
+    format_report_completed(&col_sizes, headers, &tasks, colors, &settings);
 
     Ok(())
 }
 
 // show a single id report 'lets hardcode these variables'
-pub fn report_single(width: usize, colors: Colors, task: Task ) -> Result<(), &'static str> {
-    let mut b_vec:Vec<Vec<String>> = Vec::new();
-    let mut first = "Name".to_string();
-    let mut second = "Value".to_string();
-    let mut diff:i64;
-    let now = lts_now();
-    let mut desc: Vec<Vec<String>> = Vec::new();
-    let vec = vec![ first , second ];
-    b_vec.push(vec);
-    
+pub fn report_single(settings: &SettingsMap, colors: &Colors, task: &Task ) -> Result<(), &'static str> {
+    let mut col_sizes:Vec<usize> = vec![16];
+    let headers = vec![ "Name", "Value" ];
+    let mut first_col:Vec<String>  = Vec::new(); 
+    let mut second_col:Vec<String> = Vec::new(); 
+
     // ID
-    first = "ID".to_string();
+    first_col.push("ID".to_string());
     match task.id {
         Some(i) => {
-            second = i.to_string();
+            second_col.push(i.to_string());
         }
         None => {
-            second = "-".to_string();
+            second_col.push("-".to_string());
         }
-    }
-    b_vec.push(vec![first,second]);
-    
-    // lets put description into separate vector  && only give the date (not the time as well)
-    desc.push(vec![task.description.clone()]);
-    if task.ann.len() > 0 {
-        let v_anno = task.ann.clone();
-        for a in v_anno {
-            let date = lts_to_date_string(a.date);
-            // let date = lts_to_date_time_string(a.date);
-            let pusha = "".to_string() + &date + " " + &a.desc;
-            desc.push(vec![pusha]);
-        }
-    }
-  
-    // Status
-    first = "Status".to_string();
-    second = task.status.text().to_string();
-    b_vec.push(vec![first,second]);
-    
-    // Recurrence
-    match task.recur.clone() {
-        Some(i) => {
-            first = "Recurrence".to_string();
-            second = i.to_string();
-            b_vec.push(vec![first,second]);
-        }
-        None => {
-        }
-    }
-    
-    // Parent
-    match task.parent.clone() {
-        Some(h) => {
-            first = "Parent task".to_string();
-            second = h.to_string();
-            b_vec.push(vec![first,second]);
-        }
-        None => {
-        }
-    }
-    
-    // Prodigy
-    match task.prodigy {
-        Some(h) => {
-            first = "Prodigy".to_string();
-            second = h.to_string();
-            b_vec.push(vec![first,second]);
-        }
-        None => {
-        }
-    }
-    
-    // Recurrence type
-    match task.rtype.clone() {
-        Some(h) => {
-            first = "Recurrence type".to_string();
-            second = h.text().to_string();
-            b_vec.push(vec![first,second]);
-        }
-        None => {
-        }
-    }
-    
-    // Entered
-    first = "Entered".to_string();
-    diff = now - task.entry;
-    second = lts_to_date_time_string(task.entry.clone()) + format!(" ({})",make_timetracking_timeframe(diff)).as_str(); 
-    b_vec.push(vec![first,second]);
-    
-    // Waiting until
-    match task.wait {
-        Some(h) => {
-            first = "Waiting until".to_string();
-            second = lts_to_date_time_string(h);
-            b_vec.push(vec![first,second]);
-        }
-        None => {
-        }
-    }
-    
-    // Start
-    match task.start {
-        Some(h) => {
-            first = "Start".to_string();
-            second = lts_to_date_time_string(h);
-            b_vec.push(vec![first,second]);
-        }
-        None => {
-        }
-    }
-    
-    // Due
-    match task.due {
-        Some(h) => {
-            first = "Due".to_string();
-            second = lts_to_date_time_string(h);
-            b_vec.push(vec![first,second]);
-        }
-        None => {
-        }
-    }
-    
-    // End
-    match task.end {
-        Some(e) => {
-            first = "End".to_string();
-            diff = now - e;
-            second = lts_to_date_time_string(e) + format!(" ({})",make_timetracking_timeframe(diff)).as_str(); 
-            b_vec.push(vec![first,second]);
-        }
-        None => {
-        }
-    }
-    
-    // Tags
-    match task.tags.len() {
-        0 => {
-        }
-        _ => {
-            first = "Tags".to_string();
-            let mut vecco = "".to_string();
-            for tag in task.tags.clone() {
-                vecco.push_str(&tag);
-                vecco.push_str(" ");
-            }
-            second = vecco.trim().to_string();
-            b_vec.push(vec![first,second]);
-            
-        }
-    }
-    
-    // Virtual tags
-    match task.virtual_tags.len() {
-        0 => {
-        }
-        _ => {
-            first = "Virtual tags".to_string();
-            let mut vecco = "".to_string();
-            for tag in task.virtual_tags.clone() {
-                let t = tag.text().to_uppercase();
-                vecco.push_str(&t);
-                vecco.push_str(" ");
-            }
-            second = vecco.trim().to_string();
-            b_vec.push(vec![first,second]);
-            
-        }
-    }
-    
-    // UUIID
-    first = "UUIID".to_string();
-    second = task.uuiid.clone();
-    b_vec.push(vec![first,second]);
-    
-    // Timetracking
-    match task.timetrackingseconds {
-        0 => {
-        }
-        _ => {
-            first = "Timetracking".to_string();
-            let vecco = "   ".to_string() + &make_timetracking_string(task.timetrackingseconds);
-            second = task.timetrackingseconds.to_string() + &vecco;
-            b_vec.push(vec![first,second]);
-        }
-    }
-    
-    // b_vec is too small
-    if b_vec.clone().len() < 4 {
-        return Err("Cannot get 4 lines out of the task");
     }
 
-    // get max column widths
-    let result_max_desc = get_max_col_widths(desc.clone()); 
-    if result_max_desc.is_err() {
-        return Err(result_max_desc.err().unwrap());
-    }
-    let result_max_bvec = get_max_col_widths(b_vec.clone()); 
-    if result_max_bvec.is_err() {
-        return Err(result_max_bvec.err().unwrap());
-    }
-    // let the first column have a minimum of 14
-    // let first_col = result_max_bvec.clone().unwrap()[0];
-    let first_col = 14;
+    // Description
 
-    // and combine totals; if annotated and a tab of 2 spaces
-    let mut desc_2nd_col = result_max_desc.clone().unwrap()[0];
-    if task.is_annotated(){
-        desc_2nd_col += 2;
-    }
-    let second_col = cmp::max(desc_2nd_col,result_max_bvec.clone().unwrap()[1]);
-    let col_sizes = vec![first_col,second_col];
 
-    // get total
-    let mut total_max = 0;
-    for num in col_sizes.clone() {
-        total_max += num;
-    }
 
-    // add the number of spaces
-    let total_len = total_max + 1;
 
-    // Check the width, code later if needed !! Width problem
-    if total_len > width {
-        return Err("We have the width problem");
-    }
-    
-    format_report_single(col_sizes, b_vec, desc.clone(),  task, colors);
-
-    
-    println!("report single");
     Ok(())
+
+    // let mut b_vec:Vec<Vec<String>> = Vec::new();
+    // let mut first = "Name".to_string();
+    // let mut second = "Value".to_string();
+    // let mut diff:i64;
+    // let now = lts_now();
+    // let mut desc: Vec<Vec<String>> = Vec::new();
+    // let vec = vec![ first , second ];
+    // b_vec.push(vec);
+    
+    // // ID
+    // first = "ID".to_string();
+    // match task.id {
+    //     Some(i) => {
+    //         second = i.to_string();
+    //     }
+    //     None => {
+    //         second = "-".to_string();
+    //     }
+    // }
+    // b_vec.push(vec![first,second]);
+    
+    // // lets put description into separate vector  && only give the date (not the time as well)
+    // desc.push(vec![task.description.clone()]);
+    // if task.ann.len() > 0 {
+    //     let v_anno = task.ann.clone();
+    //     for a in v_anno {
+    //         let date = lts_to_date_string(a.date);
+    //         // let date = lts_to_date_time_string(a.date);
+    //         let pusha = "".to_string() + &date + " " + &a.desc;
+    //         desc.push(vec![pusha]);
+    //     }
+    // }
+  
+    // // Status
+    // first = "Status".to_string();
+    // second = task.status.text().to_string();
+    // b_vec.push(vec![first,second]);
+    
+    // // Recurrence
+    // match task.recur.clone() {
+    //     Some(i) => {
+    //         first = "Recurrence".to_string();
+    //         second = i.to_string();
+    //         b_vec.push(vec![first,second]);
+    //     }
+    //     None => {
+    //     }
+    // }
+    
+    // // Parent
+    // match task.parent.clone() {
+    //     Some(h) => {
+    //         first = "Parent task".to_string();
+    //         second = h.to_string();
+    //         b_vec.push(vec![first,second]);
+    //     }
+    //     None => {
+    //     }
+    // }
+    
+    // // Prodigy
+    // match task.prodigy {
+    //     Some(h) => {
+    //         first = "Prodigy".to_string();
+    //         second = h.to_string();
+    //         b_vec.push(vec![first,second]);
+    //     }
+    //     None => {
+    //     }
+    // }
+    
+    // // Recurrence type
+    // match task.rtype.clone() {
+    //     Some(h) => {
+    //         first = "Recurrence type".to_string();
+    //         second = h.text().to_string();
+    //         b_vec.push(vec![first,second]);
+    //     }
+    //     None => {
+    //     }
+    // }
+    
+    // // Entered
+    // first = "Entered".to_string();
+    // diff = now - task.entry;
+    // second = lts_to_date_time_string(task.entry.clone()) + format!(" ({})",make_timetracking_timeframe(diff)).as_str(); 
+    // b_vec.push(vec![first,second]);
+    
+    // // Waiting until
+    // match task.wait {
+    //     Some(h) => {
+    //         first = "Waiting until".to_string();
+    //         second = lts_to_date_time_string(h);
+    //         b_vec.push(vec![first,second]);
+    //     }
+    //     None => {
+    //     }
+    // }
+    
+    // // Start
+    // match task.start {
+    //     Some(h) => {
+    //         first = "Start".to_string();
+    //         second = lts_to_date_time_string(h);
+    //         b_vec.push(vec![first,second]);
+    //     }
+    //     None => {
+    //     }
+    // }
+    
+    // // Due
+    // match task.due {
+    //     Some(h) => {
+    //         first = "Due".to_string();
+    //         second = lts_to_date_time_string(h);
+    //         b_vec.push(vec![first,second]);
+    //     }
+    //     None => {
+    //     }
+    // }
+    
+    // // End
+    // match task.end {
+    //     Some(e) => {
+    //         first = "End".to_string();
+    //         diff = now - e;
+    //         second = lts_to_date_time_string(e) + format!(" ({})",make_timetracking_timeframe(diff)).as_str(); 
+    //         b_vec.push(vec![first,second]);
+    //     }
+    //     None => {
+    //     }
+    // }
+    
+    // // Tags
+    // match task.tags.len() {
+    //     0 => {
+    //     }
+    //     _ => {
+    //         first = "Tags".to_string();
+    //         let mut vecco = "".to_string();
+    //         for tag in task.tags.clone() {
+    //             vecco.push_str(&tag);
+    //             vecco.push_str(" ");
+    //         }
+    //         second = vecco.trim().to_string();
+    //         b_vec.push(vec![first,second]);
+            
+    //     }
+    // }
+    
+    // // Virtual tags
+    // match task.virtual_tags.len() {
+    //     0 => {
+    //     }
+    //     _ => {
+    //         first = "Virtual tags".to_string();
+    //         let mut vecco = "".to_string();
+    //         for tag in task.virtual_tags.clone() {
+    //             let t = tag.text().to_uppercase();
+    //             vecco.push_str(&t);
+    //             vecco.push_str(" ");
+    //         }
+    //         second = vecco.trim().to_string();
+    //         b_vec.push(vec![first,second]);
+            
+    //     }
+    // }
+    
+    // // UUIID
+    // first = "UUIID".to_string();
+    // second = task.uuiid.clone();
+    // b_vec.push(vec![first,second]);
+    
+    // // Timetracking
+    // match task.timetrackingseconds {
+    //     0 => {
+    //     }
+    //     _ => {
+    //         first = "Timetracking".to_string();
+    //         let vecco = "   ".to_string() + &make_timetracking_string(task.timetrackingseconds);
+    //         second = task.timetrackingseconds.to_string() + &vecco;
+    //         b_vec.push(vec![first,second]);
+    //     }
+    // }
+    
+    // // b_vec is too small
+    // if b_vec.clone().len() < 4 {
+    //     return Err("Cannot get 4 lines out of the task");
+    // }
+
+    // // get max column widths
+    // let result_max_desc = get_max_col_widths(desc.clone()); 
+    // if result_max_desc.is_err() {
+    //     return Err(result_max_desc.err().unwrap());
+    // }
+    // let result_max_bvec = get_max_col_widths(b_vec.clone()); 
+    // if result_max_bvec.is_err() {
+    //     return Err(result_max_bvec.err().unwrap());
+    // }
+    // // let the first column have a minimum of 14
+    // // let first_col = result_max_bvec.clone().unwrap()[0];
+    // let first_col = 14;
+
+    // // and combine totals; if annotated and a tab of 2 spaces
+    // let mut desc_2nd_col = result_max_desc.clone().unwrap()[0];
+    // if task.is_annotated(){
+    //     desc_2nd_col += 2;
+    // }
+    // let second_col = cmp::max(desc_2nd_col,result_max_bvec.clone().unwrap()[1]);
+    // let col_sizes = vec![first_col,second_col];
+
+    // // get total
+    // let mut total_max = 0;
+    // for num in col_sizes.clone() {
+    //     total_max += num;
+    // }
+
+    // // add the number of spaces
+    // let total_len = total_max + 1;
+
+    // // Check the width, code later if needed !! Width problem
+    // if total_len > width {
+    //     return Err("We have the width problem");
+    // }
+    
+    // format_report_single(col_sizes, b_vec, desc.clone(),  task, colors);
+
+    
+    // println!("report single");
+    // Ok(())
 }
 
 

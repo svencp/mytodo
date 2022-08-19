@@ -1,6 +1,1 @@
-UUID     Age    Duration        Tags          Completed  R Description                                                                                                                       
-b2c34970 3.1y                   cell          2019-07-02   record cell balance.                                                                                                              
-                                                             2019-07-02 CAD 94.88                                                                                                            
-6330bd1d 3.1y                   household     2019-07-02   mowed the lawn                                                                                                                    
-4ff7fc30 3.1y                                 2019-07-02   find out if sudo no password = root
-
+Recurrence type Chained   

@@ -68,6 +68,13 @@ pub struct Task {
 
 impl Task {
     
+    pub fn has_recur(&self) -> bool {
+        if self.recur.is_some(){
+            return true;
+        }
+        return false;
+    }
+
     pub fn is_active(&self) -> bool {
         for v in self.virtual_tags.clone() {
             if v == VirtualTags::Active {
@@ -135,7 +142,7 @@ impl Task {
             id: None,
             parent_int: None,
             parent: None,
-            prodigy: None,
+            prodigy: Some(0),
             recur: None,
             rtype: None,
             start: None,
@@ -270,26 +277,11 @@ pub fn make_task(vec:Vec<&str>) -> Result<Task, &'static str> {
                             return Err(res.err().unwrap())
                         }
                         ret.due = Some(res.unwrap());
-
-                        // let res= split_colon[1].parse::<i64>();
-                        // if res.is_err(){
-                        //     let term = split_colon[1].trim().to_lowercase();
-                        //     if term.starts_with("now") {
-                        //         ret.due = Some(chrono::offset::Local::now().timestamp());
-                        //     }
-                        //     else {
-                        //         return Err("Integer parsing error");           
-                        //     }
-                        // } 
-                        // else {
-                        //     ret.due = Some(res.unwrap());
-                        // }
                     }
                     
                     "end" => {
                         let res= split_colon[1].parse::<i64>();
                         if res.is_err(){
-                            // let message = format!("Integer parsing error in file: {}",path);
                             return Err("Integer parsing error");           
                         }
                         ret.end = Some(res.unwrap());
@@ -298,7 +290,6 @@ pub fn make_task(vec:Vec<&str>) -> Result<Task, &'static str> {
                     "entry" => {
                         let res= split_colon[1].parse::<i64>();
                         if res.is_err(){
-                            // let message = format!("Integer parsing error in file: {}",path);
                             return Err("Integer parsing error");           
                         }
                         ret.entry = res.unwrap();
@@ -308,7 +299,6 @@ pub fn make_task(vec:Vec<&str>) -> Result<Task, &'static str> {
                         let parent = split_colon[1].to_string();
                         let res = hexi_verify(&parent);
                         if res.is_err(){
-                            // let message = format!("Line in file: {} has faulty hex values",path);
                             return Err("faulty hex values");           
                         }
                         ret.parent = Some(parent);
@@ -318,7 +308,6 @@ pub fn make_task(vec:Vec<&str>) -> Result<Task, &'static str> {
                     "prodigy" => {
                         let res= split_colon[1].parse::<i64>();
                         if res.is_err(){
-                            // let message = format!("Integer parsing error in file: {}",path);
                             return Err("Integer parsing error");          
                         }
                         ret.prodigy = Some(res.unwrap());
@@ -326,12 +315,16 @@ pub fn make_task(vec:Vec<&str>) -> Result<Task, &'static str> {
                     
                     "recur" => {
                         ret.recur = Some(split_colon[1].to_string());
+
+                        //default to periodic
+                        if ret.rtype.is_none(){
+                            ret.rtype = Some(Rtype::Periodic);
+                        }
                     }
                     
                     "rtype" => {
                         let res = Rtype::from_str(split_colon[1]);
                         if res.is_err(){
-                            // let message = format!("Rtype parsing error in file: {}",path);
                             return Err("Rtype parsing error");         
                         }
                         ret.rtype = Some(res.unwrap());
@@ -350,15 +343,7 @@ pub fn make_task(vec:Vec<&str>) -> Result<Task, &'static str> {
                         if res.is_err(){
                             return Err("Status parsing error");         
                         }
-                        // let status = res.clone().unwrap();
                         ret.status = res.unwrap();
-
-                        // if status == Status::Waiting {
-                        //     let wait = ret.wait.unwrap();
-                        //     if now > wait  {
-                        //         ret.status = Status::Pending
-                        //     }
-                        // }
                     }
                     
                     "tags" => {
@@ -371,7 +356,6 @@ pub fn make_task(vec:Vec<&str>) -> Result<Task, &'static str> {
                     "timetrackingseconds" => {
                         let res= split_colon[1].parse::<i64>();
                         if res.is_err(){
-                            // let message = format!("timetrackingseconds parsing error in file: {}",path);
                             return Err("timetrackingseconds parsing error");             
                         }
                         ret.timetrackingseconds = res.unwrap();
@@ -381,13 +365,11 @@ pub fn make_task(vec:Vec<&str>) -> Result<Task, &'static str> {
                         let uuiid = split_colon[1].to_string();
                         let res = hexi_verify(&uuiid);
                         if res.is_err(){
-                            // let message = format!("Line in file: {} has faulty hex values",path);
                             return Err("faulty hex values");           
                         }
                         ret.uuiid = uuiid;
                         let u_int = res.unwrap();
                         ret.uuiid_int = u_int;
-                        // h_set.insert(u_int);
                     }
 
                     "wait" => {
@@ -396,13 +378,6 @@ pub fn make_task(vec:Vec<&str>) -> Result<Task, &'static str> {
                             return Err(res.err().unwrap())
                         }
                         ret.wait = Some(res.unwrap());
-
-                        // let res= split_colon[1].parse::<i64>();
-                        // if res.is_err(){
-                        //     // let message = format!("Integer parsing error in file: {}",path);
-                        //     return Err("Integer parsing error");         
-                        // }
-                        // ret.wait = Some(res.unwrap());
                     }
                     
 
@@ -411,7 +386,6 @@ pub fn make_task(vec:Vec<&str>) -> Result<Task, &'static str> {
                         return Err("Unknown element in colon split")            
                     }
                 }
-
             }
 
             _ => {
@@ -422,8 +396,12 @@ pub fn make_task(vec:Vec<&str>) -> Result<Task, &'static str> {
     } // end of for element
 
     ret.status = update_status(now, ret.clone());
-
     ret.virtual_tags = make_virtual_tags(ret.clone());
+
+    // Check initial prodigy is valid
+    if !ret.has_recur() {
+        ret.prodigy = None;
+    } 
 
 
     Ok(ret)
@@ -474,18 +452,6 @@ pub fn make_virtual_tags(task: Task) -> Vec<VirtualTags> {
     if task.status == Status::Pending {
         ret.push(VirtualTags::Pending);
     }
-    // match task.wait {
-    //     Some(w) => {
-    //         if now > w && task.start.is_none() {
-    //             ret.push(VirtualTags::Pending);
-    //         }
-    //     }
-    //     None => {
-    //         if task.start.is_none() {
-    //             ret.push(VirtualTags::Pending);
-    //         }
-    //     }
-    // }
     
     // Tagged
     if task.tags.len() > 0 {
@@ -502,8 +468,15 @@ pub fn make_virtual_tags(task: Task) -> Vec<VirtualTags> {
     return ret;
 }
 
+
 // update the status
 pub fn update_status(now: i64, task: Task) -> Status {
+    // if this does not have a parent, and has recur, it is a parent; change to recurring
+    if task.recur.is_some(){
+        if task.parent.is_none(){
+            return Status::Recurring;
+        }
+    }
     match task.status {
         Status::Pending => {
             if task.wait.is_some(){
