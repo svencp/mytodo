@@ -68,6 +68,13 @@ pub struct Task {
 
 impl Task {
     
+    pub fn has_due(&self) -> bool {
+        if self.due.is_some(){
+            return true;
+        }
+        return false;
+    }
+
     pub fn has_prodigy(&self) -> bool {
         if self.prodigy.is_some(){
             return true;

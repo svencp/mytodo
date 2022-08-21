@@ -120,31 +120,6 @@ pub fn get_max_col_widths(big: Vec<Vec<String>>) -> Result<Vec<usize>, &'static 
 }
 
 pub fn format_report_active(col_sizes: &Vec<usize>, headers: Vec<&str>, tasks: &Vec<Task>, colors: &Colors, settings: &SettingsMap) {
-    // let res_fg = settings.get_color("color_complete_orphan");
-    // if res_fg.is_err() {
-    //     let message = "Problems retrieving color from settings".to_string();
-    //     feedback(Feedback::Error, message);
-    //     exit(17);
-    // }
-    // let res_fg_overdue = settings.get_color("color_overdue");
-    // if res_fg_overdue.is_err() {
-    //     let message = "Problems retrieving color from settings".to_string();
-    //     feedback(Feedback::Error, message);
-    //     exit(17);
-    // }
-    // let res_bg_overdue = settings.get_color("color_black_bg");
-    // if res_bg_overdue.is_err() {
-    //     let message = "Problems retrieving color from settings".to_string();
-    //     feedback(Feedback::Error, message);
-    //     exit(17);
-    // }
-    // let res_bg = settings.get_color("color_active_bg");
-    // if res_bg.is_err() {
-    //     let message = "Problems retrieving color from settings".to_string();
-    //     feedback(Feedback::Error, message);
-    //     exit(17);
-    // }
-    // let fg   = res_fg.unwrap();
     let fg   = colors.clone().color_complete_orphan;
     let bg   = colors.clone().color_active_bg;
     let fgov = colors.clone().color_overdue;
@@ -313,91 +288,120 @@ pub fn format_report_completed(col_sizes: &Vec<usize>, headers: Vec<&str>, tasks
     print!("\n\n")
 }
 
-pub fn format_report_single(cols: Vec<usize>, big: Vec<Vec<String>>, desc: Vec<Vec<String>>, task: Task, colors: Colors) {
-    let fg = colors.color_complete_orphan;
-    let bg = colors.color_black_bg;
+pub fn format_report_single(col_sizes: &Vec<usize>, headers: Vec<&str>, lines: Vec<Vec<String>>, colors: &Colors, task: &Task ) {
+    let normal_fg   = colors.clone().color_complete_orphan;
+    let tagged_fg   = colors.clone().color_tagged;
+    let rperiod_fg  = colors.clone().color_recur_period_fg;
+    let rchained_fg = colors.clone().color_recur_chain_fg;
+    let black_bg    = colors.clone().color_black_bg;
+    let anno_block = make_annotation_block(col_sizes);
 
-    // lets do the header
-    print!("\n\n");
-    let mut first = justify(big[0][0].clone(), cols[0], Justify::Left);
-    underline_string(first);
-    print!(" ");
-    let mut second = justify(big[0][1].clone(), cols[1], Justify::Left);
-    underline_string(second);
-    print!("\n");
+    let mut remainder: i64;
+    let mut index: i64 = 1;
+    let mut v_lines:Vec<String>;
+
+    // make_heading(col_sizes,headers,settings);
+    make_heading(col_sizes,headers,colors);
+    let num_lines = lines.clone()[1].len();
+
+    for i in 0..num_lines {
+
+    }
+
+
+
+
+
+
+
+
     
-    // 222222222222222222222222222222222222222
-    first = justify(big[1][0].clone(), cols[0], Justify::Left);
-    second = justify(big[1][1].clone(), cols[1], Justify::Left);
-    make_dark_print_single(&first,&second,fg,bg);
+    // let fg = colors.color_complete_orphan;
+    // let bg = colors.color_black_bg;
 
-    // 3333333333333333333333333333333333333333
-    let fgbg = get_colour_scheme(task,colors);
+    // // lets do the header
+    // print!("\n\n");
+    // let mut first = justify(big[0][0].clone(), cols[0], Justify::Left);
+    // underline_string(first);
+    // print!(" ");
+    // let mut second = justify(big[0][1].clone(), cols[1], Justify::Left);
+    // underline_string(second);
+    // print!("\n");
+    
+    // // 222222222222222222222222222222222222222
+    // first = justify(big[1][0].clone(), cols[0], Justify::Left);
+    // second = justify(big[1][1].clone(), cols[1], Justify::Left);
+    // make_dark_print_single(&first,&second,fg,bg);
 
-    for i in 0..desc.len() {
-        match i {
-            0 => {
-                match fgbg.get(1).unwrap() {
-                    Some(bg) => {
-                        let d = justify("Description".to_string(), cols[0], Justify::Left);
-                        print!("{} ",d);
-                        let value = desc[i][0].clone();        
-                        let v = justify(value, cols[1], Justify::Left);
-                        print!("{}{}{}",color::Fg(fgbg[0].unwrap()), color::Bg(*bg),v);
-                        print!("{}\n",style::Reset);
-                    }
-                    None => {
-                        let d = justify("Description".to_string(), cols[0], Justify::Left);
-                        print!("{} ",d);
-                        let value = desc[i][0].clone();  
-                        let v = justify(value, cols[1], Justify::Left);
-                        print!("{}{}",color::Fg(fgbg[0].unwrap()),v);
-                        print!("{}\n",style::Reset);
-                    }
-                }
-            }
+    // // 3333333333333333333333333333333333333333
+    // let fgbg = get_colour_scheme(task,colors);
 
-            _ => {
-                match fgbg.get(1).unwrap() {
-                    Some(bg) => {
-                        let d = repeat_char(" ".to_string(), cols[0]);
-                        print!("{} ",d);
-                        let value = desc[i][0].clone(); 
-                        // remember to take 2 spaces away again for the tab
-                        let v = justify(value, cols[1]-2, Justify::Left);
-                        print!("{}{}  {}",color::Fg(fgbg[0].unwrap()), color::Bg(*bg),v);
-                        print!("{}\n",style::Reset);
-                    }
-                    None => {
-                        let d = repeat_char(" ".to_string(), cols[0]);
-                        print!("{} ",d);
-                        let value = desc[i][0].clone(); 
-                        // remember to take 2 spaces away again for the tab
-                        let v = justify(value, cols[1]-2, Justify::Left);
-                        print!("{}  {}",color::Fg(fgbg[0].unwrap()),v);
-                        print!("{}\n",style::Reset);
-                    }
-                }
-            }
-        }
-    }
+    // for i in 0..desc.len() {
+    //     match i {
+    //         0 => {
+    //             match fgbg.get(1).unwrap() {
+    //                 Some(bg) => {
+    //                     let d = justify("Description".to_string(), cols[0], Justify::Left);
+    //                     print!("{} ",d);
+    //                     let value = desc[i][0].clone();        
+    //                     let v = justify(value, cols[1], Justify::Left);
+    //                     print!("{}{}{}",color::Fg(fgbg[0].unwrap()), color::Bg(*bg),v);
+    //                     print!("{}\n",style::Reset);
+    //                 }
+    //                 None => {
+    //                     let d = justify("Description".to_string(), cols[0], Justify::Left);
+    //                     print!("{} ",d);
+    //                     let value = desc[i][0].clone();  
+    //                     let v = justify(value, cols[1], Justify::Left);
+    //                     print!("{}{}",color::Fg(fgbg[0].unwrap()),v);
+    //                     print!("{}\n",style::Reset);
+    //                 }
+    //             }
+    //         }
 
-    // 4444444444444444444444444444444444444444444444444444444444444444444444444 onwards
-    for i in 2..big.len() {
-        first = justify(big[i][0].clone(), cols[0], Justify::Left);
-        second = justify(big[i][1].clone(), cols[1], Justify::Left);
+    //         _ => {
+    //             match fgbg.get(1).unwrap() {
+    //                 Some(bg) => {
+    //                     let d = repeat_char(" ".to_string(), cols[0]);
+    //                     print!("{} ",d);
+    //                     let value = desc[i][0].clone(); 
+    //                     // remember to take 2 spaces away again for the tab
+    //                     let v = justify(value, cols[1]-2, Justify::Left);
+    //                     print!("{}{}  {}",color::Fg(fgbg[0].unwrap()), color::Bg(*bg),v);
+    //                     print!("{}\n",style::Reset);
+    //                 }
+    //                 None => {
+    //                     let d = repeat_char(" ".to_string(), cols[0]);
+    //                     print!("{} ",d);
+    //                     let value = desc[i][0].clone(); 
+    //                     // remember to take 2 spaces away again for the tab
+    //                     let v = justify(value, cols[1]-2, Justify::Left);
+    //                     print!("{}  {}",color::Fg(fgbg[0].unwrap()),v);
+    //                     print!("{}\n",style::Reset);
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
+
+    // // 4444444444444444444444444444444444444444444444444444444444444444444444444 onwards
+    // for i in 2..big.len() {
+    //     first = justify(big[i][0].clone(), cols[0], Justify::Left);
+    //     second = justify(big[i][1].clone(), cols[1], Justify::Left);
         
-        let remainder = i % 2;
-        match remainder {
-            0 => {
-                make_dark_print_single(&first,&second,fg,bg);
-            }
-            _ => {
-                make_print2(&first, &second, fg);
-            }
-        }
-    }
-    print!("\n\n");
+    //     let remainder = i % 2;
+    //     match remainder {
+    //         0 => {
+    //             make_dark_print_single(&first,&second,fg,bg);
+    //         }
+    //         _ => {
+    //             make_print2(&first, &second, fg);
+    //         }
+    //     }
+    // }
+    // print!("\n\n");
+
+
 }
 
 pub fn make_active(settings: &SettingsMap) {
@@ -444,13 +448,6 @@ pub fn make_dark_print_single(first: &str, second: &str, fg: color::Rgb, bg:colo
 
 // make the header line
 pub fn make_heading(col_sizes: &Vec<usize>, headers: Vec<&str>, colors: &Colors) {
-    // let res_fg = settings.get_color("color_complete_orphan");
-    // if res_fg.is_err() {
-    //     let message = "Problems retrieving color from settings".to_string();
-    //     feedback(Feedback::Error, message);
-    //     exit(17);
-    // }
-    // let fg = res_fg.unwrap();
     let fg = colors.color_complete_orphan;
     print!("\n\n{}", color::Fg(fg));
     
@@ -675,6 +672,7 @@ pub fn report_single(settings: &SettingsMap, colors: &Colors, task: &Task ) -> R
     let mut first_col:Vec<String>  = Vec::new(); 
     let mut second_col:Vec<String> = Vec::new(); 
     let mut diff:i64;
+    let mut max_col:usize = 0;
     let now = lts_now();
 
     // ID
@@ -745,244 +743,72 @@ pub fn report_single(settings: &SettingsMap, colors: &Colors, task: &Task ) -> R
         first_col.push("Start".to_string());
         second_col.push(task.clone().start.unwrap().to_string());
     }
+    
+    // Due
+    if task.has_due(){
+        first_col.push("Due".to_string());
+        second_col.push(task.clone().due.unwrap().to_string());
+    }
 
+    // End
+    if task.is_complete() {
+        first_col.push("Due".to_string());
+        diff = now - task.end.unwrap();
+        let second = lts_to_date_time_string(task.end.clone().unwrap()) + format!(" ({})",make_timetracking_timeframe(diff)).as_str(); 
+        second_col.push(second);
+    }
+    
+    // Tags
+    if task.is_tagged() {
+        first_col.push("Tags".to_string());
+        let mut vecco = "".to_string();
+        for tag in task.tags.clone() {
+            vecco.push_str(&tag);
+            vecco.push_str(" ");
+        }
+        second_col.push(vecco.trim().to_string());
+    }
+    
+    // Virtual tags   -> there should always be virtual tags
+    first_col.push("Virtual tags".to_string());
+    let mut vecco = "".to_string();
+    for tag in task.virtual_tags.clone() {
+        let t = tag.text().to_uppercase();
+        vecco.push_str(&t);
+        vecco.push_str(" ");
+    }
+    second_col.push(vecco.trim().to_string());
+    
+    // UUIID
+    first_col.push("UUIID".to_string());
+    let uuiid_int = format!("{}    ({})",task.uuiid.clone(), task.clone().uuiid_int.to_string());
+    second_col.push(uuiid_int);
+    
+    // Timetracking
+    first_col.push("Timetracking".to_string());
+    vecco = "   ".to_string() + &make_timetracking_string(task.timetrackingseconds);
+    second_col.push(task.timetrackingseconds.to_string() + &vecco);
 
+    // find max of second column
+    for size in second_col.clone() {
+        let len = size.len();
+        if len > max_col {
+            max_col = len;
+        }
+    }
+    col_sizes.push(max_col);
 
+    // Width problem
+    let sum = col_sizes[0] + col_sizes[1] + 1;
+    let width = settings.get_integer("useTerminalWidthOf");
+    if sum > width.unwrap() as usize {
+        return Err("We have the width problem");
+    }
 
-
+    let lines = vec![first_col.clone(), second_col.clone()];
+    format_report_single(&col_sizes, headers, lines, &colors, &task);
 
     Ok(())
-
-    // let mut b_vec:Vec<Vec<String>> = Vec::new();
-    // let mut first = "Name".to_string();
-    // let mut second = "Value".to_string();
-    // let mut diff:i64;
-    // let now = lts_now();
-    // let mut desc: Vec<Vec<String>> = Vec::new();
-    // let vec = vec![ first , second ];
-    // b_vec.push(vec);
-    
-    // // ID
-    // first = "ID".to_string();
-    // match task.id {
-    //     Some(i) => {
-    //         second = i.to_string();
-    //     }
-    //     None => {
-    //         second = "-".to_string();
-    //     }
-    // }
-    // b_vec.push(vec![first,second]);
-    
-    // // lets put description into separate vector  && only give the date (not the time as well)
-    // desc.push(vec![task.description.clone()]);
-    // if task.ann.len() > 0 {
-    //     let v_anno = task.ann.clone();
-    //     for a in v_anno {
-    //         let date = lts_to_date_string(a.date);
-    //         // let date = lts_to_date_time_string(a.date);
-    //         let pusha = "".to_string() + &date + " " + &a.desc;
-    //         desc.push(vec![pusha]);
-    //     }
-    // }
-  
-    // // Status
-    // first = "Status".to_string();
-    // second = task.status.text().to_string();
-    // b_vec.push(vec![first,second]);
-    
-    // // Recurrence
-    // match task.recur.clone() {
-    //     Some(i) => {
-    //         first = "Recurrence".to_string();
-    //         second = i.to_string();
-    //         b_vec.push(vec![first,second]);
-    //     }
-    //     None => {
-    //     }
-    // }
-    
-    // // Parent
-    // match task.parent.clone() {
-    //     Some(h) => {
-    //         first = "Parent task".to_string();
-    //         second = h.to_string();
-    //         b_vec.push(vec![first,second]);
-    //     }
-    //     None => {
-    //     }
-    // }
-    
-    // // Prodigy
-    // match task.prodigy {
-    //     Some(h) => {
-    //         first = "Prodigy".to_string();
-    //         second = h.to_string();
-    //         b_vec.push(vec![first,second]);
-    //     }
-    //     None => {
-    //     }
-    // }
-    
-    // // Recurrence type
-    // match task.rtype.clone() {
-    //     Some(h) => {
-    //         first = "Recurrence type".to_string();
-    //         second = h.text().to_string();
-    //         b_vec.push(vec![first,second]);
-    //     }
-    //     None => {
-    //     }
-    // }
-    
-    // // Entered
-    // first = "Entered".to_string();
-    // diff = now - task.entry;
-    // second = lts_to_date_time_string(task.entry.clone()) + format!(" ({})",make_timetracking_timeframe(diff)).as_str(); 
-    // b_vec.push(vec![first,second]);
-    
-    // // Waiting until
-    // match task.wait {
-    //     Some(h) => {
-    //         first = "Waiting until".to_string();
-    //         second = lts_to_date_time_string(h);
-    //         b_vec.push(vec![first,second]);
-    //     }
-    //     None => {
-    //     }
-    // }
-    
-    // // Start
-    // match task.start {
-    //     Some(h) => {
-    //         first = "Start".to_string();
-    //         second = lts_to_date_time_string(h);
-    //         b_vec.push(vec![first,second]);
-    //     }
-    //     None => {
-    //     }
-    // }
-    
-    // // Due
-    // match task.due {
-    //     Some(h) => {
-    //         first = "Due".to_string();
-    //         second = lts_to_date_time_string(h);
-    //         b_vec.push(vec![first,second]);
-    //     }
-    //     None => {
-    //     }
-    // }
-    
-    // // End
-    // match task.end {
-    //     Some(e) => {
-    //         first = "End".to_string();
-    //         diff = now - e;
-    //         second = lts_to_date_time_string(e) + format!(" ({})",make_timetracking_timeframe(diff)).as_str(); 
-    //         b_vec.push(vec![first,second]);
-    //     }
-    //     None => {
-    //     }
-    // }
-    
-    // // Tags
-    // match task.tags.len() {
-    //     0 => {
-    //     }
-    //     _ => {
-    //         first = "Tags".to_string();
-    //         let mut vecco = "".to_string();
-    //         for tag in task.tags.clone() {
-    //             vecco.push_str(&tag);
-    //             vecco.push_str(" ");
-    //         }
-    //         second = vecco.trim().to_string();
-    //         b_vec.push(vec![first,second]);
-            
-    //     }
-    // }
-    
-    // // Virtual tags
-    // match task.virtual_tags.len() {
-    //     0 => {
-    //     }
-    //     _ => {
-    //         first = "Virtual tags".to_string();
-    //         let mut vecco = "".to_string();
-    //         for tag in task.virtual_tags.clone() {
-    //             let t = tag.text().to_uppercase();
-    //             vecco.push_str(&t);
-    //             vecco.push_str(" ");
-    //         }
-    //         second = vecco.trim().to_string();
-    //         b_vec.push(vec![first,second]);
-            
-    //     }
-    // }
-    
-    // // UUIID
-    // first = "UUIID".to_string();
-    // second = task.uuiid.clone();
-    // b_vec.push(vec![first,second]);
-    
-    // // Timetracking
-    // match task.timetrackingseconds {
-    //     0 => {
-    //     }
-    //     _ => {
-    //         first = "Timetracking".to_string();
-    //         let vecco = "   ".to_string() + &make_timetracking_string(task.timetrackingseconds);
-    //         second = task.timetrackingseconds.to_string() + &vecco;
-    //         b_vec.push(vec![first,second]);
-    //     }
-    // }
-    
-    // // b_vec is too small
-    // if b_vec.clone().len() < 4 {
-    //     return Err("Cannot get 4 lines out of the task");
-    // }
-
-    // // get max column widths
-    // let result_max_desc = get_max_col_widths(desc.clone()); 
-    // if result_max_desc.is_err() {
-    //     return Err(result_max_desc.err().unwrap());
-    // }
-    // let result_max_bvec = get_max_col_widths(b_vec.clone()); 
-    // if result_max_bvec.is_err() {
-    //     return Err(result_max_bvec.err().unwrap());
-    // }
-    // // let the first column have a minimum of 14
-    // // let first_col = result_max_bvec.clone().unwrap()[0];
-    // let first_col = 14;
-
-    // // and combine totals; if annotated and a tab of 2 spaces
-    // let mut desc_2nd_col = result_max_desc.clone().unwrap()[0];
-    // if task.is_annotated(){
-    //     desc_2nd_col += 2;
-    // }
-    // let second_col = cmp::max(desc_2nd_col,result_max_bvec.clone().unwrap()[1]);
-    // let col_sizes = vec![first_col,second_col];
-
-    // // get total
-    // let mut total_max = 0;
-    // for num in col_sizes.clone() {
-    //     total_max += num;
-    // }
-
-    // // add the number of spaces
-    // let total_len = total_max + 1;
-
-    // // Check the width, code later if needed !! Width problem
-    // if total_len > width {
-    //     return Err("We have the width problem");
-    // }
-    
-    // format_report_single(col_sizes, b_vec, desc.clone(),  task, colors);
-
-    
-    // println!("report single");
-    // Ok(())
 }
 
 
