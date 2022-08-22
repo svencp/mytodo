@@ -165,7 +165,7 @@ pub fn format_report_active(col_sizes: &Vec<usize>, headers: Vec<&str>, tasks: &
 
                     let desc = lts_to_date_string(ann.date) + " " + &ann.desc;
                     let d = justify(desc.clone(), col_sizes[4]-2, Justify::Left);
-                    print!("{}   {}",anno_block, d);
+                    print!("{}{}",anno_block, d);
                     print!("{}\n",style::Reset);
                 }
             }
@@ -175,7 +175,7 @@ pub fn format_report_active(col_sizes: &Vec<usize>, headers: Vec<&str>, tasks: &
     print!("\n\n");
 }
 
-pub fn format_report_completed(col_sizes: &Vec<usize>, headers: Vec<&str>, tasks: &Vec<Task>, colors: &Colors ,settings: &SettingsMap) {
+pub fn format_report_completed(col_sizes: &Vec<usize>, headers: Vec<&str>, tasks: &Vec<Task>, colors: &Colors) {
     let normal_fg   = colors.clone().color_complete_orphan;
     let tagged_fg   = colors.clone().color_tagged;
     let rperiod_fg  = colors.clone().color_recur_period_fg;
@@ -249,41 +249,54 @@ pub fn format_report_completed(col_sizes: &Vec<usize>, headers: Vec<&str>, tasks
         }
     }
 
+    print!("\n\n")
+}
 
+pub fn format_report_recurring(col_sizes: &Vec<usize>, headers: Vec<&str>, tasks: &Vec<Task>, colors: &Colors) {
+    let rperiod_fg  = colors.clone().color_recur_period_fg;
+    let rchained_fg = colors.clone().color_recur_chain_fg;
+    let black_bg    = colors.clone().color_black_bg;
+    let anno_block = make_annotation_block(col_sizes);
 
+    let mut remainder: i64;
+    let mut index: i64 = 0;
+    let mut v_lines:Vec<String>;
 
-    // for i in 0..tasks.len() {
-    //     let remainder = i % 2;
-    //     match remainder {
-    //         // dark black background
-    //         0 => {
-    //             match tasks[i].cloned().is_recurring() {
-    //                 true => {
-    //                     match tasks.cloned()[i].rtype.unwrap() {
-    //                         Rtype::Periodic => {
+    make_heading(col_sizes, headers, colors);
 
-    //                         }
-    //                         Rtype::Chained => {
+    for task in tasks {
+        index += 1;
+        remainder = index % 2;
 
-    //                         }
-    //                     }
-    //                 }
-    //                 false => {
+        v_lines = get_task_line_recurring(col_sizes, &anno_block, &task);
 
-    //                 }
-    //             }
-    //         }
-    //         // normal background
-    //         _ => {
-
-    //         }
-    //     }
-    // }
-
-
-
-
-
+        match remainder {
+            // dark black background
+            0 => {
+                match task.is_periodic() {
+                    true => {
+                        make_dark_print(v_lines, rperiod_fg, black_bg);
+                    }
+                    // assume it is chained
+                    false => {
+                        make_dark_print(v_lines, rchained_fg, black_bg);
+                    }
+                }
+            }
+            // normal background
+            _ => {
+                match task.is_periodic() {
+                    true => {
+                        make_print(v_lines, rperiod_fg);
+                    }
+                    // assume it is chained
+                    false => {
+                        make_print(v_lines, rchained_fg);
+                    }
+                }
+            }
+        }
+    }
 
     print!("\n\n")
 }
@@ -295,19 +308,19 @@ pub fn format_report_single(col_sizes: &Vec<usize>, headers: Vec<&str>, lines: V
     let rchained_fg = colors.clone().color_recur_chain_fg;
     let active_bg    = colors.clone().color_active_bg;
     let black_bg    = colors.clone().color_black_bg;
-    let anno_block = make_annotation_block(col_sizes);
-    let mut index: usize = 0;
+    // let anno_block = make_annotation_block(col_sizes);
+    // let mut index: usize = 0;
 
-    let mut remainder: i64;
+    // let mut remainder: i64;
     let mut index: i64 = 1;
-    let mut v_lines:Vec<String>;
+    // let mut v_lines:Vec<String>;
 
     // make_heading(col_sizes,headers,settings);
     make_heading(col_sizes,headers,colors);
     let num_lines = lines.clone()[1].len();
 
     for i in 0..num_lines {
-        if lines[0][i].clone().starts_with("Desc") || lines[0][i].clone().len() == 0 {
+        if lines[0][i].clone().starts_with("Desc")  {
             // first col 
             print!("{}",color::Fg(normal_fg));
             print!("{}", justify(lines[0][i].clone(), col_sizes[0] + 1, Justify::Left));
@@ -359,6 +372,61 @@ pub fn format_report_single(col_sizes: &Vec<usize>, headers: Vec<&str>, lines: V
             index = 1;
             continue;
         }
+
+        // take care of any annotations
+        if lines[0][i].clone().len() == 0 {
+            // first col 
+            print!("{}",color::Fg(normal_fg));
+            print!("{}", justify(lines[0][i].clone(), col_sizes[0] + 1, Justify::Left));
+            print!("{}",style::Reset);
+
+            // second col
+            match task.is_active() {
+                true => {
+                    print!("{}{}",color::Fg(normal_fg), color::Bg(active_bg));
+                    print!("  {}", justify(lines[1][i].clone(), col_sizes[1]-2, Justify::Left));
+                    print!("{}\n",style::Reset);
+                }
+                false => {
+                    match task.has_recur() {
+                        true => {
+                            match task.is_periodic() {
+                                true => {
+                                    print!("{}",color::Fg(rperiod_fg));
+                                    print!("  {}", justify(lines[1][i].clone(), col_sizes[1]-2, Justify::Left));
+                                    print!("{}\n",style::Reset); 
+                                }
+                                // assume it is chained
+                                false => {
+                                    print!("{}",color::Fg(rchained_fg));
+                                    print!("  {}", justify(lines[1][i].clone(), col_sizes[1]-2, Justify::Left));
+                                    print!("{}\n",style::Reset); 
+                                }
+                            }
+                        }
+                        false => {
+                            match task.is_tagged() {
+                                true => {
+                                    print!("{}",color::Fg(tagged_fg));
+                                    print!("  {}", justify(lines[1][i].clone(), col_sizes[1]-2, Justify::Left));
+                                    print!("{}\n",style::Reset); 
+                                }
+                                false => {
+                                    print!("{}",color::Fg(normal_fg));
+                                    print!("  {}", justify(lines[1][i].clone(), col_sizes[1]-2, Justify::Left));
+                                    print!("{}\n",style::Reset);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // we have to reset the index here in order for annotations to follow pattern
+            index = 1;
+            continue;
+        }
+
         match index % 2 {
             0 => {
                 print!("{}",color::Fg(normal_fg));
@@ -472,6 +540,83 @@ pub fn format_report_single(col_sizes: &Vec<usize>, headers: Vec<&str>, lines: V
     // print!("\n\n");
 
     print!("\n\n");
+}
+
+pub fn format_report_waiting(col_sizes: &Vec<usize>, headers: Vec<&str>, tasks: &Vec<Task>, colors: &Colors) {
+    let normal_fg   = colors.clone().color_complete_orphan;
+    let tagged_fg   = colors.clone().color_tagged;
+    let rperiod_fg  = colors.clone().color_recur_period_fg;
+    let rchained_fg = colors.clone().color_recur_chain_fg;
+    let black_bg    = colors.clone().color_black_bg;
+    let anno_block = make_annotation_block(col_sizes);
+
+    let mut remainder: i64;
+    let mut index: i64 = 0;
+    let mut v_lines:Vec<String>;
+
+    make_heading(col_sizes, headers, colors);
+
+    for task in tasks {
+        index += 1;
+        remainder = index % 2;
+
+        v_lines = get_task_line_recurring(col_sizes, &anno_block, &task);
+
+        match remainder {
+            // dark black background
+            0 => {
+                match task.is_recurring() {
+                    true => {
+                        match task.clone().rtype.unwrap() {
+                            Rtype::Periodic => {
+                                make_dark_print(v_lines, rperiod_fg, black_bg);
+                            }
+                            Rtype::Chained => {
+                                make_dark_print(v_lines, rchained_fg, black_bg);
+                            }
+                        }
+                    }
+                    false => {
+                        match task.is_tagged() {
+                            true => {
+                                make_dark_print(v_lines, tagged_fg, black_bg);
+                            }
+                            false => {
+                                make_dark_print(v_lines, normal_fg, black_bg);
+                            }
+                        }
+                    }
+                }
+            }
+            // normal background
+            _ => {
+                match task.is_recurring() {
+                    true => {
+                        match task.clone().rtype.unwrap() {
+                            Rtype::Periodic => {
+                                make_print(v_lines, rperiod_fg);
+                            }
+                            Rtype::Chained => {
+                                make_print(v_lines, rchained_fg)
+                            }
+                        }
+                    }
+                    false => {
+                        match task.is_tagged() {
+                            true => {
+                                make_print(v_lines, tagged_fg)
+                            }
+                            false => {
+                                make_print(v_lines, normal_fg)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    print!("\n\n")
 }
 
 pub fn make_active(settings: &SettingsMap) {
@@ -619,7 +764,7 @@ pub fn report_active(colors: &Colors, settings: &SettingsMap, pend: &List) -> Re
 
     // lets get the set of tasks
     for t in pend.list.clone() {
-        if t.is_active() || t.is_overdue() {
+        if t.is_active() || t.is_overdue()  {
             tasks.push(t.clone());
             v_desc.push(t.description.clone());
             let l1 = t.description.len();
@@ -730,7 +875,62 @@ pub fn report_completed(colors: &Colors, settings: &SettingsMap, comp: &List ) -
         return Err("no matches");
     }
 
-    format_report_completed(&col_sizes, headers, &tasks, colors, &settings);
+    format_report_completed(&col_sizes, headers, &tasks, colors);
+
+    Ok(())
+}
+
+pub fn report_recurring(colors: &Colors, settings: &SettingsMap, pend: &List ) -> Result<(), &'static str> {
+    let mut col_sizes = vec![2,8,7,4];
+    let headers = vec!["ID", "UUIID", "Age", "Tags", "Description" ];
+    let mut tasks: Vec<Task> = Vec::new();
+    let mut v_desc: Vec<String> = Vec::new();
+    let mut max_col: usize = 0;
+
+
+    // check for lengths of description and only get parents
+    for t in pend.list.clone() {
+        if t.is_parent() {
+            tasks.push(t.clone());
+            v_desc.push(t.description.clone());
+            let l1 = t.description.clone().len();
+            if l1 > max_col {
+                max_col = l1;
+            }
+
+            if t.ann.len() > 0 {
+                for a in t.ann {
+                    let line = "  ".to_string() + &lts_to_date_string(a.date) + " " + &a.desc;
+                    v_desc.push(line.clone());
+                    if line.len() > max_col {
+                        max_col = line.len();
+                    }
+                }
+            }
+        }
+    }
+
+    // add max_col to col_sizes with two spaces
+    col_sizes.push(max_col);
+    let mut total_width = 0;
+    for s in col_sizes.clone() {
+        total_width += s;
+    }
+    // add the separator spaces
+    total_width += col_sizes.len() - 1;
+
+    // Width problem
+    let width = settings.get_integer("useTerminalWidthOf");
+    if total_width > width.unwrap() as usize {
+        return Err("We have the width problem");
+    }
+
+    // do we have anything
+    if tasks.len() == 0 {
+        return Err("no matches");
+    }
+
+    format_report_recurring(&col_sizes, headers, &tasks, colors);
 
     Ok(())
 }
@@ -893,6 +1093,60 @@ pub fn report_single(settings: &SettingsMap, colors: &Colors, task: &Task ) -> R
     Ok(())
 }
 
+pub fn report_waiting(colors: &Colors, settings: &SettingsMap, pend: &List ) -> Result<(), &'static str> {
+    let mut col_sizes = vec![2,8,7,4];
+    let headers = vec!["ID", "UUIID", "Age", "Tags", "Description" ];
+    let mut tasks: Vec<Task> = Vec::new();
+    let mut v_desc: Vec<String> = Vec::new();
+    let mut max_col: usize = 0;
+
+
+    // check for lengths of description and only get parents
+    for t in pend.list.clone() {
+        if t.is_parent() {
+            tasks.push(t.clone());
+            v_desc.push(t.description.clone());
+            let l1 = t.description.clone().len();
+            if l1 > max_col {
+                max_col = l1;
+            }
+
+            if t.ann.len() > 0 {
+                for a in t.ann {
+                    let line = "  ".to_string() + &lts_to_date_string(a.date) + " " + &a.desc;
+                    v_desc.push(line.clone());
+                    if line.len() > max_col {
+                        max_col = line.len();
+                    }
+                }
+            }
+        }
+    }
+
+    // add max_col to col_sizes with two spaces
+    col_sizes.push(max_col);
+    let mut total_width = 0;
+    for s in col_sizes.clone() {
+        total_width += s;
+    }
+    // add the separator spaces
+    total_width += col_sizes.len() - 1;
+
+    // Width problem
+    let width = settings.get_integer("useTerminalWidthOf");
+    if total_width > width.unwrap() as usize {
+        return Err("We have the width problem");
+    }
+
+    // do we have anything
+    if tasks.len() == 0 {
+        return Err("no matches");
+    }
+
+    format_report_waiting(&col_sizes, headers, &tasks, colors);
+
+    Ok(())
+}
 
 // show Nag
 pub fn show_nag(settings: &SettingsMap) {

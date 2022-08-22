@@ -459,7 +459,9 @@ pub fn make_virtual_tags(task: Task) -> Vec<VirtualTags> {
 
     // Active
     if task.start.is_some(){
-        ret.push(VirtualTags::Active);
+        if !task.is_parent() {
+            ret.push(VirtualTags::Active);
+        }
     }
 
     // Annotated
@@ -485,7 +487,9 @@ pub fn make_virtual_tags(task: Task) -> Vec<VirtualTags> {
     // Overdue
     if task.due.is_some() {
         if now > task.due.unwrap() {
-            ret.push(VirtualTags::Overdue);
+            if !task.is_parent() {
+                ret.push(VirtualTags::Overdue);
+            }
         }
     } 
     
@@ -507,7 +511,9 @@ pub fn make_virtual_tags(task: Task) -> Vec<VirtualTags> {
     // Waiting
     if task.wait.is_some() {
         if now < task.wait.unwrap() {
-            ret.push(VirtualTags::Waiting);
+            if !task.is_parent() {
+                ret.push(VirtualTags::Waiting);
+            }
         }
     }
 

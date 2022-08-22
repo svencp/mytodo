@@ -273,8 +273,24 @@ fn main() {
                     }
                 }
                 
+                "recurring" => {
+                    let result = report_recurring(&colors, &settings, &pending_tasks);
+                    if result.is_err() {
+                        let message = result.err().unwrap().to_string();
+                        feedback(Feedback::Warning, message);
+                    }
+                }
+
                 "version" => {
                     println!("Version is {}",VERSION);
+                }
+
+                "waiting" => {
+                    let result = report_waiting(&colors, &settings, &pending_tasks);
+                    if result.is_err() {
+                        let message = result.err().unwrap().to_string();
+                        feedback(Feedback::Warning, message);
+                    }
                 }
 
                 _ => { 
