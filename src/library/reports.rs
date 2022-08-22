@@ -293,8 +293,10 @@ pub fn format_report_single(col_sizes: &Vec<usize>, headers: Vec<&str>, lines: V
     let tagged_fg   = colors.clone().color_tagged;
     let rperiod_fg  = colors.clone().color_recur_period_fg;
     let rchained_fg = colors.clone().color_recur_chain_fg;
+    let active_bg    = colors.clone().color_active_bg;
     let black_bg    = colors.clone().color_black_bg;
     let anno_block = make_annotation_block(col_sizes);
+    let mut index: usize = 0;
 
     let mut remainder: i64;
     let mut index: i64 = 1;
@@ -305,7 +307,75 @@ pub fn format_report_single(col_sizes: &Vec<usize>, headers: Vec<&str>, lines: V
     let num_lines = lines.clone()[1].len();
 
     for i in 0..num_lines {
+        if lines[0][i].clone().starts_with("Desc") || lines[0][i].clone().len() == 0 {
+            // first col 
+            print!("{}",color::Fg(normal_fg));
+            print!("{}", justify(lines[0][i].clone(), col_sizes[0] + 1, Justify::Left));
+            print!("{}",style::Reset);
 
+            // second col
+            match task.is_active() {
+                true => {
+                    print!("{}{}",color::Fg(normal_fg), color::Bg(active_bg));
+                    print!("{}", justify(lines[1][i].clone(), col_sizes[1], Justify::Left));
+                    print!("{}\n",style::Reset);
+                }
+                false => {
+                    match task.has_recur() {
+                        true => {
+                            match task.is_periodic() {
+                                true => {
+                                    print!("{}",color::Fg(rperiod_fg));
+                                    print!("{}", justify(lines[1][i].clone(), col_sizes[1], Justify::Left));
+                                    print!("{}\n",style::Reset); 
+                                }
+                                // assume it is chained
+                                false => {
+                                    print!("{}",color::Fg(rchained_fg));
+                                    print!("{}", justify(lines[1][i].clone(), col_sizes[1], Justify::Left));
+                                    print!("{}\n",style::Reset); 
+                                }
+                            }
+                        }
+                        false => {
+                            match task.is_tagged() {
+                                true => {
+                                    print!("{}",color::Fg(tagged_fg));
+                                    print!("{}", justify(lines[1][i].clone(), col_sizes[1], Justify::Left));
+                                    print!("{}\n",style::Reset); 
+                                }
+                                false => {
+                                    print!("{}",color::Fg(normal_fg));
+                                    print!("{}", justify(lines[1][i].clone(), col_sizes[1], Justify::Left));
+                                    print!("{}\n",style::Reset);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // we have to reset the index here in order for annotations to follow pattern
+            index = 1;
+            continue;
+        }
+        match index % 2 {
+            0 => {
+                print!("{}",color::Fg(normal_fg));
+                print!("{}", justify(lines[0][i].clone(), col_sizes[0] + 1, Justify::Left));
+                print!("{}", justify(lines[1][i].clone(), col_sizes[1], Justify::Left));
+                print!("{}\n",style::Reset);
+            }
+            _ => {
+                // make dark bg
+                print!("{}{}",color::Fg(normal_fg), color::Bg(black_bg));
+                print!("{}", justify(lines[0][i].clone(), col_sizes[0] + 1, Justify::Left));
+                print!("{}", justify(lines[1][i].clone(), col_sizes[1], Justify::Left));
+                print!("{}\n",style::Reset);
+            }
+        }
+
+        index += 1;
     }
 
 
@@ -401,7 +471,7 @@ pub fn format_report_single(col_sizes: &Vec<usize>, headers: Vec<&str>, lines: V
     // }
     // print!("\n\n");
 
-
+    print!("\n\n");
 }
 
 pub fn make_active(settings: &SettingsMap) {
@@ -667,12 +737,13 @@ pub fn report_completed(colors: &Colors, settings: &SettingsMap, comp: &List ) -
 
 // show a single id report 'lets hardcode these variables'
 pub fn report_single(settings: &SettingsMap, colors: &Colors, task: &Task ) -> Result<(), &'static str> {
-    let mut col_sizes:Vec<usize> = vec![16];
+    let mut col_sizes:Vec<usize> = Vec::new();
     let headers = vec![ "Name", "Value" ];
     let mut first_col:Vec<String>  = Vec::new(); 
     let mut second_col:Vec<String> = Vec::new(); 
     let mut diff:i64;
-    let mut max_col:usize = 0;
+    let mut max_second_col:usize = 0;
+    let mut max_first_col:usize  = 0;
     let now = lts_now();
 
     // ID
@@ -694,6 +765,9 @@ pub fn report_single(settings: &SettingsMap, colors: &Colors, task: &Task ) -> R
     for anno in task.clone().ann {
         first_col.push("".to_string());
         let line = lts_to_date_time_string(anno.date) + " " + &anno.desc;
+        if line.len() + 2 > max_second_col {
+            max_second_col = line.len() + 2;
+        }
         second_col.push(line);
     }
 
@@ -735,24 +809,24 @@ pub fn report_single(settings: &SettingsMap, colors: &Colors, task: &Task ) -> R
     // Waiting until
     if task.has_wait(){
         first_col.push("Waiting until".to_string());
-        second_col.push(task.clone().wait.unwrap().to_string());
+        second_col.push(lts_to_date_time_string(task.clone().wait.unwrap()));
     }
 
     // Start
     if task.has_start(){
         first_col.push("Start".to_string());
-        second_col.push(task.clone().start.unwrap().to_string());
+        second_col.push(lts_to_date_time_string(task.clone().start.unwrap()));
     }
     
     // Due
     if task.has_due(){
         first_col.push("Due".to_string());
-        second_col.push(task.clone().due.unwrap().to_string());
+        second_col.push(lts_to_date_time_string(task.clone().due.unwrap()));
     }
 
     // End
     if task.is_complete() {
-        first_col.push("Due".to_string());
+        first_col.push("End".to_string());
         diff = now - task.end.unwrap();
         let second = lts_to_date_time_string(task.end.clone().unwrap()) + format!(" ({})",make_timetracking_timeframe(diff)).as_str(); 
         second_col.push(second);
@@ -785,18 +859,26 @@ pub fn report_single(settings: &SettingsMap, colors: &Colors, task: &Task ) -> R
     second_col.push(uuiid_int);
     
     // Timetracking
-    first_col.push("Timetracking".to_string());
-    vecco = "   ".to_string() + &make_timetracking_string(task.timetrackingseconds);
-    second_col.push(task.timetrackingseconds.to_string() + &vecco);
+    if task.timetrackingseconds > 0 {
+        first_col.push("Timetracking".to_string());
+        vecco = "   ".to_string() + &make_timetracking_string(task.timetrackingseconds);
+        second_col.push(task.timetrackingseconds.to_string() + &vecco);
+    }
 
-    // find max of second column
-    for size in second_col.clone() {
-        let len = size.len();
-        if len > max_col {
-            max_col = len;
+    // find max of both columns 
+    for i in 0..first_col.len() {
+        let len1 = first_col[i].len();
+        if len1 > max_first_col {
+            max_first_col = len1;
+        }
+
+        let len2 = second_col[i].len();
+        if len2 > max_second_col {
+            max_second_col = len2;
         }
     }
-    col_sizes.push(max_col);
+    col_sizes.push(max_first_col);
+    col_sizes.push(max_second_col);
 
     // Width problem
     let sum = col_sizes[0] + col_sizes[1] + 1;
