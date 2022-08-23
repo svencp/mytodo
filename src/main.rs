@@ -102,6 +102,14 @@ fn main() {
                         } // end of ann
                         
                         "del" => {
+                            let result = command_delete( &arg_id, &arg_hex, 
+                                                    &mut pending_tasks, &mut completed_tasks);
+                            if result.is_err(){
+                                let message = result.err().unwrap().to_string();
+                                feedback(Feedback::Error, message);
+                                exit(17);
+                            }
+
                             println!("{}",term);
                         }
                         

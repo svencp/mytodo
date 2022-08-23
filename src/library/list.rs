@@ -288,6 +288,59 @@ impl<'a> List<'a> {
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Functions @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@           @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
+pub fn delete_task(pend: &mut List, comp: &mut List, task: Task ) -> Result<(),&'static str> {
+    let index = pend.get_index_of_task_with_uuiid_int(task.uuiid_int);
+    if index < 0 {
+        return Err("Error deleting task in pending file.")
+    }
+    let mut deleted = pend.list.remove(index as usize);
+    deleted.status = Status::Deleted;
+    
+    // lets move the start date (if it has one to the end)
+    match deleted.start.is_some() {
+        true => {
+            deleted.end = Some(deleted.clone().start.unwrap()); 
+        }
+        false => {
+            deleted.end = Some(lts_now());
+        }
+    }
+
+    pend.save();
+    comp.list.insert(0, deleted.clone());
+    comp.save();
+
+    println!("Deleting task {} '{}'.", deleted.clone().uuiid, deleted.description);
+
+    Ok(())
+}
+
+pub fn delete_task_from_completed(comp: &mut List, task: Task ) -> Result<(),&'static str> {
+    let index = comp.get_index_of_task_with_uuiid_int(task.uuiid_int);
+    if index < 0 {
+        return Err("Error deleting task in completed file.")
+    }
+    let mut deleted = comp.list.remove(index as usize);
+    deleted.status = Status::Deleted;
+    
+    // lets move the start date (if it has one to the end)
+    match deleted.start.is_some() {
+        true => {
+            deleted.end = Some(deleted.clone().start.unwrap()); 
+        }
+        false => {
+            deleted.end = Some(lts_now());
+        }
+    }
+
+    comp.list.insert(0, deleted.clone());
+    comp.save();
+
+    println!("Deleting task {} '{}'.", deleted.clone().uuiid, deleted.description);
+
+    Ok(())
+}
+
 // no result needed as files could be messed up
 pub fn load_all_tasks(  p_file: &str, c_file: &str, pending: &mut List, 
                         completed: &mut List, hexi_set: &mut Hdeci) {

@@ -114,7 +114,7 @@ pub fn underline_string(str: String){
 
 // tried to transcribe my units eg. task -> tasks
 pub fn units(unit: &str, how_many: usize) -> String {
-    if how_many > 1 {
+    if how_many != 1 {
         let ret:String = "".to_string() + unit + "s";
         return ret;
     }

@@ -1,7 +1,0 @@
-description:just an active task	uuiid:0x000001	entry:1661167595	status:pending	annotation_1661167631:with some annotations which could be longer than the task description	annotation_1661170294:just another poor boy	due:1661167595	start:1661167595	tags:car,house
-description:First recurring dark blue	uuiid:0x000002	entry:1661167733	status:waiting	annotation_1661200867:=============================================================++++++++++++++++++++=====	due:1662076800	parent:0x000001	prodigy:0	recur:+1m	rtype:periodic	tags:car,jag,household	wait:1661299200
-description:lets do a recurring but in a light blue setting	uuiid:0x000004	entry:1661175961	status:waiting	annotation_1661187464:just a little bit longer, just a little bit shy	due:1661175961	prodigy:0	recur:+6m	rtype:chained	wait:2022-10-01	parent:0x000003
-description:mmmhhh	uuiid:0x000005	entry:1661191735	status:recurring	annotation_1661191756:*********************************************************************************************	due:1661191735	prodigy:0	recur:+1y	rtype:periodic	tags:car
-description:This task has a long waiting time	uuiid:0x000006	entry:1661197616	status:waiting	annotation_1661197642:======================================================	due:1672444800	tags:wag	wait:1669852800
-description:Another task that shall be waiting	uuiid:0x000007	entry:1661198933	status:waiting	due:1670803200	wait:1669852800
-description:Just 1	uuiid:0x000008	entry:1661200213	status:waiting	annotation_1661200249:yebo yes	wait:1661212800

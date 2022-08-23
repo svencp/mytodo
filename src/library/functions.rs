@@ -9,6 +9,8 @@
 use substring::Substring;
 use std::convert::TryFrom;
 use std::process::exit;
+use std::io;
+use std::io::Write;
 use termion::{color, style};
 use crate::library::task::*;
 use crate::library::list::*;
@@ -157,6 +159,228 @@ pub fn command_add_annotation(args: &Vec<String>, v_int: &Vec<i64>, v_hex: &Vec<
 
     Ok(())
 }
+
+// function to delete tasks
+pub fn command_delete(v_int: &Vec<i64>, v_hex: &Vec<String>,
+                        pend: &mut List, comp: &mut List) -> Result<(), &'static str> {
+    let mut v_tasks: Vec<Task> = Vec::new();
+    let mut done = false;
+    let mut del_counter = 0;
+
+    match v_hex.len() {
+        0 => {
+            // lets see if they are all valid
+            for id in v_int.clone() {
+                let task = pend.get_task_from_id(id);
+                if task.is_err() {
+                    return Err("Invalid task id's given.")
+                }
+                v_tasks.push(task.unwrap());
+            }
+            
+            match v_tasks.clone().len() {
+                1 => {
+                    let task = v_tasks.pop().unwrap();
+                    while !done {
+                        let out_text = format!("Delete task {} '{}'? (yes/no) ", task.clone().id.unwrap(), task.clone().description);
+                        let res_reply = get_input(&out_text);
+                        if res_reply.is_err() {
+                            return Err(res_reply.err().unwrap())
+                        }
+                        let reply = res_reply.unwrap().to_lowercase();
+                        if reply.starts_with("y") || reply.starts_with("n") {
+                            match reply.substring(0, 1) {
+                                "y" => {
+                                    let res_del = delete_task(pend,comp,task.clone());
+                                    if res_del.is_err(){
+                                        return Err(res_del.err().unwrap())
+                                    }
+                                }
+                                _ => {
+                                    println!("Task not deleted.");
+                                    println!("Deleted 0 tasks.");
+                                }
+                            }
+                            done = true;
+                        }
+            
+                    }
+                }
+                _ => {
+                    let len = v_tasks.clone().len();
+
+                    while !done {
+                        for t in 0..len {
+                            let task = v_tasks.get(t).unwrap();
+
+                            let out_text = format!("Delete task {} '{}'? (yes/no/all/quit) ", 
+                                                task.clone().id.unwrap(), task.clone().description);
+                            let res_reply = get_input(&out_text);
+                            if res_reply.is_err() {
+                                return Err(res_reply.err().unwrap())
+                            }
+                            let reply = res_reply.unwrap().to_lowercase();
+                            if  reply.starts_with("y") || reply.starts_with("n") ||
+                                reply.starts_with("a") || reply.starts_with("q") {
+                                match reply.substring(0, 1) {
+                                    "y" => {
+                                        let res_del = delete_task(pend,comp,task.clone());
+                                        if res_del.is_err(){
+                                            return Err(res_del.err().unwrap())
+                                        }
+                                        del_counter += 1;
+
+                                        if t + 1 < len {
+                                            println!();
+                                            continue;
+                                        }
+                                        // done = true;
+                                    }
+                                    "n" => {
+                                        println!("Task not deleted.");
+
+                                        if t + 1 < len {
+                                            println!();
+                                            continue;
+                                        }
+                                        // done = true;
+                                    }
+                                    "a" => {
+                                        for task in v_tasks.clone() {
+                                            let res_del = delete_task(pend,comp,task.clone());
+                                            if res_del.is_err(){
+                                                return Err(res_del.err().unwrap());
+                                            }
+                                            del_counter += 1;
+                                        }
+                                        done = true;
+                                        break;
+                                    }
+                                    "q" => {
+                                        println!("Task not deleted.");
+                                        done = true;
+                                        break;
+                                    }
+                                    _ => {
+                                    }
+                                }
+                                done = true;
+                            }
+                        }
+                    }
+                    println!("Deleted {} {}",del_counter.to_string(), units("task", del_counter));
+                }
+            }
+        }
+        // hex values
+        _ => {
+            // lets see if they are all valid
+            for uuiid in v_hex.clone() {
+                let task = comp.get_task_from_uuiid(uuiid);
+                if task.is_err() {
+                    return Err("Invalid task id's given.")
+                }
+                v_tasks.push(task.unwrap());
+            }
+
+            match v_tasks.clone().len() {
+                1 => {
+                    let task = v_tasks.pop().unwrap();
+                    while !done {
+                        let out_text = format!("Delete task {} '{}'? (yes/no) ", task.clone().uuiid, task.clone().description);
+                        let res_reply = get_input(&out_text);
+                        if res_reply.is_err() {
+                            return Err(res_reply.err().unwrap())
+                        }
+                        let reply = res_reply.unwrap().to_lowercase();
+                        if reply.starts_with("y") || reply.starts_with("n") {
+                            match reply.substring(0, 1) {
+                                "y" => {
+                                    let res_del = delete_task_from_completed(comp,task.clone());
+                                    if res_del.is_err(){
+                                        return Err(res_del.err().unwrap())
+                                    }
+                                }
+                                _ => {
+                                    println!("Task not deleted.");
+                                    println!("Deleted 0 tasks.");
+                                }
+                            }
+                            done = true;
+                        }
+                    }
+                }
+                _ => {
+                    let len = v_tasks.clone().len();
+
+                    while !done {
+                        for t in 0..len {
+                            let task = v_tasks.get(t).unwrap();
+
+                            let out_text = format!("Delete task {} '{}'? (yes/no/all/quit) ", 
+                                                task.clone().uuiid, task.clone().description);
+                            let res_reply = get_input(&out_text);
+                            if res_reply.is_err() {
+                                return Err(res_reply.err().unwrap())
+                            }
+                            let reply = res_reply.unwrap().to_lowercase();
+                            if  reply.starts_with("y") || reply.starts_with("n") ||
+                                reply.starts_with("a") || reply.starts_with("q") {
+                                match reply.substring(0, 1) {
+                                    "y" => {
+                                        let res_del = delete_task_from_completed(comp,task.clone());
+                                        if res_del.is_err(){
+                                            return Err(res_del.err().unwrap())
+                                        }
+                                        del_counter += 1;
+
+                                        if t + 1 < len {
+                                            println!();
+                                            continue;
+                                        }
+                                        // done = true;
+                                    }
+                                    "n" => {
+                                        println!("Task not deleted.");
+
+                                        if t + 1 < len {
+                                            println!();
+                                            continue;
+                                        }
+                                        // done = true;
+                                    }
+                                    "a" => {
+                                        for task in v_tasks.clone() {
+                                            let res_del = delete_task_from_completed(comp,task.clone());
+                                            if res_del.is_err(){
+                                                return Err(res_del.err().unwrap());
+                                            }
+                                            del_counter += 1;
+                                        }
+                                        done = true;
+                                        break;
+                                    }
+                                    "q" => {
+                                        println!("Task not deleted.");
+                                        done = true;
+                                        break;
+                                    }
+                                    _ => {
+                                    }
+                                }
+                                done = true;
+                            }
+                        }
+                    }
+                    println!("Deleted {} {}",del_counter.to_string(), units("task", del_counter));
+                }
+            }
+        }
+    }
+
+    Ok(())
+}
+
 
 //function to complete tasks; return number of tasks completed
 pub fn command_done(v_id:Vec<i64>, pend: &mut List, comp: &mut List, settings: &SettingsMap  ) -> Result<(), &'static str> {
@@ -448,6 +672,32 @@ pub fn determine_second_arg(args: &Vec<String>, command: &mut String) -> ArgType
     }
     
     return ArgType::Unknown;
+}
+
+pub fn get_input(text: &str) -> Result<String, &'static str> {
+    print!("{}",text);
+    match io::stdout().flush() {
+        Ok(_) => print!(""),
+        Err(_) => return Err("Some kind of flush error"),
+    }
+
+    let mut ret = String::new();
+    match io::stdin().read_line(&mut ret) {
+        Ok(_) => {
+            ret = ret.trim().to_string();
+            if ret.len() > 0 {
+                // let greeting = "Hello, ".to_string() + &name + &", nice to meet you!".to_string();
+                // println!("{}", greeting);
+                // println!("{}", ret);
+            } else {
+                // println!("No name entered, goodbye.");
+                return Err("Nothing entered!");
+            }
+        }
+        Err(_) => return Err("Some kind of readln error")
+    }
+
+    Ok(ret)
 }
 
 pub fn get_integer_single_report(settings: &SettingsMap, colors: Colors, uuiid_int: i64, all: &List)
@@ -1303,7 +1553,17 @@ mod tests {
         let res = align_timeframe(t);
         assert_eq!(res, "   3h  ");
     }
-
+    
+    // // #[ignore]
+    // #[test]
+    // fn t016_input() {
+    //     let text = "Hello, what is your name? ";
+    //     let res_ans = get_input(text);
+        
+    //     let t:i64 = 10_000;
+    //     let res = align_timeframe(t);
+    //     assert_eq!(res, "   3h  ");
+    // }
 
 
 
