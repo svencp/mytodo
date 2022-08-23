@@ -177,6 +177,15 @@ impl Task {
         return false;
     }
 
+    pub fn is_waiting(&self) -> bool {
+        for v in self.virtual_tags.clone() {
+            if v == VirtualTags::Waiting {
+                return true;
+            }
+        } 
+        return false;
+    }
+
     // make an empty task for compilers sake
     pub fn new() -> Task {
         Task { 

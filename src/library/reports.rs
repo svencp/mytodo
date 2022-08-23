@@ -127,7 +127,7 @@ pub fn format_report_active(col_sizes: &Vec<usize>, headers: Vec<&str>, tasks: &
     let anno_block = make_annotation_block(col_sizes);
 
     // make_heading(col_sizes,headers,settings);
-    make_heading(col_sizes,headers,colors);
+    make_heading(col_sizes,headers,colors, "Active");
     
     for task in tasks {
 
@@ -172,10 +172,12 @@ pub fn format_report_active(col_sizes: &Vec<usize>, headers: Vec<&str>, tasks: &
         }
     }
 
-    print!("\n\n");
+    print!("\n");
+    println!("{} {} \n",tasks.clone().len(), units("task", tasks.len()));
+
 }
 
-pub fn format_report_completed(col_sizes: &Vec<usize>, headers: Vec<&str>, tasks: &Vec<Task>, colors: &Colors) {
+pub fn format_report_completed(col_sizes: &Vec<usize>, headers: Vec<&str>, tasks: &Vec<Task>, colors: &Colors, heading: &str) {
     let normal_fg   = colors.clone().color_complete_orphan;
     let tagged_fg   = colors.clone().color_tagged;
     let rperiod_fg  = colors.clone().color_recur_period_fg;
@@ -187,7 +189,7 @@ pub fn format_report_completed(col_sizes: &Vec<usize>, headers: Vec<&str>, tasks
     let mut index: i64 = 1;
     let mut v_lines:Vec<String>;
 
-    make_heading(col_sizes, headers, colors);
+    make_heading(col_sizes, headers, colors, heading);
 
     for task in tasks {
         index += 1;
@@ -246,13 +248,14 @@ pub fn format_report_completed(col_sizes: &Vec<usize>, headers: Vec<&str>, tasks
                     }
                 }
             }
-        }
-    }
+        } // end of match
+    } // end of for loop
 
-    print!("\n\n")
+    print!("\n");
+    println!("{} {} \n",tasks.clone().len(), units("task", tasks.len()));
 }
 
-pub fn format_report_recurring(col_sizes: &Vec<usize>, headers: Vec<&str>, tasks: &Vec<Task>, colors: &Colors) {
+pub fn format_report_recurring(col_sizes: &Vec<usize>, headers: Vec<&str>, tasks: &Vec<Task>, colors: &Colors, heading: &str) {
     let rperiod_fg  = colors.clone().color_recur_period_fg;
     let rchained_fg = colors.clone().color_recur_chain_fg;
     let black_bg    = colors.clone().color_black_bg;
@@ -262,7 +265,7 @@ pub fn format_report_recurring(col_sizes: &Vec<usize>, headers: Vec<&str>, tasks
     let mut index: i64 = 0;
     let mut v_lines:Vec<String>;
 
-    make_heading(col_sizes, headers, colors);
+    make_heading(col_sizes, headers, colors, heading);
 
     for task in tasks {
         index += 1;
@@ -298,7 +301,8 @@ pub fn format_report_recurring(col_sizes: &Vec<usize>, headers: Vec<&str>, tasks
         }
     }
 
-    print!("\n\n")
+    print!("\n");
+    println!("{} {} \n",tasks.clone().len(), units("task", tasks.len()));
 }
 
 pub fn format_report_single(col_sizes: &Vec<usize>, headers: Vec<&str>, lines: Vec<Vec<String>>, colors: &Colors, task: &Task ) {
@@ -316,7 +320,7 @@ pub fn format_report_single(col_sizes: &Vec<usize>, headers: Vec<&str>, lines: V
     // let mut v_lines:Vec<String>;
 
     // make_heading(col_sizes,headers,settings);
-    make_heading(col_sizes,headers,colors);
+    make_heading(col_sizes,headers,colors, "Single");
     let num_lines = lines.clone()[1].len();
 
     for i in 0..num_lines {
@@ -542,7 +546,7 @@ pub fn format_report_single(col_sizes: &Vec<usize>, headers: Vec<&str>, lines: V
     print!("\n\n");
 }
 
-pub fn format_report_waiting(col_sizes: &Vec<usize>, headers: Vec<&str>, tasks: &Vec<Task>, colors: &Colors) {
+pub fn format_report_waiting(col_sizes: &Vec<usize>, headers: Vec<&str>, tasks: &Vec<Task>, colors: &Colors, heading: &str) {
     let normal_fg   = colors.clone().color_complete_orphan;
     let tagged_fg   = colors.clone().color_tagged;
     let rperiod_fg  = colors.clone().color_recur_period_fg;
@@ -554,18 +558,18 @@ pub fn format_report_waiting(col_sizes: &Vec<usize>, headers: Vec<&str>, tasks: 
     let mut index: i64 = 0;
     let mut v_lines:Vec<String>;
 
-    make_heading(col_sizes, headers, colors);
+    make_heading(col_sizes, headers, colors, heading);
 
     for task in tasks {
         index += 1;
         remainder = index % 2;
 
-        v_lines = get_task_line_recurring(col_sizes, &anno_block, &task);
+        v_lines = get_task_line_waiting(col_sizes, &anno_block, &task);
 
         match remainder {
             // dark black background
             0 => {
-                match task.is_recurring() {
+                match task.is_child() {
                     true => {
                         match task.clone().rtype.unwrap() {
                             Rtype::Periodic => {
@@ -590,7 +594,7 @@ pub fn format_report_waiting(col_sizes: &Vec<usize>, headers: Vec<&str>, tasks: 
             }
             // normal background
             _ => {
-                match task.is_recurring() {
+                match task.is_child() {
                     true => {
                         match task.clone().rtype.unwrap() {
                             Rtype::Periodic => {
@@ -613,10 +617,11 @@ pub fn format_report_waiting(col_sizes: &Vec<usize>, headers: Vec<&str>, tasks: 
                     }
                 }
             }
-        }
+        } // end of match
     }
 
-    print!("\n\n")
+    print!("\n");
+    println!("{} {} \n",tasks.clone().len(), units("task", tasks.len()));
 }
 
 pub fn make_active(settings: &SettingsMap) {
@@ -654,17 +659,21 @@ pub fn make_dark_print(v_lines:Vec<String>, fg: color::Rgb, bg: color::Rgb) {
     }
 }
 
-// make the dark sting (the alternate fro single report)
-pub fn make_dark_print_single(first: &str, second: &str, fg: color::Rgb, bg:color::Rgb){
-    print!("{}{}",color::Fg(fg), color::Bg(bg));
-    print!("{} {}",first,second);
-    print!("{}\n",style::Reset);
-}
+// // make the dark sting (the alternate fro single report)
+// pub fn make_dark_print_single(first: &str, second: &str, fg: color::Rgb, bg:color::Rgb){
+//     print!("{}{}",color::Fg(fg), color::Bg(bg));
+//     print!("{} {}",first,second);
+//     print!("{}\n",style::Reset);
+// }
 
 // make the header line
-pub fn make_heading(col_sizes: &Vec<usize>, headers: Vec<&str>, colors: &Colors) {
+pub fn make_heading(col_sizes: &Vec<usize>, headers: Vec<&str>, colors: &Colors, heading: &str) {
     let fg = colors.color_complete_orphan;
-    print!("\n\n{}", color::Fg(fg));
+    
+    print!("\n");
+    let message = heading.to_string();
+    feedback(Feedback::Info, message);
+    print!("\n{}", color::Fg(fg));
     
     for i in 0..headers.len() {
         let h = justify(headers[i].to_string(), col_sizes[i], Justify::Left);
@@ -701,12 +710,12 @@ pub fn make_print(v_lines:Vec<String>, fg: color::Rgb) {
     }
 }
 
-// make the dark string (the alternate fro single report)
-pub fn make_print2(first: &str, second: &str, fg: color::Rgb){
-    print!("{}",color::Fg(fg));
-    print!("{} {}",first,second);
-    print!("{}\n",style::Reset);
-}
+// // make the dark string (the alternate fro single report)
+// pub fn make_print2(first: &str, second: &str, fg: color::Rgb){
+//     print!("{}",color::Fg(fg));
+//     print!("{} {}",first,second);
+//     print!("{}\n",style::Reset);
+// }
 
 // pub fn print_annotation_lines(block: String, col_sizes: &Vec<usize>, task: &Task) {
 
@@ -875,7 +884,7 @@ pub fn report_completed(colors: &Colors, settings: &SettingsMap, comp: &List ) -
         return Err("no matches");
     }
 
-    format_report_completed(&col_sizes, headers, &tasks, colors);
+    format_report_completed(&col_sizes, headers, &tasks, colors, "Completed");
 
     Ok(())
 }
@@ -930,7 +939,7 @@ pub fn report_recurring(colors: &Colors, settings: &SettingsMap, pend: &List ) -
         return Err("no matches");
     }
 
-    format_report_recurring(&col_sizes, headers, &tasks, colors);
+    format_report_recurring(&col_sizes, headers, &tasks, colors, "Recurring");
 
     Ok(())
 }
@@ -1094,8 +1103,8 @@ pub fn report_single(settings: &SettingsMap, colors: &Colors, task: &Task ) -> R
 }
 
 pub fn report_waiting(colors: &Colors, settings: &SettingsMap, pend: &List ) -> Result<(), &'static str> {
-    let mut col_sizes = vec![2,8,7,4];
-    let headers = vec!["ID", "UUIID", "Age", "Tags", "Description" ];
+    let mut col_sizes = vec![2,8,7,4,7];
+    let headers = vec!["ID", "UUIID", "Age", "Tags", "Wait", "Description" ];
     let mut tasks: Vec<Task> = Vec::new();
     let mut v_desc: Vec<String> = Vec::new();
     let mut max_col: usize = 0;
@@ -1103,14 +1112,14 @@ pub fn report_waiting(colors: &Colors, settings: &SettingsMap, pend: &List ) -> 
 
     // check for lengths of description and only get parents
     for t in pend.list.clone() {
-        if t.is_parent() {
+        if t.is_waiting() {
             tasks.push(t.clone());
             v_desc.push(t.description.clone());
             let l1 = t.description.clone().len();
             if l1 > max_col {
                 max_col = l1;
             }
-
+    
             if t.ann.len() > 0 {
                 for a in t.ann {
                     let line = "  ".to_string() + &lts_to_date_string(a.date) + " " + &a.desc;
@@ -1143,7 +1152,7 @@ pub fn report_waiting(colors: &Colors, settings: &SettingsMap, pend: &List ) -> 
         return Err("no matches");
     }
 
-    format_report_waiting(&col_sizes, headers, &tasks, colors);
+    format_report_waiting(&col_sizes, headers, &tasks, colors, "Waiting");
 
     Ok(())
 }

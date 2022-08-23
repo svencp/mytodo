@@ -570,6 +570,62 @@ pub fn get_task_line_recurring(col_sizes: &Vec<usize>, block: &str, task: &Task)
     return ret;
 }
 
+pub fn get_task_line_waiting(col_sizes: &Vec<usize>, block: &str, task: &Task) -> Vec<String> {
+    let mut ret:Vec<String> = Vec::new();
+    let mut line:String;
+    let mut temp_str:String;
+    let mut diff:i64;
+    let now = lts_now();
+
+
+    // ID
+    line = justify(task.clone().id.unwrap().to_string(), col_sizes[0], Justify::Right) + " ";
+
+    // UUIID
+    temp_str =  task.clone().uuiid + " ";
+    line += temp_str.as_str();
+    
+    // Age
+    diff = now - task.entry;
+    temp_str = align_timeframe(diff) + " ";
+    line += temp_str.as_str();
+    
+    // Tags
+    match task.is_tagged() {
+        true => {
+            let num_tags = task.clone().tags.len();
+            temp_str = format!("[{}]",num_tags);
+            temp_str = justify(temp_str.clone(), col_sizes[3], Justify::Right) + " ";
+            line += temp_str.as_str();
+            
+        }
+        false => {
+            line += repeat_char(" ".to_string(), col_sizes[3] +1).as_str();
+        }
+    }
+    
+    // Wait
+    diff = task.wait.unwrap() -  now;
+    temp_str = align_timeframe(diff) + " ";
+    line += temp_str.as_str();
+
+
+    // Description
+    temp_str = justify(task.clone().description, col_sizes[5], Justify::Left);
+    line += temp_str.as_str();
+    ret.push(line);
+    
+    // Annotations
+    for anno in task.clone().ann {
+        temp_str = block.to_string() + lts_to_date_string(anno.date).as_str() + " ";
+        // who knows wy i'm subtracting (10-date, 2-tab, 1 space between date and desc  = 13)
+        line = temp_str + justify(anno.desc, col_sizes[5]-13, Justify::Left).as_str();
+        ret.push(line);
+    }
+
+    return ret;
+}
+
 // get the termianl width size in characters
 pub fn get_terminal_width(settings: &SettingsMap) -> i64 {
     let res = settings.get_integer("useTerminalWidthOf");
