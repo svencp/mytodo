@@ -112,79 +112,85 @@ impl<'a> List<'a> {
         let mut ret:String =  "".to_string();
         
         for task in &self.list {
-            ret.push_str("description:");
-            ret.push_str(&task.description);
-            ret.push_str("\t");
-            ret.push_str("uuiid:");
-            ret.push_str(&task.uuiid);
-            ret.push_str("\t");
-            ret.push_str("entry:");
-            ret.push_str(&task.entry.to_string());
-            ret.push_str("\t");
-            ret.push_str("status:");
-            ret.push_str(&task.status.text().to_lower_case());
+
+            let mut line = make_line_from_task(task);
+            line += "\n";
+
+            ret.push_str(&line);
+
+            // ret.push_str("description:");
+            // ret.push_str(&task.description);
+            // ret.push_str("\t");
+            // ret.push_str("uuiid:");
+            // ret.push_str(&task.uuiid);
+            // ret.push_str("\t");
+            // ret.push_str("entry:");
+            // ret.push_str(&task.entry.to_string());
+            // ret.push_str("\t");
+            // ret.push_str("status:");
+            // ret.push_str(&task.status.text().to_lower_case());
     
-            if task.ann.len() != 0 {
-                for a in task.ann.clone() {
-                    ret.push_str("\tannotation_");
-                    let num = a.date.to_string() + ":";
-                    ret.push_str(&num);
-                    ret.push_str(&a.desc);
-                }
-            }
-            if task.due.is_some() {                                                        //due
-                ret.push_str("\tdue:");
-                ret.push_str(&task.due.unwrap().to_string());
-            }
-            if task.end.is_some() {                                                        //due
-                ret.push_str("\tend:");
-                ret.push_str(&task.end.unwrap().to_string());
-            }
-            if task.parent.is_some() {                                                     //parent
-                ret.push_str("\tparent:");
-                ret.push_str(&task.parent.clone().unwrap());
-            }
-            if task.prodigy.is_some() {                                                    //parent
-                ret.push_str("\tprodigy:");
-                ret.push_str(&task.prodigy.unwrap().to_string());
-            }
-            if task.recur.is_some() {                                                      //recur
-                ret.push_str("\trecur:");
-                ret.push_str(&task.recur.clone().unwrap());
-            }
-            if task.rtype.is_some() {                                                      //recur
-                ret.push_str("\trtype:");
-                ret.push_str(&task.rtype.clone().unwrap().text().to_lowercase());
-            }
-            if task.start.is_some() {                                                      //start
-                ret.push_str("\tstart:");
-                ret.push_str(&task.start.unwrap().to_string());
-            }
-            if task.tags.len() > 0 {                                                       //tags
-                let mut vec:String = "".to_string();
-                for tag in task.tags.clone() {
-                    let str = tag + ",";
-                    vec.push_str(&str);
-                }
+            // if task.ann.len() != 0 {
+            //     for a in task.ann.clone() {
+            //         ret.push_str("\tannotation_");
+            //         let num = a.date.to_string() + ":";
+            //         ret.push_str(&num);
+            //         ret.push_str(&a.desc);
+            //     }
+            // }
+            // if task.due.is_some() {                                                        //due
+            //     ret.push_str("\tdue:");
+            //     ret.push_str(&task.due.unwrap().to_string());
+            // }
+            // if task.end.is_some() {                                                        //due
+            //     ret.push_str("\tend:");
+            //     ret.push_str(&task.end.unwrap().to_string());
+            // }
+            // if task.parent.is_some() {                                                     //parent
+            //     ret.push_str("\tparent:");
+            //     ret.push_str(&task.parent.clone().unwrap());
+            // }
+            // if task.prodigy.is_some() {                                                    //parent
+            //     ret.push_str("\tprodigy:");
+            //     ret.push_str(&task.prodigy.unwrap().to_string());
+            // }
+            // if task.recur.is_some() {                                                      //recur
+            //     ret.push_str("\trecur:");
+            //     ret.push_str(&task.recur.clone().unwrap());
+            // }
+            // if task.rtype.is_some() {                                                      //recur
+            //     ret.push_str("\trtype:");
+            //     ret.push_str(&task.rtype.clone().unwrap().text().to_lowercase());
+            // }
+            // if task.start.is_some() {                                                      //start
+            //     ret.push_str("\tstart:");
+            //     ret.push_str(&task.start.unwrap().to_string());
+            // }
+            // if task.tags.len() > 0 {                                                       //tags
+            //     let mut vec:String = "".to_string();
+            //     for tag in task.tags.clone() {
+            //         let str = tag + ",";
+            //         vec.push_str(&str);
+            //     }
                 
-                //remove last comma
-                let len = vec.len();
-                let end = len -1 ;
-                let taggings = vec[0..end].to_string();
+            //     //remove last comma
+            //     let len = vec.len();
+            //     let end = len -1 ;
+            //     let taggings = vec[0..end].to_string();
                 
-                ret.push_str("\ttags:");                                                  
-                ret.push_str(&taggings);
-            }
-            if task.timetrackingseconds != 0 {                                             //parent
-                ret.push_str("\ttimetrackingseconds:");
-                ret.push_str(&task.timetrackingseconds.to_string());
-            }
-            if task.wait.is_some() {                                                       //wait
-                ret.push_str("\twait:");
-                ret.push_str(&task.wait.unwrap().to_string());
-            }
+            //     ret.push_str("\ttags:");                                                  
+            //     ret.push_str(&taggings);
+            // }
+            // if task.timetrackingseconds != 0 {                                             //parent
+            //     ret.push_str("\ttimetrackingseconds:");
+            //     ret.push_str(&task.timetrackingseconds.to_string());
+            // }
+            // if task.wait.is_some() {                                                       //wait
+            //     ret.push_str("\twait:");
+            //     ret.push_str(&task.wait.unwrap().to_string());
+            // }
     
-            ret.push_str("\n")
+            // ret.push_str("\n")
     
         }
     
@@ -262,7 +268,16 @@ impl<'a> List<'a> {
         self.list.insert(index, task.clone());
     }
 
+    // remove from list given only the id
+    pub fn remove_with_id(&mut self, id:i64) -> Result<Task,&'static str> {
+        let index = self.get_index_of_task_with_id(id);
+        if index < 0 {
+            return Err("ID not found in list.")
+        }
+        let ret = self.list.remove(index as usize);
 
+        Ok(ret)
+    }
 
 
 
@@ -410,204 +425,285 @@ pub fn load_task_file(task_file: &str, the_list: &mut List, hexi_set: &mut Hdeci
     Ok(())
 }
 
+// make a string (line) from a task - dont add a newline here though
+pub fn make_line_from_task(task: &Task) -> String {
+    let mut ret = "".to_string();
 
-pub fn load_task_list(path: &str, list: &mut List, h_set: &mut BTreeSet<i64>) -> Result<(), String> {
-    // clear the list
-    list.list.clear();
-    // let mut ret_list = List::new();
-    // let mut ret_hexi64: BTreeSet<i64> = BTreeSet::new();
+    ret.push_str("description:");
+    ret.push_str(&task.description);
+    ret.push_str("\t");
+    ret.push_str("uuiid:");
+    ret.push_str(&task.uuiid);
+    ret.push_str("\t");
+    ret.push_str("entry:");
+    ret.push_str(&task.entry.to_string());
+    ret.push_str("\t");
+    ret.push_str("status:");
+    ret.push_str(&task.status.text().to_lower_case());
 
-    // does the file exists, if not return empties
-    if ! Path::new(path).exists() {
-        // let ret = ( ret_list, ret_hexi64 );
-        return Ok(());
+    if task.ann.len() != 0 {
+        for a in task.ann.clone() {
+            ret.push_str("\tannotation_");
+            let num = a.date.to_string() + ":";
+            ret.push_str(&num);
+            ret.push_str(&a.desc);
+        }
+    }
+    if task.due.is_some() {                                                        //due
+        ret.push_str("\tdue:");
+        ret.push_str(&task.due.unwrap().to_string());
+    }
+    if task.end.is_some() {                                                        //due
+        ret.push_str("\tend:");
+        ret.push_str(&task.end.unwrap().to_string());
+    }
+    if task.parent.is_some() {                                                     //parent
+        ret.push_str("\tparent:");
+        ret.push_str(&task.parent.clone().unwrap());
+    }
+    if task.prodigy.is_some() {                                                    //parent
+        ret.push_str("\tprodigy:");
+        ret.push_str(&task.prodigy.unwrap().to_string());
+    }
+    if task.recur.is_some() {                                                      //recur
+        ret.push_str("\trecur:");
+        ret.push_str(&task.recur.clone().unwrap());
+    }
+    if task.rtype.is_some() {                                                      //recur
+        ret.push_str("\trtype:");
+        ret.push_str(&task.rtype.clone().unwrap().text().to_lowercase());
+    }
+    if task.start.is_some() {                                                      //start
+        ret.push_str("\tstart:");
+        ret.push_str(&task.start.unwrap().to_string());
+    }
+    if task.tags.len() > 0 {                                                       //tags
+        let mut vec:String = "".to_string();
+        for tag in task.tags.clone() {
+            let str = tag + ",";
+            vec.push_str(&str);
+        }
+        
+        //remove last comma
+        let len = vec.len();
+        let end = len -1 ;
+        let taggings = vec[0..end].to_string();
+        
+        ret.push_str("\ttags:");                                                  
+        ret.push_str(&taggings);
+    }
+    if task.timetrackingseconds != 0 {                                             //parent
+        ret.push_str("\ttimetrackingseconds:");
+        ret.push_str(&task.timetrackingseconds.to_string());
+    }
+    if task.wait.is_some() {                                                       //wait
+        ret.push_str("\twait:");
+        ret.push_str(&task.wait.unwrap().to_string());
     }
 
+    // ret.push_str("\n");
 
-    let file = File::open(path).unwrap();
-    let reader = BufReader::new(file);
-
-    for line in reader.lines() {
-        let mut task = Task::new();
-
-        if line.is_err() {
-            let message = format!("Problems reading file: {}",path);
-            return Err(message);            
-        }
-        let one_line = line.unwrap();
-        let split_tab:Vec<_> = one_line.split("\t").collect();
-        
-        for element in split_tab {
-            let split_colon:Vec<_> = element.split(":").collect();
-            if split_colon.len() != 2 {
-                let message = format!("Line in file: {} has faulty elements",path);
-                return Err(message);           
-            }
-            
-            // to take care of annotation with time, i'm going to make a separate match term
-            let mut matcho = split_colon[0];
-            if matcho.starts_with("annotation") {
-                matcho = "annotation";
-            }
-            
-            match matcho {
-                "annotation" => {
-                    let split_ann:Vec<_> = split_colon[0].split("_").collect();
-                    if split_ann.len() != 2 {
-                        let message = format!("Line in file: {} has faulty annotations",path);
-                        return Err(message);           
-                    }
-                    let mut anno = Annotation::new();
-                    let date = split_ann[1].parse::<i64>();
-                    if date.is_err(){
-                        let message = format!("Line in file: {} has faulty annotations times",path);
-                        return Err(message);  
-                    }
-                    anno.date = date.unwrap();
-                    anno.desc = split_colon[1].to_string();
-                    task.ann.push(anno);
-
-                }
-
-                "description" => {
-                    task.description = split_colon[1].to_string();
-                }
-                
-                "due" => {
-                    let res= split_colon[1].parse::<i64>();
-                    if res.is_err(){
-                        let message = format!("Integer parsing error in file: {}",path);
-                        return Err(message);           
-                    }
-                    task.due = Some(res.unwrap());
-                }
-                
-                "end" => {
-                    let res= split_colon[1].parse::<i64>();
-                    if res.is_err(){
-                        let message = format!("Integer parsing error in file: {}",path);
-                        return Err(message);           
-                    }
-                    task.end = Some(res.unwrap());
-                }
-
-                "entry" => {
-                    let res= split_colon[1].parse::<i64>();
-                    if res.is_err(){
-                        let message = format!("Integer parsing error in file: {}",path);
-                        return Err(message);           
-                    }
-                    task.entry = res.unwrap();
-                }
-                
-                "parent" => {
-                    let parent = split_colon[1].to_string();
-                    let res = hexi_verify(&parent);
-                    if res.is_err(){
-                        let message = format!("Line in file: {} has faulty hex values",path);
-                        return Err(message);           
-                    }
-                    task.parent = Some(parent);
-                    task.parent_int = Some(res.unwrap());
-                }
-                
-                "prodigy" => {
-                    let res= split_colon[1].parse::<i64>();
-                    if res.is_err(){
-                        let message = format!("Integer parsing error in file: {}",path);
-                        return Err(message);           
-                    }
-                    task.prodigy = Some(res.unwrap());
-                }
-                
-                "recur" => {
-                    task.recur = Some(split_colon[1].to_string());
-                }
-                
-                "rtype" => {
-                    let res = Rtype::from_str(split_colon[1]);
-                    if res.is_err(){
-                        let message = format!("Rtype parsing error in file: {}",path);
-                        return Err(message);         
-                    }
-                    task.rtype = Some(res.unwrap());
-                }
-                
-                "start" => {
-                    let res= split_colon[1].parse::<i64>();
-                    if res.is_err(){
-                        let message = format!("Status parsing error in file: {}",path);
-                        return Err(message);             
-                    }
-                    task.start = Some(res.unwrap());
-                }
-                
-                "status" => {
-                    let res = Status::from_str(split_colon[1]);
-                    if res.is_err(){
-                        let message = format!("Status parsing error in file: {}",path);
-                        return Err(message);         
-                    }
-                    task.status = res.unwrap();
-                }
-                
-                "tags" => {
-                    let split_comma:Vec<_> = split_colon[1].split(":").collect();
-                    for tag in split_comma {
-                        task.tags.push(tag.to_string());
-                    }
-                }
-                
-                "timetrackingseconds" => {
-                    let res= split_colon[1].parse::<i64>();
-                    if res.is_err(){
-                        let message = format!("timetrackingseconds parsing error in file: {}",path);
-                        return Err(message);             
-                    }
-                    task.timetrackingseconds = res.unwrap();
-                }
-
-                "uuiid" => {
-                    let uuiid = split_colon[1].to_string();
-                    let res = hexi_verify(&uuiid);
-                    if res.is_err(){
-                        let message = format!("Line in file: {} has faulty hex values",path);
-                        return Err(message);           
-                    }
-                    task.uuiid = uuiid;
-                    let u_int = res.unwrap();
-                    task.uuiid_int = u_int;
-                    h_set.insert(u_int);
-                }
-
-                "wait" => {
-                    let res= split_colon[1].parse::<i64>();
-                    if res.is_err(){
-                        let message = format!("Integer parsing error in file: {}",path);
-                        return Err(message);         
-                    }
-                    task.wait = Some(res.unwrap());
-                }
-                
-
-                _ => {
-                    // shouldnt really get here
-                    return Err("Unknown element in colon split".to_string())            
-                }
-            }
-
-        }
-        
-         if task.ann.len() > 1 {
-            task.ann.sort();    
-         }
-        list.list.push(task);
-    } //end of for line loop
-
-
-    // let ret = ( ret_list, ret_hexi64 );
-    Ok(())
+    return ret;
 }
+
+
+// pub fn load_task_list(path: &str, list: &mut List, h_set: &mut BTreeSet<i64>) -> Result<(), String> {
+//     // clear the list
+//     list.list.clear();
+//     // let mut ret_list = List::new();
+//     // let mut ret_hexi64: BTreeSet<i64> = BTreeSet::new();
+
+//     // does the file exists, if not return empties
+//     if ! Path::new(path).exists() {
+//         // let ret = ( ret_list, ret_hexi64 );
+//         return Ok(());
+//     }
+
+
+//     let file = File::open(path).unwrap();
+//     let reader = BufReader::new(file);
+
+//     for line in reader.lines() {
+//         let mut task = Task::new();
+
+//         if line.is_err() {
+//             let message = format!("Problems reading file: {}",path);
+//             return Err(message);            
+//         }
+//         let one_line = line.unwrap();
+//         let split_tab:Vec<_> = one_line.split("\t").collect();
+        
+//         for element in split_tab {
+//             let split_colon:Vec<_> = element.split(":").collect();
+//             if split_colon.len() != 2 {
+//                 let message = format!("Line in file: {} has faulty elements",path);
+//                 return Err(message);           
+//             }
+            
+//             // to take care of annotation with time, i'm going to make a separate match term
+//             let mut matcho = split_colon[0];
+//             if matcho.starts_with("annotation") {
+//                 matcho = "annotation";
+//             }
+            
+//             match matcho {
+//                 "annotation" => {
+//                     let split_ann:Vec<_> = split_colon[0].split("_").collect();
+//                     if split_ann.len() != 2 {
+//                         let message = format!("Line in file: {} has faulty annotations",path);
+//                         return Err(message);           
+//                     }
+//                     let mut anno = Annotation::new();
+//                     let date = split_ann[1].parse::<i64>();
+//                     if date.is_err(){
+//                         let message = format!("Line in file: {} has faulty annotations times",path);
+//                         return Err(message);  
+//                     }
+//                     anno.date = date.unwrap();
+//                     anno.desc = split_colon[1].to_string();
+//                     task.ann.push(anno);
+
+//                 }
+
+//                 "description" => {
+//                     task.description = split_colon[1].to_string();
+//                 }
+                
+//                 "due" => {
+//                     let res= split_colon[1].parse::<i64>();
+//                     if res.is_err(){
+//                         let message = format!("Integer parsing error in file: {}",path);
+//                         return Err(message);           
+//                     }
+//                     task.due = Some(res.unwrap());
+//                 }
+                
+//                 "end" => {
+//                     let res= split_colon[1].parse::<i64>();
+//                     if res.is_err(){
+//                         let message = format!("Integer parsing error in file: {}",path);
+//                         return Err(message);           
+//                     }
+//                     task.end = Some(res.unwrap());
+//                 }
+
+//                 "entry" => {
+//                     let res= split_colon[1].parse::<i64>();
+//                     if res.is_err(){
+//                         let message = format!("Integer parsing error in file: {}",path);
+//                         return Err(message);           
+//                     }
+//                     task.entry = res.unwrap();
+//                 }
+                
+//                 "parent" => {
+//                     let parent = split_colon[1].to_string();
+//                     let res = hexi_verify(&parent);
+//                     if res.is_err(){
+//                         let message = format!("Line in file: {} has faulty hex values",path);
+//                         return Err(message);           
+//                     }
+//                     task.parent = Some(parent);
+//                     task.parent_int = Some(res.unwrap());
+//                 }
+                
+//                 "prodigy" => {
+//                     let res= split_colon[1].parse::<i64>();
+//                     if res.is_err(){
+//                         let message = format!("Integer parsing error in file: {}",path);
+//                         return Err(message);           
+//                     }
+//                     task.prodigy = Some(res.unwrap());
+//                 }
+                
+//                 "recur" => {
+//                     task.recur = Some(split_colon[1].to_string());
+//                 }
+                
+//                 "rtype" => {
+//                     let res = Rtype::from_str(split_colon[1]);
+//                     if res.is_err(){
+//                         let message = format!("Rtype parsing error in file: {}",path);
+//                         return Err(message);         
+//                     }
+//                     task.rtype = Some(res.unwrap());
+//                 }
+                
+//                 "start" => {
+//                     let res= split_colon[1].parse::<i64>();
+//                     if res.is_err(){
+//                         let message = format!("Status parsing error in file: {}",path);
+//                         return Err(message);             
+//                     }
+//                     task.start = Some(res.unwrap());
+//                 }
+                
+//                 "status" => {
+//                     let res = Status::from_str(split_colon[1]);
+//                     if res.is_err(){
+//                         let message = format!("Status parsing error in file: {}",path);
+//                         return Err(message);         
+//                     }
+//                     task.status = res.unwrap();
+//                 }
+                
+//                 "tags" => {
+//                     let split_comma:Vec<_> = split_colon[1].split(":").collect();
+//                     for tag in split_comma {
+//                         task.tags.push(tag.to_string());
+//                     }
+//                 }
+                
+//                 "timetrackingseconds" => {
+//                     let res= split_colon[1].parse::<i64>();
+//                     if res.is_err(){
+//                         let message = format!("timetrackingseconds parsing error in file: {}",path);
+//                         return Err(message);             
+//                     }
+//                     task.timetrackingseconds = res.unwrap();
+//                 }
+
+//                 "uuiid" => {
+//                     let uuiid = split_colon[1].to_string();
+//                     let res = hexi_verify(&uuiid);
+//                     if res.is_err(){
+//                         let message = format!("Line in file: {} has faulty hex values",path);
+//                         return Err(message);           
+//                     }
+//                     task.uuiid = uuiid;
+//                     let u_int = res.unwrap();
+//                     task.uuiid_int = u_int;
+//                     h_set.insert(u_int);
+//                 }
+
+//                 "wait" => {
+//                     let res= split_colon[1].parse::<i64>();
+//                     if res.is_err(){
+//                         let message = format!("Integer parsing error in file: {}",path);
+//                         return Err(message);         
+//                     }
+//                     task.wait = Some(res.unwrap());
+//                 }
+                
+
+//                 _ => {
+//                     // shouldnt really get here
+//                     return Err("Unknown element in colon split".to_string())            
+//                 }
+//             }
+
+//         }
+        
+//          if task.ann.len() > 1 {
+//             task.ann.sort();    
+//          }
+//         list.list.push(task);
+//     } //end of for line loop
+
+
+//     // let ret = ( ret_list, ret_hexi64 );
+//     Ok(())
+// }
 
 
 

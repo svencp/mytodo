@@ -623,23 +623,14 @@ mod tests {
     
     // #[ignore]
     #[test]
-    fn t004_determine_due_start_wait() {
-        // let term1 = "now";
-
-
-        // let term2 = "2021-09-30";
-
-
-        // let vs: Vec<String> = vec!["Nutting".to_string(), "add".to_string(), "Do a job".to_string(),
-        //                         "due:2030-01-05".to_string(), "start:now".to_string(), "+household".to_string()];
-        // let result = make_task(&vs, 26, 30);
-        // let now = chrono::offset::Local::now().timestamp().timestamp();
-        // assert_eq!(result.unwrap().start.unwrap(), now);
+    fn t004_mod() {
+        let vs: Vec<&str> = vec!["First Task", "due:2030-01-05", "start:now", "+household"];
+        let res = make_task(vs);
+        assert_eq!(res.unwrap().start.unwrap(), lts_now() );
         
-        // let vs2: Vec<String> = vec!["Nutting".to_string(), "add".to_string(), "Do a job2".to_string(),
-        //                         "due:now".to_string(), "recur:+4m".to_string(), "rtype:chained".to_string()];
-        // let result = make_task(&vs2, 2, 2);
-        // assert_eq!(result.unwrap().rtype.unwrap(), Rtype::Chained);
+        let m_vec = vec!["wait:2030-01-01", "+jag"];
+
+
     }
 
 

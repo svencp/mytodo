@@ -8,6 +8,113 @@
 // use field_names::*;
 use std::str::FromStr;
 
+use substring::Substring;
+
+
+//enum for which modifications are allowed
+#[derive(Debug, Clone, Eq, PartialEq  )]
+#[allow(non_snake_case)]
+pub enum AllowMods {
+    // description
+    Des,
+    // due
+    Due,
+    // recur
+    Rec,
+    // rtype
+    Rty,
+    // start
+    Sta,
+    // tags
+    Tag,
+    // wait
+    Wai,
+}
+
+impl AllowMods {
+    pub fn text(&self) -> &str{
+        match *self {
+            AllowMods::Des  => "des",
+            AllowMods::Due  => "due",
+            AllowMods::Rec  => "rec",
+            AllowMods::Rty  => "rty",
+            AllowMods::Sta  => "sta",
+            AllowMods::Tag  => "tag",
+            AllowMods::Wai  => "wai",
+        }
+    }
+}
+
+
+impl FromStr for AllowMods {
+    type Err = ();
+    
+    fn from_str(input: &str) -> Result<AllowMods, Self::Err> {
+        let lower = input.trim().to_lowercase();
+        if lower.len() < 3 {
+            return Err(())
+        }
+        let matcho = lower.substring(0, 3);
+
+        match matcho {
+            "des"  => Ok(AllowMods::Des),
+            "due"  => Ok(AllowMods::Due),
+            "rec"  => Ok(AllowMods::Rec),
+            "rty"  => Ok(AllowMods::Rty),
+            "sta"  => Ok(AllowMods::Sta),
+            "tag"  => Ok(AllowMods::Tag),
+            "wai"  => Ok(AllowMods::Wai),
+            _      => Err(()),
+        }
+    }
+}
+
+
+//enum for argument type
+#[derive(Debug, Clone, Eq, PartialEq  )]
+#[allow(non_snake_case)]
+pub enum ArgType {
+    None,
+    Integer,
+    Hexidecimal,
+    Command,
+    Unknown,
+}
+
+
+// enum for recurring type
+#[derive(Clone, Debug, Ord, PartialOrd, Eq, PartialEq  )]
+#[allow(non_snake_case)]
+pub enum Rtype {
+    Periodic,
+    Chained,
+}
+
+
+impl Rtype {
+    pub fn text(&self) -> &str{
+        match *self {
+            Rtype::Periodic  => "Periodic",
+            Rtype::Chained   => "Chained",
+        }
+    }
+}
+
+impl FromStr for Rtype {
+    type Err = ();
+    
+    fn from_str(input: &str) -> Result<Rtype, Self::Err> {
+        let lower = input.trim().to_lowercase();
+        let matcho = lower.as_str();
+
+        match matcho {
+            "periodic"  => Ok(Rtype::Periodic),
+            "chained"   => Ok(Rtype::Chained),
+            _           => Err(()),
+        }
+    }
+}
+
 
 
 #[derive(Clone, Debug, Ord, PartialOrd, Eq, PartialEq )]
@@ -55,54 +162,12 @@ impl FromStr for Status {
 
 
 
-// enum for recurring type
-#[derive(Clone, Debug, Ord, PartialOrd, Eq, PartialEq  )]
-#[allow(non_snake_case)]
-pub enum Rtype {
-    Periodic,
-    Chained,
-}
-
-
-impl Rtype {
-    pub fn text(&self) -> &str{
-        match *self {
-            Rtype::Periodic  => "Periodic",
-            Rtype::Chained   => "Chained",
-        }
-    }
-}
-
-impl FromStr for Rtype {
-    type Err = ();
-    
-    fn from_str(input: &str) -> Result<Rtype, Self::Err> {
-        let lower = input.trim().to_lowercase();
-        let matcho = lower.as_str();
-
-        match matcho {
-            "periodic"  => Ok(Rtype::Periodic),
-            "chained"   => Ok(Rtype::Chained),
-            _           => Err(()),
-        }
-    }
-    
-}
 
 
 
 
 
-//enum for argument type
-#[derive(Debug, Clone, Eq, PartialEq  )]
-#[allow(non_snake_case)]
-pub enum ArgType {
-    None,
-    Integer,
-    Hexidecimal,
-    Command,
-    Unknown,
-}
+
 
 
 
@@ -200,7 +265,18 @@ mod tests {
         let sta2 = Rtype::from_str(&s2);
         assert_eq!(sta2.is_err(), true);
     }
-
+    
+    // #[ignore]
+    #[test]
+    fn t004_allow_mods() {
+        let s1 = "wait:2022-09-01"; 
+        let res = AllowMods::from_str(s1);
+        assert_eq!(res.unwrap(), AllowMods::Wai);
+        
+        let s1 = "waxt:2022-09-01"; 
+        let res = AllowMods::from_str(s1);
+        assert_eq!(res.is_err(), true);
+    }
 
 
 

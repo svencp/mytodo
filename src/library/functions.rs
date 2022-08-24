@@ -7,11 +7,12 @@
 
 
 use substring::Substring;
-use std::convert::TryFrom;
+// use std::convert::TryFrom;
 use std::process::exit;
 use std::io;
 use std::io::Write;
-use termion::{color, style};
+use std::str::FromStr;
+// use termion::{color, style};
 use crate::library::task::*;
 use crate::library::list::*;
 use crate::library::lts::*;
@@ -442,6 +443,122 @@ pub fn command_done(v_id:Vec<i64>, pend: &mut List, comp: &mut List, settings: &
     Ok(())
 }
 
+pub fn command_modification(args: &Vec<String>, v_id: &Vec<i64>, v_hex: &Vec<String>, pend: &mut List, 
+                            comp: &mut List) -> Result<(), &'static str> {
+    let mut v_tasks: Vec<Task> = Vec::new();
+    let mut v_mods: Vec<String> = Vec::new();
+
+    match v_hex.len() {
+        // assume non-completed tasks
+        0 => {
+            // lets see if they are all valid
+            for id in v_id.clone() {
+                let task = pend.get_task_from_id(id);
+                if task.is_err() {
+                    return Err("Invalid task id's given.")
+                }
+                v_tasks.push(task.clone().unwrap());
+            }
+
+            let len = args.clone().len();
+            if len < 4 {
+                return Err("No modifications given!");
+            }
+
+            // give message
+            println!("This command will alter {} {}",v_tasks.clone().len(), units("task", v_tasks.clone().len()));
+
+            // lets get the mods
+            for m in 3..len {
+                let s1 = args.get(m).unwrap().to_string();
+                v_mods.push(s1);
+            }
+
+            for index in 0..v_tasks.clone().len() {
+                let task = v_tasks.get(index).unwrap();
+                
+                //lets make a function that strips search terms and appends mods
+                let new_str = strip_and_dip(&mut v_mods, task);
+                if new_str.is_err() {
+                    return Err(new_str.err().unwrap());
+                }
+                let to_be_split = new_str.unwrap();
+                let new_split:Vec<_> = to_be_split.split("\t").collect();
+                let res_task = make_task(new_split.clone());
+                if res_task.is_err() {
+                    return Err(res_task.err().unwrap());
+                }
+
+                // lets remove and add
+                let index = pend.get_index_of_task_with_id(task.id.unwrap()) as usize;
+                pend.list.remove(index);
+                pend.list.insert(index, res_task.unwrap());
+
+                println!("Modifying task {} '{}'",task.id.unwrap(),task.description);
+            }
+            
+            println!("Modified {} '{}'",v_tasks.len(),units("task", v_tasks.len()));
+            pend.save();
+        }
+
+        // assume hex uuiid's
+        _ => {
+            // lets see if they are all valid
+            for h in v_hex.clone() {
+                let task = comp.get_task_from_uuiid(h);
+                if task.is_err() {
+                    return Err("Invalid task id's given.")
+                }
+                v_tasks.push(task.clone().unwrap());
+            }
+
+            let len = args.clone().len();
+            if len < 4 {
+                return Err("No modifications given!");
+            }
+
+            // give message
+            println!("This command will alter {} {}",v_tasks.clone().len(), units("task", v_tasks.clone().len()));
+
+            // lets get the mods
+            for m in 3..len {
+                let s1 = args.get(m).unwrap().to_string();
+                v_mods.push(s1);
+            }
+
+            for index in 0..v_tasks.clone().len() {
+                let task = v_tasks.get(index).unwrap();
+                
+                //lets make a function that strips search terms and appends mods
+                let new_str = strip_and_dip(&mut v_mods, task);
+                if new_str.is_err() {
+                    return Err(new_str.err().unwrap());
+                }
+                let to_be_split = new_str.unwrap();
+                let new_split:Vec<_> = to_be_split.split("\t").collect();
+                let res_task = make_task(new_split.clone());
+                if res_task.is_err() {
+                    return Err(res_task.err().unwrap());
+                }
+
+                // lets remove and add
+                // let index = comp.get_index_of_task_with_id(task.id.unwrap()) as usize;
+                let index = comp.get_index_of_task_with_uuiid_int(task.uuiid_int) as usize;
+                comp.list.remove(index);
+                comp.list.insert(index, res_task.unwrap());
+
+                println!("Modifying task {} '{}'",task.uuiid, task.description);
+            }
+            
+            println!("Modified {} '{}'",v_tasks.len(),units("task", v_tasks.len()));
+            comp.save();
+        }
+    }
+
+    // comp.save();
+
+    Ok(())                        
+}
 
 // start the given tasks
 pub fn command_start(v_int: &Vec<i64>, v_hex: &Vec<String>,
@@ -1179,9 +1296,6 @@ pub fn make_timetracking_timeframe(secs: i64) -> String {
 }
 
 
-
-
-
 // shorten vec from the front by ... 
 pub fn shorten_front_of_vec_by_2<'a>(args: &'a Vec<String>) -> Result<Vec<&'a str>, &'static str> {
 
@@ -1208,8 +1322,71 @@ pub fn shorten_front_of_vec_by_2<'a>(args: &'a Vec<String>) -> Result<Vec<&'a st
     Ok(ret)
 }
 
+// function to strip out mod terms in task and run through new make_task
+pub fn strip_and_dip(mods: &mut Vec<String>, task: &Task) -> Result<String, &'static str> {
+    let mut ret = "".to_string();
+    let mut v_index: Vec<usize> = Vec::new();
+    let mut replacement: String;
 
+    let line = make_line_from_task(task);
+    let mut split_tab:Vec<_> = line.split("\t").collect();
 
+    // we need to replace the '+' sign with 'tags:' in order for AllowMods to work
+    let m_len = mods.len();
+    for t in 0..m_len {
+        let found = mods[t].substring(0, 1) == "+";
+        if found {
+            replacement = mods.remove(t);
+            replacement = replacement.replace("+", "tags:");
+            mods.insert(t, replacement);
+        }
+    }
+
+    // get the allowed mods
+    for i in 0..split_tab.clone().len() {
+        let term = split_tab[i];
+        for m in mods.clone() {
+            let res_search = AllowMods::from_str(&m);
+            if res_search.is_err() {
+                return Err("Unknown search term.")
+            }
+
+            let a1 = res_search.unwrap();
+            let search_term = a1.text();
+
+            let sub = term.substring(0, 3);
+            if sub == search_term {
+                v_index.push(i);
+            }
+        }
+    }
+
+    // we need a top-down sort
+    v_index.sort();
+    v_index.reverse();
+
+    // remove the affected terms
+    for i in 0..v_index.len() {
+        split_tab.remove(v_index[i]);
+    }
+
+    // add the mods
+    for m in mods {
+        ret.push_str(m);
+        ret.push_str("\t");
+    }
+
+    // add the rest of the split_tab
+    let len_end = split_tab.len() -1;
+    for i in 0..=len_end {
+        ret.push_str(split_tab[i]);
+        if i != len_end {
+            ret.push_str("\t");
+        }
+    }
+
+    Ok(ret)
+}
 
 
 
@@ -1514,7 +1691,7 @@ mod tests {
         pen.save();
         pen.list.clear();
         
-        let res_load = load_task_file(dest1, &mut pen, &mut hd_set);
+        let _res_load = load_task_file(dest1, &mut pen, &mut hd_set);
         remove_file(dest1).expect("Cleanup test failed");
         remove_file(dest2).expect("Cleanup test failed");
 
@@ -1554,17 +1731,32 @@ mod tests {
         assert_eq!(res, "   3h  ");
     }
     
-    // // #[ignore]
-    // #[test]
-    // fn t016_input() {
-    //     let text = "Hello, what is your name? ";
-    //     let res_ans = get_input(text);
-        
-    //     let t:i64 = 10_000;
-    //     let res = align_timeframe(t);
-    //     assert_eq!(res, "   3h  ");
-    // }
+    // #[ignore]
+    #[test]
+    fn t016_strip_and_dip() {
+        let line = "description:how do i do\tdue:1658513756\t\
+        entry:1658512756\tstart:1658513756\tstatus:pending\tuuiid:0x0001\ttags:houseboat";
+        let vec:Vec<_> = line.split("\t").collect();
+        let task1 = make_task(vec).unwrap();
+        let mut mods = vec!["description:New decription Svenny!".to_string(), "wait:2022-09-01".to_string(), "+car".to_string()];
+        let res = strip_and_dip(&mut mods, &task1).unwrap();
+        let vec2:Vec<_> = res.split("\t").collect();
+        let task2 = make_task(vec2).unwrap();
+        assert_eq!(task2.description, "New decription Svenny!");
+        assert_eq!(task2.entry, 1658512756);
+        assert_eq!(task2.tags[0], "car");
+        assert_eq!(task2.wait.unwrap(), 1661990400);
+    }
+    
+    // #[ignore]
+    #[test]
+    fn t017_sort_reverse_vector() {
+        let mut vec = vec![1,3,19,0,0,1];
+        vec.sort();
+        vec.reverse();
 
+        assert_eq!(vec[0],19);
+    }
 
 
 
