@@ -4,25 +4,19 @@ Most of my odd structs are in here.
 
 */
 
-
-
-
 use std::collections::{BTreeSet, BTreeMap};
 use termion::{color, style};
 use crate::library::settings::*;
 use crate::library::my_utils::*;
-use chrono::prelude::*;
-use substring::Substring;
-use std::path::Path;
-use term_size::*;
-// use std::fs::remove_file;
-use std::io::{Write, LineWriter};
+use crate::library::lts::*;
 use std::process::exit;
-use std::fmt::{Debug};
-use std::str::FromStr;
-// use serde::{Serialize, Deserialize};
 use std::time::{UNIX_EPOCH, Duration};
-use std::io::{BufRead, BufReader};
+use chrono::*;
+use chronoutil::*;
+
+
+pub const DAY_SECS: i64          = 86400;
+pub const WEEK_SECS: i64         = 604800;
 
 
 
@@ -100,15 +94,135 @@ impl Hdeci {
         return index;
     }
 
+} // end of impl
+
+
+pub struct RecurTerm {
+    pub term: String,
+    pub numeric: i64,
+    pub duration: char,
+    pub is_relative: bool,
+}
+
+impl RecurTerm {
+
+    fn instant() -> RecurTerm {
+        RecurTerm {
+            term: "".to_string(),
+            numeric: 0,
+            duration: 'd',
+            is_relative: false,
+        }
+    }
+
+    pub fn multiply_from_timestring(&self, ts: i64, multiplier: i64) -> i64 {
+        let ret:i64;
+        let mut addition:i64 = 0;
+
+        let product = (self.numeric * multiplier) as i32;
+        let time_ndt = NaiveDateTime::from_timestamp(ts, 0);
+
+        match self.duration {
+            'd' => {
+                addition = product as i64 * DAY_SECS;
+            }
+            'w' => {
+                addition = product as i64 * WEEK_SECS;
+            }
+            'm' => {
+                let delta = RelativeDuration::months(product);
+                let ndt = time_ndt + delta;
+                return ndt.timestamp();
+            }
+            'y' => {
+                let delta = RelativeDuration::years(product);
+                let ndt = time_ndt + delta;
+                return ndt.timestamp();
+            }
+            _ => {
+                // should never get here
+            }
+        }
+
+        ret = ts + addition;
+        return ret
+    }
+
+    pub fn new(term: &str) -> Result<RecurTerm, &'static str> {
+        let mut ret = RecurTerm::instant();
+
+        if ! term.starts_with("+") {
+            return Err("Term doesn't start with + ");
+        }
+    
+        let str = term.replace("+", "");
+        let mut n_arr:Vec<char> = Vec::new();
+        let mut c_arr:Vec<char> = Vec::new();
+        let str_arr: Vec<char> = str.chars().collect();
+        for c in str_arr {
+            if c.is_numeric() {
+                n_arr.push(c);
+                continue;
+            }
+            c_arr.push(c);
+        }
+    
+        // is it a number
+        let s_num: String = n_arr.iter().collect();
+        let res_num = s_num.parse::<i64>();
+        if res_num.is_err() {
+            return Err("recur_term number could not be parsed");
+        }
+        ret.numeric = res_num.unwrap();
+        
+        // has the term got the right chars (only d,w,m,y)
+        if c_arr.len() > 1 {
+            return Err("Too many characters in duration");
+        }
+        if c_arr.len() < 1 {
+            return Err("No duration symbol given");
+        }
+    
+        // assign duration
+        ret.duration = c_arr[0];
+
+        match c_arr[0] {
+            'd' => {
+                ret.term = "+".to_string() + &ret.numeric.to_string() + "d";
+                ret.is_relative = false;
+            }
+            'w' => {
+                ret.term = "+".to_string() + &ret.numeric.to_string() + "w";
+                ret.is_relative = false;
+            }
+            'm' => {
+                ret.term = "+".to_string() + &ret.numeric.to_string() + "m";
+                ret.is_relative = true;
+            }
+            'y' => {
+                ret.term = "+".to_string() + &ret.numeric.to_string() + "y";
+                ret.is_relative = true;
+            }
+            _ => {
+                return Err("Illegal duration symbol");
+            }
+        }
+
+        Ok(ret)
+    } // end of new()
+
+    pub fn text(&self) -> String {
+        return  self.term.to_string()
+    }
+
+
+
+
 
 
 
 
 } // end of impl
-
-
-
-
 
 
 
@@ -231,8 +345,49 @@ mod tests {
         seto.add(4);
         let str1 = hexidecimal_to_string(seto.get_next_hexidecimal());
         assert_eq!(str1,"0x000005");
-
     }
+    
+    // #[ignore]
+    #[test]
+    fn t002_recur_term() {
+        let term = RecurTerm::new("+3m").unwrap();
+        assert_eq!(term.text(),"+3m");
+        
+        let term2 = RecurTerm::new("+3mo");
+        assert_eq!(term2.is_err(),true);
+        
+        let date_str = "2000-01-01";
+        let ts = lts_date_string_to_timestamp(date_str);
+        
+        // add 12 months
+        let dts = term.multiply_from_timestring(ts.unwrap(), 4);
+        let str = lts_to_date_time_string(dts);
+        assert_eq!(str.substring(0, 10), "2001-01-01");
+        
+        let term3 = RecurTerm::new("+7d").unwrap();
+        let date_str = "2000-01-01";
+        let ts = lts_date_string_to_timestamp(date_str);
+        let dts = term3.multiply_from_timestring(ts.unwrap(), 10);
+        let str = lts_to_date_time_string(dts);
+        assert_eq!(str.substring(0, 10), "2000-03-11");
+        
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

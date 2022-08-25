@@ -1,0 +1,2 @@
+description:a light blue journey	uuiid:0x000001	entry:1661458300	status:recurring	due:1651363200	prodigy:3	recur:+4m	rtype:chained	wait:1650844800
+description:a light blue journey	uuiid:0x000004	entry:1661458470	status:waiting	due:1682453667	parent:0x000001	recur:+4m	rtype:chained	wait:1681935267

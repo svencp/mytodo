@@ -13,6 +13,7 @@ use crate::library::enums::*;
 use crate::library::functions::*;
 use crate::library::lts::*;
 use crate::library::structs::*;
+use crate::library::list::*;
 
 
 
@@ -103,6 +104,16 @@ impl Task {
         return false;
     }
 
+    pub fn increase_prodigy(&mut self) -> Result<(), &'static str> {
+        if self.prodigy.is_some(){
+            let mut num = self.prodigy.unwrap();
+            num += 1;
+            self.prodigy = Some(num);
+            return Ok(())
+        }
+        return Err("task has no ability to have prodigy");
+    }
+
     pub fn is_active(&self) -> bool {
         for v in self.virtual_tags.clone() {
             if v == VirtualTags::Active {
@@ -186,6 +197,8 @@ impl Task {
         return false;
     }
 
+
+
     // make an empty task for compilers sake
     pub fn new() -> Task {
         Task { 
@@ -212,7 +225,118 @@ impl Task {
     }
 
 
+    pub fn update_status(&mut self) {
+        let now = lts_now();
 
+        // if this does not have a parent, and has recur, it is a parent; change to recurring
+        if self.recur.is_some(){
+            if self.parent.is_none(){
+                self.status = Status::Recurring;
+            }
+        }
+        match self.status {
+            Status::Pending => {
+                match self.wait {
+                    Some(ts) => {
+                        if now < ts && self.start.is_none() {
+                            self.status = Status::Waiting;
+                        } else {
+                            self.status = Status::Pending;
+                        }
+                    }
+                    None => {
+                        self.status = Status::Pending;
+                    }
+                }
+            }
+            Status::Waiting => {
+                match self.wait {
+                    Some(ts) => {
+                        if now < ts {
+                            self.status = Status::Waiting;
+                        } else {
+                            self.status = Status::Pending;
+                        }
+                    }
+                    None => {
+                        self.status = Status::Pending;
+                    }
+                }
+            }
+            _ => {
+            }
+        }
+    }
+    
+    pub fn update_virtual_tags(&mut self) {
+        self.virtual_tags = Vec::new();
+        let now = lts_now();
+    
+        // Active
+        if self.start.is_some(){
+            if !self.is_parent() {
+                self.virtual_tags.push(VirtualTags::Active);
+            }
+        }
+    
+        // Annotated
+        if self.ann.len() > 0 {
+            self.virtual_tags.push(VirtualTags::Annotated);
+        }
+    
+        // Child
+        if self.parent.is_some() {
+            self.virtual_tags.push(VirtualTags::Child);
+        }
+    
+        // Completed
+        if self.end.is_some() {
+            self.virtual_tags.push(VirtualTags::Completed);
+        }
+    
+        // Deleted
+        if self.status == Status::Deleted {
+            self.virtual_tags.push(VirtualTags::Deleted);
+        }
+        
+        // Overdue
+        if self.due.is_some() {
+            if now > self.due.unwrap() {
+                if !self.is_parent() {
+                    self.virtual_tags.push(VirtualTags::Overdue);
+                }
+            }
+        } 
+        
+        // Parent
+        if self.status == Status::Recurring {
+            self.virtual_tags.push(VirtualTags::Parent);
+        }
+        
+        // Pending
+        if self.status == Status::Pending {
+            self.virtual_tags.push(VirtualTags::Pending);
+        }
+        
+        // Tagged
+        if self.tags.len() > 0 {
+            self.virtual_tags.push(VirtualTags::Tagged);
+        }
+        
+        // Waiting
+        if self.status == Status::Waiting {
+            self.virtual_tags.push(VirtualTags::Waiting);
+        }
+        // if self.wait.is_some() {
+        //     if now < self.wait.unwrap() {
+        //         if !self.is_parent() {
+        //             self.virtual_tags.push(VirtualTags::Waiting);
+        //         }
+        //     }
+        // }
+    }
+
+    
 
 
 
@@ -261,10 +385,123 @@ pub fn determine_due_start_wait(term: &str) -> Result<i64, &'static str> {
     Err("unknown term for due: start: wait:")
 }
 
+pub fn generate_child(pend: &List, comp: &List, parent: &Task, hd_set: &mut Hdeci) -> Task {
+    let mut ret = parent.clone();
+    let now = lts_now();
+
+    // update some defaults
+    ret.entry = now;
+    ret.parent = Some(parent.clone().uuiid);
+    ret.parent_int = Some(parent.clone().uuiid_int);
+    ret.start = None;
+    ret.timetrackingseconds = 0;
+    ret.prodigy = None;
+    ret.status = Status::Pending;
+    ret.end = None;
+
+    let next_hexidecimal = hd_set.get_next_hexidecimal();
+    ret.uuiid_int = next_hexidecimal;
+    ret.uuiid = hexidecimal_to_string(next_hexidecimal);
+    hd_set.add(next_hexidecimal);
+
+    let new_id = pend.list.len() as i64  + 1;
+    ret.id = Some(new_id);
+
+    // lets sort out the times
+    match parent.clone().rtype.unwrap() {
+        Rtype::Chained => {
+            let latest_child = find_latest_child(comp, parent);
+            let term = RecurTerm::new(&parent.clone().recur.unwrap()).unwrap();
+
+            match latest_child {
+                Some(child) => {
+
+                    let ets = child.end.unwrap();
+
+                    match child.due {
+                        Some(_ts) => {
+                            let new_ts = term.multiply_from_timestring(ets, parent.prodigy.unwrap()); 
+                            ret.due = Some( new_ts );
+                        }
+                        None => {
+                            ret.due = None;
+                        }
+                    }
+                    match child.wait {
+                        Some(_ts) => {
+                            match child.due {
+                                Some(_ts) => {
+                                    let diff = parent.due.unwrap() - parent.wait.unwrap();
+                                    ret.wait = Some(ret.due.unwrap() - diff);
+                                }
+                                None => {
+                                    let new_ts = term.multiply_from_timestring(parent.wait.unwrap(), parent.prodigy.unwrap()); 
+                                    ret.due = Some( new_ts );
+                                }
+                            }
+                            // let new_ts = term.multiply_from_timestring(ts, parent.prodigy.unwrap()); 
+                            // ret.wait = Some( new_ts );
+                        }
+                        None => {
+                            ret.wait = None;
+                        }
+                    }
+                }
+                None => {
+                    match parent.due {
+                        Some(ts) => {
+                            let new_ts = term.multiply_from_timestring(ts, parent.prodigy.unwrap()); 
+                            ret.due = Some( new_ts );
+                        }
+                        None => {
+                            ret.due = None;
+                        }
+                    }
+                    match parent.wait {
+                        Some(ts) => {
+                            let new_ts = term.multiply_from_timestring(ts, parent.prodigy.unwrap()); 
+                            ret.wait = Some( new_ts );
+                        }
+                        None => {
+                            ret.wait = None;
+                        }
+                    }
+                }
+            }
+        }
+        // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Periodic @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        Rtype::Periodic => {
+            let term = RecurTerm::new(&parent.clone().recur.unwrap()).unwrap();
+            match parent.due {
+                Some(ts) => {
+                    let new_ts = term.multiply_from_timestring(ts, parent.prodigy.unwrap()); 
+                    ret.due = Some( new_ts );
+                }
+                None => {
+                    ret.due = None;
+                }
+            }
+            match parent.wait {
+                Some(ts) => {
+                    let new_ts = term.multiply_from_timestring(ts, parent.prodigy.unwrap()); 
+                    ret.wait = Some( new_ts );
+                }
+                None => {
+                    ret.wait = None;
+                }
+            }
+        }       
+    }
+
+    ret.update_status();
+
+    return ret;
+}
+
 // Main make task function
 pub fn make_task(vec:Vec<&str>) -> Result<Task, &'static str> {
     let mut ret = Task::new();
-    let now = lts_now();
+    // let now = lts_now();
 
     for element in vec {
         let split_colon: Vec<_> = element.split(":").collect();
@@ -435,29 +672,31 @@ pub fn make_task(vec:Vec<&str>) -> Result<Task, &'static str> {
                         ret.wait = Some(res.unwrap());
                     }
                     
-
                     _ => {
                         // shouldnt really get here
                         return Err("Unknown element in colon split")            
                     }
                 }
             }
-
             _ => {
                 return Err("too many terms per element")
             }
         }
-
     } // end of for element
-
-    ret.status = update_status(now, ret.clone());
-    ret.virtual_tags = make_virtual_tags(ret.clone());
+    ret.update_status();
+    ret.update_virtual_tags();
 
     // Check initial prodigy is valid
-    if !ret.has_recur() {
-        ret.prodigy = None;
-    } 
-
+    match ret.is_parent(){
+        true => {
+            // parents dont start
+            ret.start = None;
+        }
+        false => {
+            // only parents have prodigy
+            ret.prodigy = None;
+        }
+    }
 
     Ok(ret)
 }

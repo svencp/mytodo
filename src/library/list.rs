@@ -9,18 +9,16 @@ use inflections::Inflect;
 use crate::library::task::*;
 use crate::library::my_utils::*;
 use crate::library::enums::*;
-use crate::library::functions::*;
 use crate::library::structs::*;
-use std::str::FromStr;
+use crate::library::lts::*;
 use std::path::Path;
 use std::fs::{ OpenOptions };
 use std::io::{BufRead, BufReader};
 use std::fs::*;
 use std::io::prelude::*;
-use std::collections::{BTreeSet, BTreeMap};
 use std::process::exit;
 
-use super::lts::lts_now;
+use super::reports::to_orange_feedback;
 
 
 
@@ -356,6 +354,84 @@ pub fn delete_task_from_completed(comp: &mut List, task: Task ) -> Result<(),&'s
     Ok(())
 }
 
+pub fn find_children(pend: &List, task: &Task) -> Option<Vec<Task>> {
+    let mut ret: Vec<Task> = Vec::new();
+
+    for t in pend.clone().list {
+        if t.parent.is_some() {
+            if t.clone().parent.unwrap() == task.uuiid {
+                ret.push(t.clone());
+            }
+        }
+    }
+
+    if ret.len() == 0 {
+        return None;
+    }
+
+    return Some(ret)
+}
+
+pub fn find_latest_child(comp: &List, parent: &Task) -> Option<Task> {
+    let res_children = find_children(comp, parent);
+    if res_children.is_none(){
+        return None;
+    }
+    let mut children = res_children.unwrap();
+
+    // sort by end date  i.e. highest at the start
+    children.sort_by(|a,b| {
+        return b.end.unwrap().cmp(&a.end.unwrap())
+    });
+
+    // return the one at the start
+    return Some(children[0].clone())
+}
+
+pub fn generate_recurring_tasks(pend: &mut List, comp: &mut List, hd_set: &mut Hdeci ) {
+    let mut recurring_tasks: Vec<Task> = Vec::new();
+    let mut no_children: Vec<Task> = Vec::new();
+
+    // find recurring tasks that are parents
+    for task in pend.clone().list {
+        if task.is_recurring() && task.is_parent() {
+            recurring_tasks.push(task);
+        }
+    } 
+
+    // do all have children
+    for task in recurring_tasks {
+        let children = find_children(&pend, &task);
+        if children.is_none() {
+            no_children.push(task);
+        }
+    }
+
+    // lets generate children
+    for p in no_children.iter_mut() {
+        let child = generate_child(pend,comp, &p, hd_set);
+        pend.list.push(child.clone());
+
+        // we have to increase the prodigy of the parent
+        let mut parent = pend.remove_with_id(p.id.unwrap()).unwrap();
+        let res = parent.increase_prodigy();
+        match res.is_ok() {
+            true => {
+                let index = p.id.unwrap() as usize - 1;
+                pend.list.insert(index, parent);
+                let line = format!("Task {} '{}' has been created.\n", child.id.unwrap(), child.description);
+                to_orange_feedback(&line);
+                pend.save();
+            }
+            false => {
+                let message = "Something wrong in generating children (should not really happen)".to_string();
+                feedback(Feedback::Error, message);
+                exit(17);
+            }
+        }
+    }
+}
+
 // no result needed as files could be messed up
 pub fn load_all_tasks(  p_file: &str, c_file: &str, pending: &mut List, 
                         completed: &mut List, hexi_set: &mut Hdeci) {
@@ -417,7 +493,8 @@ pub fn load_task_file(task_file: &str, the_list: &mut List, hexi_set: &mut Hdeci
         hexi_set.add(task.uuiid_int);
 
         // we have to do the virtual tags as well
-        task.virtual_tags = make_virtual_tags(task.clone());
+        // task.virtual_tags = make_virtual_tags(task.clone());
+        task.update_virtual_tags();
 
         the_list.list.push(task);
     }

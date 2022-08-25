@@ -57,14 +57,9 @@ fn main() {
     load_all_tasks( &pending_file,&completed_file, &mut pending_tasks, &mut completed_tasks, &mut hd_set);
     all_tasks.append(pending_tasks.clone());
     all_tasks.append(completed_tasks.clone());
-    // let all_tasks= &mut completed_tasks.list;
-    // all_tasks.append(&mut pending_tasks.clone().list);
-    // all_tasks.sort();
 
-    // let mut next_hexi = get_next_hexidecimal(hexi_set);
-
-    // let next_id: i64 = 1;
-    // let next_uuiid_int: i64 = 1;
+    // generate recurring tasks
+    generate_recurring_tasks(&mut pending_tasks, &mut completed_tasks, &mut hd_set);
 
     
 

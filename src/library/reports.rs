@@ -200,7 +200,7 @@ pub fn format_report_completed(col_sizes: &Vec<usize>, headers: Vec<&str>, tasks
         match remainder {
             // dark black background
             0 => {
-                match task.is_recurring() {
+                match task.has_recur() {
                     true => {
                         match task.clone().rtype.unwrap() {
                             Rtype::Periodic => {
@@ -225,7 +225,7 @@ pub fn format_report_completed(col_sizes: &Vec<usize>, headers: Vec<&str>, tasks
             }
             // normal background
             _ => {
-                match task.is_recurring() {
+                match task.has_recur() {
                     true => {
                         match task.clone().rtype.unwrap() {
                             Rtype::Periodic => {
@@ -310,14 +310,10 @@ pub fn format_report_single(col_sizes: &Vec<usize>, headers: Vec<&str>, lines: V
     let tagged_fg   = colors.clone().color_tagged;
     let rperiod_fg  = colors.clone().color_recur_period_fg;
     let rchained_fg = colors.clone().color_recur_chain_fg;
-    let active_bg    = colors.clone().color_active_bg;
+    let active_bg   = colors.clone().color_active_bg;
     let black_bg    = colors.clone().color_black_bg;
-    // let anno_block = make_annotation_block(col_sizes);
-    // let mut index: usize = 0;
 
-    // let mut remainder: i64;
     let mut index: i64 = 1;
-    // let mut v_lines:Vec<String>;
 
     // make_heading(col_sizes,headers,settings);
     make_heading(col_sizes,headers,colors, "Single");

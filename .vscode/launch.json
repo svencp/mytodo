@@ -19,7 +19,7 @@
                     "kind": "bin"
                 }
             },
-            "args": [ "0x000001,0x000002", "mod", "due:2022-10-01" , "+cat" ],
+            "args": [ "1" ],
             "cwd": "${workspaceFolder}"
         },
         {
