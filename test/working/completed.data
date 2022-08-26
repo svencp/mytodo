@@ -1,3 +1,0 @@
-description:a light blue journey	uuiid:0x000002	entry:1661458302	status:completed	due:1651363200	end:1661458325	parent:0x000001	recur:+4m	rtype:chained	timetrackingseconds:23	wait:1650844800
-description:a light blue journey	uuiid:0x000003	entry:1661458329	status:completed	annotation_1661458422:hello	due:1671999125	end:1661458467	parent:0x000001	recur:+4m	rtype:chained	timetrackingseconds:109	wait:1671480725
-description:a light blue journey	uuiid:0x000004	entry:1661458470	status:completed	due:1682453667	end:1661459346	parent:0x000001	recur:+4m	rtype:chained	tags:houseboat	timetrackingseconds:330	wait:1681935267

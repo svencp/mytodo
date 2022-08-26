@@ -13,23 +13,19 @@ use library::settings::*;
 use library::structs::*;
 use library::reports::*;
 use library::list::*;
-use substring::Substring;
-use std::collections::{BTreeMap, BTreeSet};
-use std::future::pending;
 use std::process::exit;
-use std::fs::copy;
-use std::path::Path;
 use std::env;
-use termion::{color, style};
-use thousands::{Separable};
+use termion::{color};
 use std::time::{SystemTime};
 
 
+pub const RELEASE: bool            = true;
 pub const VERSION: &str            = env!("CARGO_PKG_VERSION");
 pub const PENDING: &str            = "./test/working/pending.data";
 pub const COMPLETED: &str          = "./test/working/completed.data";
 pub const SETTINGS_FILE: &str      = "settings.txt";
 pub const COLOR_ORANGE: color::Rgb = color::Rgb(246,116,0);
+
 
 
 
@@ -73,8 +69,10 @@ fn main() {
     match matcho {
         ArgType::None => {
             let result = report_all_pending(&pending_tasks, colors, &settings);
-
-            println!("No arguments")
+            if result.is_err() {
+                let message = result.err().unwrap().to_string();
+                feedback(Feedback::Info, message);
+            }
         }
         
         ArgType::Integer | ArgType::Hexidecimal => {

@@ -1,7 +1,3 @@
-description:a light blue journey	uuiid:0x000001	entry:1661458300	status:recurring	due:1651363200	prodigy:4	recur:+4m	rtype:chained	wait:1650844800
-description:a light blue journey	uuiid:0x000005	entry:1661459009	status:recurring	due:1651363200	prodigy:1	recur:+4m	rtype:chained	wait:1650844800
-description:a light blue journey	uuiid:0x000006	entry:1661459016	status:pending	due:1651363200	parent:0x000005	recur:+4m	rtype:chained	start:1661459079	wait:1650844800
-description:a light blue journey	uuiid:0x000007	entry:1661459349	status:waiting	annotation_1661459835:*********************************************************************************************	due:1692995346	parent:0x000001	recur:+4m	rtype:chained	wait:1692476946
-description:Short Title	uuiid:0x000008	entry:1661459658	status:pending	annotation_1661459664:======================================================	due:1661459658	start:1661459658	tags:jag
-description:Howzit Svenny!	uuiid:0x000009	entry:1661509991	status:pending
-description:Happy new Year	uuiid:0x00000a	entry:1661510688	status:pending	due:1577750400
+description:mow the lawn	uuiid:0x000001	entry:1661511108	status:pending	due:1661990400	start:1661511120	tags:garden
+description:rotate matress	uuiid:0x000002	entry:1661511582	status:recurring	due:1651363200	prodigy:1	recur:+6m	rtype:chained	tags:household	wait:1650758400
+description:rotate matress	uuiid:0x000003	entry:1661511586	status:pending	due:1651363200	parent:0x000002	recur:+6m	rtype:chained	start:1661511606	tags:household	wait:1650758400

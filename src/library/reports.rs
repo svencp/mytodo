@@ -956,6 +956,10 @@ pub fn report_all_pending(pend: &List, colors: Colors, settings: &SettingsMap) -
         }
     }
 
+    if tasks.len() == 0 {
+        return Err("There are no tasks to be done!");
+    }
+
     //lets sort this vector with the least due date (if it has) on top
     tasks.sort_by(|a,b| {
         match &a.due {
