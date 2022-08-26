@@ -19,12 +19,12 @@ use termion::{color};
 use std::time::{SystemTime};
 
 
-pub const RELEASE: bool            = false;
-// pub const RELEASE: bool            = true;
+// pub const RELEASE: bool            = false;
+pub const RELEASE: bool            = true;
 pub const VERSION: &str            = env!("CARGO_PKG_VERSION");
-pub const PENDING: &str            = "./test/working/pending.data";
-pub const COMPLETED: &str          = "./test/working/completed.data";
-pub const SETTINGS_FILE: &str      = "settings.txt";
+// pub const PENDING: &str            = "./test/working/pending.data";
+// pub const COMPLETED: &str          = "./test/working/completed.data";
+// pub const SETTINGS_FILE: &str      = "settings.txt";
 pub const COLOR_ORANGE: color::Rgb = color::Rgb(246,116,0);
 
 
@@ -33,18 +33,29 @@ pub const COLOR_ORANGE: color::Rgb = color::Rgb(246,116,0);
 #[rustfmt::skip]
 fn main() {
     let now = SystemTime::now();
-    let arguments: Vec<String> = env::args().collect();
-    let mut command: String = "".to_string();
-    let mut arg_id:   Vec<i64> = Vec::new();
+    let arguments: Vec<String>    = env::args().collect();
+    let mut command: String       = "".to_string();
+    let mut arg_id:   Vec<i64>    = Vec::new();
     let mut arg_hex:  Vec<String> = Vec::new();
+    
+    let res_data_dir = create_data_dirs();
+    if res_data_dir.is_err(){
+        let message = res_data_dir.err().unwrap().to_string();
+        feedback(Feedback::Error, message);
+        exit(17);
+    }
+    let settings_file = res_data_dir.clone().unwrap().get(0).unwrap().to_string();
+    let pending_file = res_data_dir.clone().unwrap().get(1).unwrap().to_string();
+    let completed_file = res_data_dir.clone().unwrap().get(2).unwrap().to_string();
 
-    let settings = load_settings(SETTINGS_FILE);
-    // let terminal_width = get_terminal_width(&settings);
+
+
+
+
+    let settings = load_settings(&settings_file);
     let colors = load_colors(&settings);
-    let data_dir = settings.map.get("dataDir").unwrap().to_string();
+    // let data_dir = settings.map.get("dataDir").unwrap().to_string();
 
-    let pending_file = data_dir.clone() + "/pending.data";
-    let completed_file = data_dir + "/completed.data";
 
     let mut pending_tasks:List    = List::new(&pending_file);
     let mut completed_tasks:List  = List::new(&completed_file);

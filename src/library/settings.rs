@@ -44,12 +44,12 @@ impl SettingsMap {
         map.insert("color_recur_chain_fg".to_string(), "(29,153,243)".to_string());
         map.insert("color_recur_period_fg".to_string(), "(0,95,175)".to_string());
         map.insert("color_tagged".to_string(), "(0,175,95)".to_string());
-        map.insert("dataDir".to_string(), "/DATA/programming/Rust/mytodo/test/working".to_string());
+        // map.insert("dataDir".to_string(), "/DATA/programming/Rust/mytodo/test/working".to_string());
         map.insert("nag".to_string(), "You go Sven".to_string());
         map.insert("showNag".to_string(), "true".to_string());
         map.insert("showResponseTimes".to_string(), "true".to_string());
         map.insert("useTerminalWidthOf".to_string(), "180".to_string()); 
-    
+   
     } 
 
     // get a bool from settings
@@ -273,69 +273,14 @@ pub fn import(path: &str) -> Result<SettingsMap, &'static str> {
     return Ok(ret);
 }
 
-
 // pub fn load_settings(file: &str) -> SettingsMap {
 pub fn load_settings(file: &str)  -> SettingsMap {
-    let working_dir:String;
-    let path_to_trial:String;
-    let path_to_settings:String;
-
-    match crate::RELEASE {
-        true => {
-            let result_path = env::current_exe();
-            if result_path.is_err() {
-                let message = format!("Error in executable file path name.");
-                feedback(Feedback::Error, message);
-                exit(17);
-            }
-        
-            working_dir = result_path.unwrap().parent().unwrap().to_str().unwrap().to_owned();
-            path_to_trial = working_dir.clone() + "/trial";
-            path_to_settings = working_dir + "/" + file;
-        }
-        false => {
-
-            working_dir = "/DATA/programming/Rust/mytodo/test/working".to_string();
-            path_to_trial = working_dir.clone() + "/trial";
-            path_to_settings = working_dir + "/" + file;
-
-        }
-    }
-
-
-
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! dont delete
-    // let result_path = env::current_exe();
-    // if result_path.is_err() {
-        //     let message = format!("Error in executable file path name.");
-        //     feedback(Feedback::Error, message);
-        //     exit(17);
-        // }
-        
-        // let working_dir = result_path.unwrap().parent().unwrap().to_str().unwrap().to_owned();
-        // let path_to_trial = working_dir.clone() + "/trial";
-        // let path_to_settings = working_dir + "/" + file;
-        
-        
-        
-//        // let working_dir = "/DATA/programming/Rust/mytodo/test/working".to_string();
-//        // let path_to_trial = working_dir.clone() + "/trial";
-//        // let path_to_settings = working_dir + "/" + file;
-        
-        // can we write to this directory
-        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! dont delete
-    let result_system = file_system_ok(&path_to_trial);
-    if result_system.is_err() {
-        let message = format!("Error in file_system_ok().");
-        feedback(Feedback::Error, message);
-        exit(17);
-    }
     
     // if the settings file does NOT exist
-    if ! Path::new(&path_to_settings).exists() {
+    if ! Path::new(&file).exists() {
         let default = SettingsMap::new();
         // let res_save = export(&default.map, &path_to_settings);
-        let res_save = default.save(&path_to_settings);
+        let res_save = default.save(&file);
         if res_save.is_err() {
             let message = format!("Error in saving settings file");
             feedback(Feedback::Error, message);
@@ -344,7 +289,7 @@ pub fn load_settings(file: &str)  -> SettingsMap {
     }
     
     // load the settings file
-    let res_import = import(&path_to_settings);
+    let res_import = import(&file);
     if res_import.is_err() {
         let message = format!("Error in importing settings file");
         feedback(Feedback::Error, message);
@@ -353,23 +298,8 @@ pub fn load_settings(file: &str)  -> SettingsMap {
 
     let ret = res_import.unwrap();
 
-    // test to see if one can write to the data directory
-    let path_to_data = ret.map.get("dataDir").unwrap().to_string() + "/trial"  ;
-    let result_data = file_system_ok(&path_to_data);
-    if result_data.is_err() {
-        let message = format!("Error in writing to the data directory.");
-        feedback(Feedback::Error, message);
-        exit(17);
-    }
-
     return ret;
 }
-
-
-
-
-
-
 
 // make a string that will be written to a text file
 pub fn make_file_string(map: BTreeMap<String,String>) -> Vec<String> {

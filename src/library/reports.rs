@@ -850,7 +850,6 @@ pub fn print_description_line(col_sizes: &Vec<usize>, task: &Task) {
     
     let desc = justify(task.clone().description, col_sizes[4], Justify::Left);
     print!("{}{}\n",desc, style::Reset);
-    // print!("{}\n",desc);
 }
 
 // my active report

@@ -7,12 +7,13 @@
 
 
 use substring::Substring;
-// use std::convert::TryFrom;
+use std::path::Path;
 use std::process::exit;
 use std::io;
 use std::io::Write;
 use std::str::FromStr;
-// use termion::{color, style};
+use std::env;
+use std::fs;
 use crate::library::task::*;
 use crate::library::list::*;
 use crate::library::lts::*;
@@ -804,6 +805,54 @@ pub fn command_stop(v_int: &Vec<i64>, v_hex: &Vec<String>,
     Ok(())
 }
 
+// return a vector of filenames
+pub fn create_data_dirs() -> Result<Vec<String>, &'static str> {
+    let mut ret:Vec<String> = Vec::new();
+    let path:String;
+    
+    let res_cur_dir = env::current_dir();
+    if res_cur_dir.is_err() {
+        return Err("Error in querying the current directory.")
+    }
+    let current_directory = res_cur_dir.unwrap().into_os_string().into_string().unwrap();
+
+    match crate::RELEASE {
+        true => {
+            let working = "data";
+            path = current_directory + "/" + working;
+            if !Path::new(&path).exists() {
+                let res = fs::create_dir(&path);
+                if res.is_err() {
+                    return Err("Cannot create data directory (maybe debug version)");
+                }
+            }
+        }
+        false => {
+            let working = "test/working";
+            path = current_directory + "/" + working;
+            if !Path::new(&path).exists() {
+                let res = fs::create_dir(&path);
+                if res.is_err() {
+                    return Err("Cannot create data directory (maybe debug version)");
+                }
+            }
+        }
+    }
+    // 0
+    let settings_file = path.clone() + "/" + "settings.txt";
+    ret.push(settings_file);
+
+    // 1
+    let pending_file = path.clone() + "/" + "pending.data";
+    ret.push(pending_file);
+
+    // 2
+    let completed_file = path + "/" + "completed.data";
+    ret.push(completed_file);
+    
+    Ok(ret)
+}
+
 // determine the first argument type
 pub fn determine_first_arg(args: &Vec<String>, v_int: &mut Vec<i64>, v_hex: &mut Vec<String>, command: &mut String) -> ArgType {
     
@@ -931,6 +980,8 @@ pub fn get_task_lines_completed(col_sizes: &Vec<usize>, block: &str, task: &Task
     line += " ";
     line += &lts_to_date_string(task.clone().end.unwrap());
     line += " ";
+    line += &justify(task.clone().description, col_sizes[5], Justify::Left);
+    ret.push(line);
 
     
     // lets do the annotations
