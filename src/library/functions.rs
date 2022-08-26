@@ -48,6 +48,67 @@ pub fn align_timeframe(secs: i64) -> String {
     return padded.to_string()
 }
 
+pub fn categorize_term(secs: i64) -> String {
+    let ret:String;
+
+    // 1 min
+    if secs < 60 {
+        ret = secs.to_string() + "s";
+        return ret;
+    }
+    
+    // 1 hour
+    if secs < 3600 {
+        let float = secs as f64 / 60 as f64;
+        let ans = float.round() as i64;
+
+        ret = ans.to_string() + "min";
+        return ret;
+    }
+    
+    // 1 day
+    if secs < 86_400 {
+        let float = secs as f64 / 3600 as f64;
+        let ans = float.round() as i64;
+
+        ret = ans.to_string() + "h";
+        return ret;
+    }
+    
+    // 2 weeks
+    if secs < 1_209_600 {
+        let float = secs as f64 / 86_400 as f64;
+        let ans = float.round() as i64;
+
+        ret = ans.to_string() + "d";
+        return ret;
+    }
+    
+    // 12 weeks
+    if secs < 7_257_600 {
+        let float = secs as f64 / 604_800 as f64;
+        let ans = float.round() as i64;
+
+        ret = ans.to_string() + "w";
+        return ret;
+    }
+    
+    // 12 months
+    if secs < 31_536_000 {
+        let float = secs as f64 / 2_592_000 as f64;
+        let ans = float.round() as i64;
+        
+        ret = ans.to_string() + "mo";
+        return ret;
+    }
+    
+    // years
+    let float = secs as f64 / 31_536_000 as f64;
+    ret = format!("{:.1}{}",float,"y");
+
+    return ret;
+}
+
 // function to add task from command line
 pub fn command_add_task(args: &Vec<String>,  pending: &mut List, hdeci: &mut Hdeci ) -> Result<i64, String> {
 
@@ -870,8 +931,7 @@ pub fn get_task_lines_completed(col_sizes: &Vec<usize>, block: &str, task: &Task
     line += " ";
     line += &lts_to_date_string(task.clone().end.unwrap());
     line += " ";
-    line += &justify(task.clone().description, col_sizes[5], Justify::Left);
-    ret.push(line);
+
     
     // lets do the annotations
     for anno in task.clone().ann {
@@ -881,6 +941,64 @@ pub fn get_task_lines_completed(col_sizes: &Vec<usize>, block: &str, task: &Task
 
         // take into account: date length(10) and three extra spaces (i know two, dunno three)
         let len_anno = col_sizes[5] - 10 - 3;
+        line += &justify(anno.desc, len_anno, Justify::Left);
+        ret.push(line);
+    }
+    
+    return ret;
+}
+
+pub fn get_task_lines_pending(col_sizes: &Vec<usize>, block: &str, task: &Task) -> Vec<String> {
+    let mut ret:Vec<String> = Vec::new();
+    let mut line:String;
+    let mut diff:i64;
+    let now = lts_now();
+
+    // task line
+    line = justify(task.clone().id.unwrap().to_string(), col_sizes[0], Justify::Right) + " ";
+    diff = now - task.clone().entry;
+    line += &align_timeframe(diff);                                                           // col size = 7
+    line += " ";
+    // line += &justify(make_timetracking_string(task.clone().timetrackingseconds), col_sizes[2], Justify::Right);
+    // line += " ";
+    let num_tags = task.clone().tags.len();
+    match num_tags {
+        0 => {
+            line += &repeat_char(" ".to_string(), col_sizes[2])
+        }
+        1 => {
+            line += &justify(task.clone().tags[0].to_string(), col_sizes[2], Justify::Left);
+        }
+        _ => {
+            let temp = format!("[{}]",task.clone().tags.len());
+            line += &justify(temp, col_sizes[2], Justify::Center);
+        }
+    }
+    line += " ";
+    
+    // Due like -1.3y   or -13w
+    match task.due {
+        Some(ts) => {
+            diff = ts - now;
+            line += &align_timeframe(diff); 
+        }
+        None => {
+            line += &repeat_char(" ".to_string(), col_sizes[3]); 
+        }
+        
+    }
+    line += " ";
+    line += &justify(task.clone().description, col_sizes[4], Justify::Left);
+    ret.push(line);
+
+    // lets do the annotations
+    for anno in task.clone().ann {
+        line = block.to_string();
+        line += &lts_to_date_string(anno.date);
+        line += " ";
+
+        // take into account: date length(10) and three extra spaces (i know two, dunno three)
+        let len_anno = col_sizes[4] - 10 - 3;
         line += &justify(anno.desc, len_anno, Justify::Left);
         ret.push(line);
     }
@@ -1233,66 +1351,22 @@ pub fn make_timetracking_string(secs: i64) -> String {
     return ret;
 }
 
-// make timetracking timeframe like   1.5y
+// make timetracking timeframe like   1.5y    or   -3w
 pub fn make_timetracking_timeframe(secs: i64) -> String {
-    let ret:String;
-
-    // 1 min
-    if secs < 60 {
-        ret = secs.to_string() + "s";
-        return ret;
+    let mut neg = false;
+    
+    if secs < 0 {
+        neg = true;
     }
     
-    // 1 hour
-    if secs < 3600 {
-        let float = secs as f64 / 60 as f64;
-        let ans = float.round() as i64;
+    let term = categorize_term(secs.abs());
 
-        ret = ans.to_string() + "min";
+    if neg {
+        let ret = "-".to_string() + &term;
         return ret;
     }
-    
-    // 1 day
-    if secs < 86_400 {
-        let float = secs as f64 / 3600 as f64;
-        let ans = float.round() as i64;
 
-        ret = ans.to_string() + "h";
-        return ret;
-    }
-    
-    // 2 weeks
-    if secs < 1_209_600 {
-        let float = secs as f64 / 86_400 as f64;
-        let ans = float.round() as i64;
-
-        ret = ans.to_string() + "d";
-        return ret;
-    }
-    
-    // 12 weeks
-    if secs < 7_257_600 {
-        let float = secs as f64 / 604_800 as f64;
-        let ans = float.round() as i64;
-
-        ret = ans.to_string() + "w";
-        return ret;
-    }
-    
-    // 12 months
-    if secs < 31_536_000 {
-        let float = secs as f64 / 2_592_000 as f64;
-        let ans = float.round() as i64;
-        
-        ret = ans.to_string() + "mo";
-        return ret;
-    }
-    
-    // years
-    let float = secs as f64 / 31_536_000 as f64;
-    ret = format!("{:.1}{}",float,"y");
-
-    return ret;
+    return term;
 }
 
 

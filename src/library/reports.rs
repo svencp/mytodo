@@ -177,6 +177,100 @@ pub fn format_report_active(col_sizes: &Vec<usize>, headers: Vec<&str>, tasks: &
 
 }
 
+pub fn format_report_all_pending(col_sizes: &Vec<usize>, headers: Vec<&str>, tasks: &Vec<Task>, colors: &Colors, heading: &str) {
+    let normal_fg   = colors.clone().color_complete_orphan;
+    let tagged_fg   = colors.clone().color_tagged;
+    let rperiod_fg  = colors.clone().color_recur_period_fg;
+    let rchained_fg = colors.clone().color_recur_chain_fg;
+    let black_bg    = colors.clone().color_black_bg;
+    let active_bg    = colors.clone().color_active_bg;
+    let anno_block = make_annotation_block(col_sizes);
+
+    let mut remainder: i64;
+    let mut index: i64 = 1;
+    let mut v_lines:Vec<String>;
+
+    make_heading(col_sizes, headers, colors, heading);
+
+
+    for task in tasks {
+        index += 1;
+        remainder = index % 2;
+
+        v_lines = get_task_lines_pending(col_sizes, &anno_block, &task);
+
+        match remainder {
+            // The normally light option
+            0 => {
+                match task.is_active() {
+                    true => {
+                        make_dark_print(v_lines, normal_fg, active_bg)
+                    }
+                    false => {
+                        match task.has_recur() {
+                            true => {
+                                match task.is_periodic() {
+                                    true => {
+                                        make_print(v_lines, rperiod_fg);
+                                    }
+                                    false => {
+                                        make_print(v_lines, rchained_fg);
+                                    }
+                                }
+                            }
+                            false => {
+                                match task.is_tagged() {
+                                    true => {
+                                        make_print(v_lines, tagged_fg);
+                                    }
+                                    false => {
+                                        make_print(v_lines, normal_fg);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            // make this one the dark one
+            _ => {
+                match task.is_active() {
+                    true => {
+                        make_dark_print(v_lines, normal_fg, active_bg)
+                    }
+                    false => {
+                        match task.has_recur() {
+                            true => {
+                                match task.is_periodic() {
+                                    true => {
+                                        make_dark_print(v_lines, rperiod_fg, black_bg);
+                                    }
+                                    false => {
+                                        make_dark_print(v_lines, rchained_fg, black_bg);
+                                    }
+                                }
+                            }
+                            false => {
+                                match task.is_tagged() {
+                                    true => {
+                                        make_dark_print(v_lines, tagged_fg, black_bg);
+                                    }
+                                    false => {
+                                        make_dark_print(v_lines, normal_fg, black_bg);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    print!("\n");
+    println!("{} {} \n",tasks.clone().len(), units("task", tasks.len()));
+}
+
 pub fn format_report_completed(col_sizes: &Vec<usize>, headers: Vec<&str>, tasks: &Vec<Task>, colors: &Colors, heading: &str) {
     let normal_fg   = colors.clone().color_complete_orphan;
     let tagged_fg   = colors.clone().color_tagged;
@@ -827,6 +921,81 @@ pub fn report_active(colors: &Colors, settings: &SettingsMap, pend: &List) -> Re
     });
 
     format_report_active(&col_sizes, headers, &tasks, colors, &settings);
+
+    Ok(())
+}
+
+pub fn report_all_pending(pend: &List, colors: Colors, settings: &SettingsMap) -> Result<(), &'static str> {
+    let mut col_sizes = vec![2,7,11,7];
+    let headers = vec!["ID", "Age", "Tags", "Due", "Description" ];
+    let mut tasks: Vec<Task> = Vec::new();
+    let mut v_desc: Vec<String> = Vec::new();
+    let mut max_col: usize = 0;
+
+    // check for lengths of description
+    for t in pend.list.clone() {
+        // we decided not to want templates
+        if t.is_parent(){
+            continue;
+        }
+        tasks.push(t.clone());
+        v_desc.push(t.description.clone());
+        let l1 = t.description.clone().len();
+        if l1 > max_col {
+            max_col = l1;
+        }
+
+        if t.ann.len() > 0 {
+            for a in t.ann {
+                let line = "  ".to_string() + &lts_to_date_string(a.date) + " " + &a.desc;
+                v_desc.push(line.clone());
+                if line.len() > max_col {
+                    max_col = line.len();
+                }
+            }
+        }
+    }
+
+    //lets sort this vector with the least due date (if it has) on top
+    tasks.sort_by(|a,b| {
+        match &a.due {
+            Some(secs) => {
+                if b.due.is_none() {
+                    return Ordering::Less;
+                }
+                return secs.cmp(&b.due.unwrap())
+            }
+            None => {
+                if b.due.is_some() {
+                    return Ordering::Greater;
+                }
+                return Ordering::Equal;
+            }
+        }
+    });
+
+    // add max_col to col_sizes with two spaces
+    col_sizes.push(max_col);
+    let mut total_width = 0;
+    for s in col_sizes.clone() {
+        total_width += s;
+    }
+    // add the separator spaces
+    total_width += col_sizes.len() - 1;
+
+    // Width problem
+    let width = settings.get_integer("useTerminalWidthOf");
+    if total_width > width.unwrap() as usize {
+        return Err("We have the width problem");
+    }
+
+    // do we have anything
+    if tasks.len() == 0 {
+        return Err("no matches");
+    }
+
+    let heading = "All Pending   (but without templates)";
+    format_report_all_pending(&col_sizes, headers, &tasks, &colors, heading);
 
     Ok(())
 }

@@ -72,6 +72,8 @@ fn main() {
     // lets do it
     match matcho {
         ArgType::None => {
+            let result = report_all_pending(&pending_tasks, colors, &settings);
+
             println!("No arguments")
         }
         
