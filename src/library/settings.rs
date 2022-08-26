@@ -14,7 +14,7 @@ use std::fs::*;
 use std::io::{Write, LineWriter};
 use std::process::exit;
 use std::fmt::{Debug};
-use std::str::FromStr;
+use std::env;
 // use serde::{Serialize, Deserialize};
 use std::collections::BTreeMap;
 use termion::{color, style};
@@ -276,6 +276,34 @@ pub fn import(path: &str) -> Result<SettingsMap, &'static str> {
 
 // pub fn load_settings(file: &str) -> SettingsMap {
 pub fn load_settings(file: &str)  -> SettingsMap {
+    let working_dir:String;
+    let path_to_trial:String;
+    let path_to_settings:String;
+
+    match crate::RELEASE {
+        true => {
+            let result_path = env::current_exe();
+            if result_path.is_err() {
+                let message = format!("Error in executable file path name.");
+                feedback(Feedback::Error, message);
+                exit(17);
+            }
+        
+            working_dir = result_path.unwrap().parent().unwrap().to_str().unwrap().to_owned();
+            path_to_trial = working_dir.clone() + "/trial";
+            path_to_settings = working_dir + "/" + file;
+        }
+        false => {
+
+            working_dir = "/DATA/programming/Rust/mytodo/test/working".to_string();
+            path_to_trial = working_dir.clone() + "/trial";
+            path_to_settings = working_dir + "/" + file;
+
+        }
+    }
+
+
+
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! dont delete
     // let result_path = env::current_exe();
     // if result_path.is_err() {
@@ -290,9 +318,9 @@ pub fn load_settings(file: &str)  -> SettingsMap {
         
         
         
-        let working_dir = "/DATA/programming/Rust/mytodo/test/working".to_string();
-        let path_to_trial = working_dir.clone() + "/trial";
-        let path_to_settings = working_dir + "/" + file;
+//        // let working_dir = "/DATA/programming/Rust/mytodo/test/working".to_string();
+//        // let path_to_trial = working_dir.clone() + "/trial";
+//        // let path_to_settings = working_dir + "/" + file;
         
         // can we write to this directory
         // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! dont delete

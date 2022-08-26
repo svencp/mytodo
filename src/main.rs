@@ -19,7 +19,8 @@ use termion::{color};
 use std::time::{SystemTime};
 
 
-pub const RELEASE: bool            = true;
+pub const RELEASE: bool            = false;
+// pub const RELEASE: bool            = true;
 pub const VERSION: &str            = env!("CARGO_PKG_VERSION");
 pub const PENDING: &str            = "./test/working/pending.data";
 pub const COMPLETED: &str          = "./test/working/completed.data";
