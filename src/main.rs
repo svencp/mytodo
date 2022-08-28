@@ -1,6 +1,8 @@
 /*
     This is my to-do list
-    2020.07.24      Sven Ponelat
+    2022.07.24      Sven Ponelat
+
+    2022-08-29  1.2.0   adding the search function -> report
 
 */
 
@@ -18,8 +20,8 @@ use std::env;
 use std::time::{SystemTime};
 
 
-pub const RELEASE: bool            = false;
-// pub const RELEASE: bool            = true;
+// pub const RELEASE: bool            = false;
+pub const RELEASE: bool            = true;
 pub const VERSION: &str            = env!("CARGO_PKG_VERSION");
 
 
@@ -243,7 +245,7 @@ fn main() {
             }
 
 
-            println!("Integer arguments")
+            // println!("Integer arguments")
         }
         
         

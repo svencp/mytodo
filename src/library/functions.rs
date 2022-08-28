@@ -112,6 +112,7 @@ pub fn categorize_term(secs: i64) -> String {
 
 // function to add task from command line
 pub fn command_add_task(args: &Vec<String>,  pending: &mut List, hdeci: &mut Hdeci ) -> Result<i64, String> {
+    let mut refined_vector:Vec<&str> = Vec::new();
 
     // for add - remove the first two arguments
     let result = shorten_front_of_vec_by_2(&args);
@@ -120,7 +121,23 @@ pub fn command_add_task(args: &Vec<String>,  pending: &mut List, hdeci: &mut Hde
         return Err(message);
     }
 
-    let t_result = make_task(result.unwrap());
+    // we have to add "description:" to the first term"
+    let r_vec = result.unwrap();
+
+    // there should always be at least one element
+    let first = r_vec.get(0).unwrap().trim();
+    let new_first = "description:".to_string() + first;
+    refined_vector.push(&new_first);
+
+    if r_vec.len() > 1 {
+        for i in 1..r_vec.len() {
+            let temp = *r_vec.get(i).unwrap();
+            refined_vector.push(temp);
+        }
+
+    }
+
+    let t_result = make_task(refined_vector);
     if t_result.is_err(){
         let message = t_result.err().unwrap().to_string();
         return Err(message);
@@ -1426,6 +1443,29 @@ pub fn make_timetracking_timeframe(secs: i64) -> String {
     return term;
 }
 
+// // this function adds the "descrption:" to the front of the first element
+// pub fn refine_vector(vec: Vec<&str>) -> Vec<String> {
+//     let mut ret: Vec<String> = Vec::new();
+
+//     // there should always be at least one element
+//     let first = vec.get(0).unwrap().trim();
+//     let refined = "description:".to_string() + first;
+//     ret.push(refined);
+
+//     match vec.len() {
+//         1 => {
+//             return ret;
+//         }
+//         _ => {
+//             for i in 1..vec.len() {
+//                 let temp = *vec.get(i).unwrap();
+//                 ret.push(temp.to_string());
+//             }
+//         }
+//     }
+
+//     return ret.clone();
+// }
 
 // shorten vec from the front by ... 
 pub fn shorten_front_of_vec_by_2<'a>(args: &'a Vec<String>) -> Result<Vec<&'a str>, &'static str> {
@@ -1435,7 +1475,7 @@ pub fn shorten_front_of_vec_by_2<'a>(args: &'a Vec<String>) -> Result<Vec<&'a st
 
     let can_do = len - 2;
     if can_do <= 0 {
-        return Err("there are no arguments to act open");
+        return Err("there are no arguments to actually open");
     }
 
     for i in 0..args.len() {
@@ -1706,6 +1746,18 @@ mod tests {
                                     "due:2030-01-05".to_string(),
                                     "+household".to_string()];
         let result_add5 = command_add_task(&vs5 ,&mut pen, &mut h_set);
+
+        // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        // with the new description add-on
+        let vs6: Vec<String> = vec!["Something".to_string(),
+                                    "another".to_string(),
+                                    "First Task: It's what its all about! --> !()_".to_string(),
+                                    "start:now".to_string(),
+                                    "due:2030-01-05".to_string(),
+                                    "+household".to_string()];
+        let result_add6 = command_add_task(&vs6 ,&mut pen, &mut h_set);
+        assert_eq!(result_add6.is_err(),false);
+
         
         assert_eq!(result_add1.is_err(),true);
         assert_eq!(result_add2.is_err(),false);
@@ -1714,7 +1766,7 @@ mod tests {
         assert_eq!(result_add5.is_err(),false);
         
         pen.save();
-        assert_eq!(pen.list.len(),2);
+        assert_eq!(pen.list.len(),3);
         remove_file(destination).expect("Cleanup test failed");
     }
     

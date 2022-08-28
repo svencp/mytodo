@@ -1,6 +1,6 @@
 ##################
 #                #
-#   2022-08-26   #
+#   2022-08-28   #
 #                #
 ##################
 
@@ -13,7 +13,6 @@ color_overdue	(192,57,43)
 color_recur_chain_fg	(29,153,243)
 color_recur_period_fg	(0,95,175)
 color_tagged	(0,175,95)
-dataDir	/DATA/programming/Rust/mytodo/test/working
 nag	You go Sven
 showNag	true
 showResponseTimes	true

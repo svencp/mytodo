@@ -608,7 +608,6 @@ mod tests {
         remove_file(destination).expect("Cleanup test failed");
 
         assert_eq!(pending.list.len(), 3);
-        // let third_one = pending[3];
         let third_one = pending.list.get(2).unwrap();
         assert_eq!(third_one.uuiid, "0x0003");
         assert_eq!(third_one.id.unwrap(), 3);

@@ -19,6 +19,7 @@
                     "kind": "bin"
                 }
             },
+            // "args": [ "1", "ann", "Hey:_-> what's going on...." ],
             "args": [ "c" ],
             "cwd": "${workspaceFolder}"
         },

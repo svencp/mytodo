@@ -499,12 +499,41 @@ pub fn generate_child(pend: &List, comp: &List, parent: &Task, hd_set: &mut Hdec
 // Main make task function
 pub fn make_task(vec:Vec<&str>) -> Result<Task, &'static str> {
     let mut ret = Task::new();
+    let mut split_colon:Vec<_> = Vec::new();
     // let now = lts_now();
 
     for element in vec {
-        let split_colon: Vec<_> = element.split(":").collect();
-        let number_of_terms = split_colon.len();
+        let starts_with = element.substring(0, 3);
+        match starts_with {
+            "des" | "ann" => {
+                split_colon.clear();
+                let res_opt = element.split_once(":");
+                if res_opt.is_none(){
+                    return Err("Something wrong with description line.");
+                }
+                split_colon.push(res_opt.unwrap().0);
+                split_colon.push(res_opt.unwrap().1);
+            }
+            _ => {
+                split_colon = element.split(":").collect();
+            }
+        }
 
+        // match element.starts_with("description") {
+        //     true => {
+        //         let res_opt = element.split_once(":");
+        //         if res_opt.is_none(){
+        //             return Err("Something wrong with description line.");
+        //         }
+        //         split_colon.push(res_opt.unwrap().0);
+        //         split_colon.push(res_opt.unwrap().1);
+        //     }
+        //     false => {
+        //         split_colon = element.split(":").collect();
+        //     }
+        // }
+
+        let number_of_terms = split_colon.len();
         match number_of_terms {
             1 => {
                 if split_colon[0].len() < 2 {
@@ -814,7 +843,7 @@ pub fn make_task(vec:Vec<&str>) -> Result<Task, &'static str> {
 #[cfg(test)]
 mod tests {
     use super::*;
-
+    use std::fs::*;
 
     
     // #[ignore]
@@ -856,17 +885,32 @@ mod tests {
     }
     
     
-    // // #[ignore]
-    // #[test]
-    // fn t004_mod() {
-    //     let vs: Vec<&str> = vec!["First Task", "due:2030-01-05", "start:now", "+household"];
-    //     let res = make_task(vs);
-    //     assert_eq!(res.unwrap().start.unwrap(), lts_now() );
+    // #[ignore]
+    #[test]
+    fn t004_split() {
+        let destination = "./test/trial.data";
+        let mut pen = List::new(destination);
+        let mut hdeci: Hdeci = Hdeci::new();
+        let vs: Vec<String> = vec![ "1".to_string(), 
+                                    "1".to_string(), 
+                                    "First Task: due to some error: --> hello!".to_string(),
+                                    "due:2040-01-05".to_string(), 
+                                    "+household".to_string()];
+        let _res = command_add_task(&vs, &mut pen, &mut hdeci);
+        let task = pen.get_task_from_id(1);
+        let t1 = task.clone().unwrap().virtual_tags.contains(&VirtualTags::Pending);
+        assert_eq!(t1, true);
         
-    //     let m_vec = vec!["wait:2030-01-01", "+jag"];
-
-
-    // }
+        remove_file(destination).expect("Cleanup test failed");
+        let waiting = task.clone().unwrap().virtual_tags.contains(&VirtualTags::Waiting);
+        assert_eq!(waiting, false);
+        
+        let tagged = task.clone().unwrap().virtual_tags.contains(&VirtualTags::Tagged);
+        assert_eq!(tagged, true);
+        
+        let overdue = task.clone().unwrap().virtual_tags.contains(&VirtualTags::Overdue);
+        assert_eq!(overdue, false);
+    }
 
 
     // #[ignore]

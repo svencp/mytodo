@@ -1,4 +1,1 @@
-description:rotate matress	uuiid:0x000002	entry:1661511582	status:recurring	due:1651363200	prodigy:1	recur:+6m	rtype:chained	tags:household	wait:1650758400
-description:rotate matress	uuiid:0x000003	entry:1661511586	status:pending	annotation_1661532565:hello	due:1651363200	parent:0x000002	recur:+6m	rtype:chained	start:1661511606	tags:household	wait:1650758400
-description:Hello again Svenny!	uuiid:0x000004	entry:1661512943	status:pending
-description:just for waiting purposes	uuiid:0x000005	entry:1661533129	status:waiting	wait:1670803200
+description:Let's try this: "hello Svenny" ok()	uuiid:0x000002	entry:1661707727	status:pending	annotation_1661709144:just an: annotation in "quotes" -> _ yebo	due:1661707727	start:1661707727	tags:house
