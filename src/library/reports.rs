@@ -5,12 +5,6 @@
 */
 
 
-
-
-use termion::{color, style};
-use std::cmp::Ordering;
-use std::process::exit;
-use std::cmp;
 use crate::library::enums::Rtype;
 use crate::library::functions::*;
 use crate::library::lts::*;
@@ -19,9 +13,12 @@ use crate::library::settings::*;
 use crate::library::my_utils::*;
 use crate::library::task::*;
 use crate::library::list::*;
+use termion::{color, style};
+use std::cmp::Ordering;
+use std::process::exit;
 
 
-
+pub const COLOR_ORANGE: color::Rgb = color::Rgb(246,116,0);
 
 
 
@@ -53,70 +50,6 @@ pub fn color_test(colors: Colors) {
     let fg = colors.color_feedback_orange;
     let bg:Option<color::Rgb> = None;
     to_color_message(fg, bg, line1);
-}
-
-// get the color scheme according to virtual tags
-pub fn get_colour_scheme(task: Task, colors: Colors) -> Vec<Option<color::Rgb>> {
-    match task.is_active() {
-        true => {
-            let fg = Some(colors.color_complete_orphan);
-            let bg = Some(colors.color_active_bg);
-            return vec![fg,bg];
-        }
-        false => {
-            match task.is_recurring() {
-                true => {
-                    match task.is_periodic() {
-                        true => {
-                            let fg = Some(colors.color_recur_period_fg);
-                            let bg = None;
-                            return vec![fg,bg];
-                        }
-                        false => {
-                            let fg = Some(colors.color_recur_chain_fg);
-                            let bg = None;
-                            return vec![fg,bg];
-                        }
-                    }
-                }
-                false => {
-                    match task.is_tagged() {
-                        true => {
-                            let fg = Some(colors.color_tagged);
-                            let bg = None;
-                            return vec![fg,bg];
-                        }
-                        false => {
-                            let fg = Some(colors.color_complete_orphan);
-                            let bg = None;
-                            return vec![fg,bg];
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-// get the total of maximum column widths
-pub fn get_max_col_widths(big: Vec<Vec<String>>) -> Result<Vec<usize>, &'static str> {
-    let num_lines = big.len() as i64;
-    let num_columns = big[0].len();
-    let mut v_max:Vec<usize> = vec![0;num_columns];
-
-    if num_lines == 0 {
-        return Err("Cannot obtain maximum column width");
-    }
-
-    for lines in 0..big.len() {
-        for col in 0..big[lines].len() {
-            let len = big[lines][col].len();
-            let prev = v_max[col];
-            v_max[col] = cmp::max(len, prev);
-        }
-    }
-
-    Ok(v_max)
 }
 
 pub fn format_report_active(col_sizes: &Vec<usize>, headers: Vec<&str>, tasks: &Vec<Task>, colors: &Colors, settings: &SettingsMap) {
@@ -187,7 +120,7 @@ pub fn format_report_all_pending(col_sizes: &Vec<usize>, headers: Vec<&str>, tas
     let anno_block = make_annotation_block(col_sizes);
 
     let mut remainder: i64;
-    let mut index: i64 = 1;
+    let mut index: i64 = 0;
     let mut v_lines:Vec<String>;
 
     make_heading(col_sizes, headers, colors, heading);
@@ -356,7 +289,7 @@ pub fn format_report_recurring(col_sizes: &Vec<usize>, headers: Vec<&str>, tasks
     let anno_block = make_annotation_block(col_sizes);
 
     let mut remainder: i64;
-    let mut index: i64 = 0;
+    let mut index: i64 = 1;
     let mut v_lines:Vec<String>;
 
     make_heading(col_sizes, headers, colors, heading);
@@ -540,99 +473,6 @@ pub fn format_report_single(col_sizes: &Vec<usize>, headers: Vec<&str>, lines: V
         index += 1;
     }
 
-
-
-
-
-
-
-
-    
-    // let fg = colors.color_complete_orphan;
-    // let bg = colors.color_black_bg;
-
-    // // lets do the header
-    // print!("\n\n");
-    // let mut first = justify(big[0][0].clone(), cols[0], Justify::Left);
-    // underline_string(first);
-    // print!(" ");
-    // let mut second = justify(big[0][1].clone(), cols[1], Justify::Left);
-    // underline_string(second);
-    // print!("\n");
-    
-    // // 222222222222222222222222222222222222222
-    // first = justify(big[1][0].clone(), cols[0], Justify::Left);
-    // second = justify(big[1][1].clone(), cols[1], Justify::Left);
-    // make_dark_print_single(&first,&second,fg,bg);
-
-    // // 3333333333333333333333333333333333333333
-    // let fgbg = get_colour_scheme(task,colors);
-
-    // for i in 0..desc.len() {
-    //     match i {
-    //         0 => {
-    //             match fgbg.get(1).unwrap() {
-    //                 Some(bg) => {
-    //                     let d = justify("Description".to_string(), cols[0], Justify::Left);
-    //                     print!("{} ",d);
-    //                     let value = desc[i][0].clone();        
-    //                     let v = justify(value, cols[1], Justify::Left);
-    //                     print!("{}{}{}",color::Fg(fgbg[0].unwrap()), color::Bg(*bg),v);
-    //                     print!("{}\n",style::Reset);
-    //                 }
-    //                 None => {
-    //                     let d = justify("Description".to_string(), cols[0], Justify::Left);
-    //                     print!("{} ",d);
-    //                     let value = desc[i][0].clone();  
-    //                     let v = justify(value, cols[1], Justify::Left);
-    //                     print!("{}{}",color::Fg(fgbg[0].unwrap()),v);
-    //                     print!("{}\n",style::Reset);
-    //                 }
-    //             }
-    //         }
-
-    //         _ => {
-    //             match fgbg.get(1).unwrap() {
-    //                 Some(bg) => {
-    //                     let d = repeat_char(" ".to_string(), cols[0]);
-    //                     print!("{} ",d);
-    //                     let value = desc[i][0].clone(); 
-    //                     // remember to take 2 spaces away again for the tab
-    //                     let v = justify(value, cols[1]-2, Justify::Left);
-    //                     print!("{}{}  {}",color::Fg(fgbg[0].unwrap()), color::Bg(*bg),v);
-    //                     print!("{}\n",style::Reset);
-    //                 }
-    //                 None => {
-    //                     let d = repeat_char(" ".to_string(), cols[0]);
-    //                     print!("{} ",d);
-    //                     let value = desc[i][0].clone(); 
-    //                     // remember to take 2 spaces away again for the tab
-    //                     let v = justify(value, cols[1]-2, Justify::Left);
-    //                     print!("{}  {}",color::Fg(fgbg[0].unwrap()),v);
-    //                     print!("{}\n",style::Reset);
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
-
-    // // 4444444444444444444444444444444444444444444444444444444444444444444444444 onwards
-    // for i in 2..big.len() {
-    //     first = justify(big[i][0].clone(), cols[0], Justify::Left);
-    //     second = justify(big[i][1].clone(), cols[1], Justify::Left);
-        
-    //     let remainder = i % 2;
-    //     match remainder {
-    //         0 => {
-    //             make_dark_print_single(&first,&second,fg,bg);
-    //         }
-    //         _ => {
-    //             make_print2(&first, &second, fg);
-    //         }
-    //     }
-    // }
-    // print!("\n\n");
-
     print!("\n\n");
 }
 
@@ -645,7 +485,7 @@ pub fn format_report_waiting(col_sizes: &Vec<usize>, headers: Vec<&str>, tasks: 
     let anno_block = make_annotation_block(col_sizes);
 
     let mut remainder: i64;
-    let mut index: i64 = 0;
+    let mut index: i64 = 1;
     let mut v_lines:Vec<String>;
 
     make_heading(col_sizes, headers, colors, heading);
@@ -799,27 +639,6 @@ pub fn make_print(v_lines:Vec<String>, fg: color::Rgb) {
         print!("{}\n",style::Reset);
     }
 }
-
-// // make the dark string (the alternate fro single report)
-// pub fn make_print2(first: &str, second: &str, fg: color::Rgb){
-//     print!("{}",color::Fg(fg));
-//     print!("{} {}",first,second);
-//     print!("{}\n",style::Reset);
-// }
-
-// pub fn print_annotation_lines(block: String, col_sizes: &Vec<usize>, task: &Task) {
-
-
-
-
-
-//     for ann in task.ann.clone() {
-//         let desc = lts_to_date_string(ann.date) + " " + &ann.desc;
-//         let d = justify(desc.clone(), col_sizes[4]-2, Justify::Left);
-//         print!("{}   {}\n",block, d);
-//     }
-//     print!("{}",style::Reset);
-// }
 
 pub fn print_description_line(col_sizes: &Vec<usize>, task: &Task) {
     let now = lts_now();
@@ -1358,7 +1177,7 @@ pub fn to_color_message(fg: color::Rgb, bg: Option<color::Rgb>, line: &str) {
 
 // my to Orange Feedback Message
 pub fn to_orange_feedback(line: &str) {
-    let fg = crate::COLOR_ORANGE;
+    let fg = COLOR_ORANGE;
     let bg:Option<color::Rgb> = None;
     to_color_message(fg, bg, line);
 }
@@ -1382,24 +1201,21 @@ pub fn to_orange_feedback(line: &str) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::{fs::copy};
-    use substring::Substring;
-    use std::fs::remove_file;
 
     
-    // #[ignore]
-    #[test]
-    fn t001_report_single() {
-        let line = "description:how do i get the konsole that i have now\tdue:1658513756\t\
-                        entry:1658513756\tstart:1658513756\tstatus:pending\tuuiid:0x0011";
-        let vec2:Vec<_> = line.split("\t").collect();
-        let task = make_task(vec2);
-        // let hexi = task.unwrap().uuiid_int
+    // // #[ignore]
+    // #[test]
+    // fn t001_report_single() {
+    //     let line = "description:how do i get the konsole that i have now\tdue:1658513756\t\
+    //                     entry:1658513756\tstart:1658513756\tstatus:pending\tuuiid:0x0011";
+    //     let vec2:Vec<_> = line.split("\t").collect();
+    //     let task = make_task(vec2);
+    //     // let hexi = task.unwrap().uuiid_int
 
 
 
 
-    }
+    // }
 
 
 

@@ -5,16 +5,14 @@
 */
 
 
-use std::str::FromStr;
-use chrono::*;
-use chronoutil::*;
-use substring::Substring;
 use crate::library::enums::*;
 use crate::library::functions::*;
 use crate::library::lts::*;
 use crate::library::structs::*;
 use crate::library::list::*;
 
+use std::str::FromStr;
+use substring::Substring;
 
 
 
@@ -701,103 +699,103 @@ pub fn make_task(vec:Vec<&str>) -> Result<Task, &'static str> {
     Ok(ret)
 }
 
-pub fn make_virtual_tags(task: Task) -> Vec<VirtualTags> {
-    let mut ret: Vec<VirtualTags> = Vec::new();
-    let now = lts_now();
+// pub fn make_virtual_tags(task: Task) -> Vec<VirtualTags> {
+//     let mut ret: Vec<VirtualTags> = Vec::new();
+//     let now = lts_now();
 
-    // Active
-    if task.start.is_some(){
-        if !task.is_parent() {
-            ret.push(VirtualTags::Active);
-        }
-    }
+//     // Active
+//     if task.start.is_some(){
+//         if !task.is_parent() {
+//             ret.push(VirtualTags::Active);
+//         }
+//     }
 
-    // Annotated
-    if task.ann.len() > 0 {
-        ret.push(VirtualTags::Annotated);
-    }
+//     // Annotated
+//     if task.ann.len() > 0 {
+//         ret.push(VirtualTags::Annotated);
+//     }
 
-    // Child
-    if task.parent.is_some() {
-        ret.push(VirtualTags::Child);
-    }
+//     // Child
+//     if task.parent.is_some() {
+//         ret.push(VirtualTags::Child);
+//     }
 
-    // Completed
-    if task.end.is_some() {
-        ret.push(VirtualTags::Completed);
-    }
+//     // Completed
+//     if task.end.is_some() {
+//         ret.push(VirtualTags::Completed);
+//     }
 
-    // Deleted
-    if task.status == Status::Deleted {
-        ret.push(VirtualTags::Deleted);
-    }
+//     // Deleted
+//     if task.status == Status::Deleted {
+//         ret.push(VirtualTags::Deleted);
+//     }
     
-    // Overdue
-    if task.due.is_some() {
-        if now > task.due.unwrap() {
-            if !task.is_parent() {
-                ret.push(VirtualTags::Overdue);
-            }
-        }
-    } 
+//     // Overdue
+//     if task.due.is_some() {
+//         if now > task.due.unwrap() {
+//             if !task.is_parent() {
+//                 ret.push(VirtualTags::Overdue);
+//             }
+//         }
+//     } 
     
-    // Parent
-    if task.status == Status::Recurring {
-        ret.push(VirtualTags::Parent);
-    }
+//     // Parent
+//     if task.status == Status::Recurring {
+//         ret.push(VirtualTags::Parent);
+//     }
     
-    // Pending
-    if task.status == Status::Pending {
-        ret.push(VirtualTags::Pending);
-    }
+//     // Pending
+//     if task.status == Status::Pending {
+//         ret.push(VirtualTags::Pending);
+//     }
     
-    // Tagged
-    if task.tags.len() > 0 {
-        ret.push(VirtualTags::Tagged);
-    }
+//     // Tagged
+//     if task.tags.len() > 0 {
+//         ret.push(VirtualTags::Tagged);
+//     }
     
-    // Waiting
-    if task.wait.is_some() {
-        if now < task.wait.unwrap() {
-            if !task.is_parent() {
-                ret.push(VirtualTags::Waiting);
-            }
-        }
-    }
+//     // Waiting
+//     if task.wait.is_some() {
+//         if now < task.wait.unwrap() {
+//             if !task.is_parent() {
+//                 ret.push(VirtualTags::Waiting);
+//             }
+//         }
+//     }
 
-    return ret;
-}
+//     return ret;
+// }
 
 
-// update the status
-pub fn update_status(now: i64, task: Task) -> Status {
-    // if this does not have a parent, and has recur, it is a parent; change to recurring
-    if task.recur.is_some(){
-        if task.parent.is_none(){
-            return Status::Recurring;
-        }
-    }
-    match task.status {
-        Status::Pending => {
-            if task.wait.is_some(){
-                if now < task.wait.unwrap() {
-                    return Status::Waiting;
-                }
-                return Status::Pending;
-            }
-            return Status::Pending;
-        }
-        Status::Waiting => {
-            if now > task.wait.unwrap() {
-                return Status::Pending;
-            }
-            return Status::Waiting;
-        }
-        _ => {
-            return task.status
-        }
-    }
-}
+// // update the status
+// pub fn update_status(now: i64, task: Task) -> Status {
+//     // if this does not have a parent, and has recur, it is a parent; change to recurring
+//     if task.recur.is_some(){
+//         if task.parent.is_none(){
+//             return Status::Recurring;
+//         }
+//     }
+//     match task.status {
+//         Status::Pending => {
+//             if task.wait.is_some(){
+//                 if now < task.wait.unwrap() {
+//                     return Status::Waiting;
+//                 }
+//                 return Status::Pending;
+//             }
+//             return Status::Pending;
+//         }
+//         Status::Waiting => {
+//             if now > task.wait.unwrap() {
+//                 return Status::Pending;
+//             }
+//             return Status::Waiting;
+//         }
+//         _ => {
+//             return task.status
+//         }
+//     }
+// }
 
 
 
@@ -816,9 +814,7 @@ pub fn update_status(now: i64, task: Task) -> Status {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::{fs::copy};
-    use substring::Substring;
-    use std::fs::remove_file;
+
 
     
     // #[ignore]
@@ -860,17 +856,17 @@ mod tests {
     }
     
     
-    // #[ignore]
-    #[test]
-    fn t004_mod() {
-        let vs: Vec<&str> = vec!["First Task", "due:2030-01-05", "start:now", "+household"];
-        let res = make_task(vs);
-        assert_eq!(res.unwrap().start.unwrap(), lts_now() );
+    // // #[ignore]
+    // #[test]
+    // fn t004_mod() {
+    //     let vs: Vec<&str> = vec!["First Task", "due:2030-01-05", "start:now", "+household"];
+    //     let res = make_task(vs);
+    //     assert_eq!(res.unwrap().start.unwrap(), lts_now() );
         
-        let m_vec = vec!["wait:2030-01-01", "+jag"];
+    //     let m_vec = vec!["wait:2030-01-01", "+jag"];
 
 
-    }
+    // }
 
 
     // #[ignore]

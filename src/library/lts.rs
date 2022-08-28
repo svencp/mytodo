@@ -156,9 +156,6 @@ pub fn lts_add_timestamp_to_recur_term(ts: i64, term: &str) -> Result<i64, &'sta
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::{fs::copy};
-    use substring::Substring;
-    use std::fs::remove_file;
 
     
     // #[ignore]

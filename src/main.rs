@@ -15,17 +15,13 @@ use library::reports::*;
 use library::list::*;
 use std::process::exit;
 use std::env;
-use termion::{color};
 use std::time::{SystemTime};
 
 
-// pub const RELEASE: bool            = false;
-pub const RELEASE: bool            = true;
+pub const RELEASE: bool            = false;
+// pub const RELEASE: bool            = true;
 pub const VERSION: &str            = env!("CARGO_PKG_VERSION");
-// pub const PENDING: &str            = "./test/working/pending.data";
-// pub const COMPLETED: &str          = "./test/working/completed.data";
-// pub const SETTINGS_FILE: &str      = "settings.txt";
-pub const COLOR_ORANGE: color::Rgb = color::Rgb(246,116,0);
+
 
 
 
@@ -48,14 +44,8 @@ fn main() {
     let pending_file = res_data_dir.clone().unwrap().get(1).unwrap().to_string();
     let completed_file = res_data_dir.clone().unwrap().get(2).unwrap().to_string();
 
-
-
-
-
     let settings = load_settings(&settings_file);
     let colors = load_colors(&settings);
-    // let data_dir = settings.map.get("dataDir").unwrap().to_string();
-
 
     let mut pending_tasks:List    = List::new(&pending_file);
     let mut completed_tasks:List  = List::new(&completed_file);
@@ -253,13 +243,6 @@ fn main() {
             }
 
 
-
-
-
-
-
-
-
             println!("Integer arguments")
         }
         
@@ -335,22 +318,6 @@ fn main() {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    // println!("Hello Svenny!");
-    // let show = settings.clone().get_bool("showResponseTimes");
     let show = settings.get_bool("showResponseTimes");
     if show.unwrap(){
         show_response(now)

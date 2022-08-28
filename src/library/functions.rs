@@ -808,36 +808,42 @@ pub fn command_stop(v_int: &Vec<i64>, v_hex: &Vec<String>,
 // return a vector of filenames
 pub fn create_data_dirs() -> Result<Vec<String>, &'static str> {
     let mut ret:Vec<String> = Vec::new();
+    let working:&str;
+    let current_directory: String;
     let path:String;
     
-    let res_cur_dir = env::current_dir();
-    if res_cur_dir.is_err() {
-        return Err("Error in querying the current directory.")
+    let res_exe = env::current_exe();
+    if res_exe.is_err() {
+        return Err("Error in querying the executable directory.")
     }
-    let current_directory = res_cur_dir.unwrap().into_os_string().into_string().unwrap();
+    let mut dir_exe = res_exe.unwrap();
+    let res_pop = dir_exe.pop();
+    if !res_pop {
+        return Err("Error in popping the executable directory.")
+    }
 
     match crate::RELEASE {
         true => {
-            let working = "data";
-            path = current_directory + "/" + working;
-            if !Path::new(&path).exists() {
-                let res = fs::create_dir(&path);
-                if res.is_err() {
-                    return Err("Cannot create data directory (maybe debug version)");
-                }
-            }
+            working = "data";
         }
         false => {
-            let working = "test/working";
-            path = current_directory + "/" + working;
-            if !Path::new(&path).exists() {
-                let res = fs::create_dir(&path);
-                if res.is_err() {
-                    return Err("Cannot create data directory (maybe debug version)");
-                }
-            }
+            // we got to pop twice more
+            dir_exe.pop();
+            dir_exe.pop();
+            
+            working = "test/working";
         }
     }
+    
+    current_directory = dir_exe.into_os_string().into_string().unwrap();
+    path = current_directory + "/" + working;
+    if !Path::new(&path).exists() {
+        let res = fs::create_dir(&path);
+        if res.is_err() {
+            return Err("Cannot create data directory (maybe debug version)");
+        }
+    }
+
     // 0
     let settings_file = path.clone() + "/" + "settings.txt";
     ret.push(settings_file);
@@ -1162,16 +1168,16 @@ pub fn get_task_line_waiting(col_sizes: &Vec<usize>, block: &str, task: &Task) -
     return ret;
 }
 
-// get the termianl width size in characters
-pub fn get_terminal_width(settings: &SettingsMap) -> i64 {
-    let res = settings.get_integer("useTerminalWidthOf");
-    if res.is_err(){
-        let message = format!("Cannot determine dimensions of terminal from settings.");
-        feedback(Feedback::Error, message);
-        exit(17);
-    }
-    return res.unwrap();
-}
+// // get the termianl width size in characters
+// pub fn get_terminal_width(settings: &SettingsMap) -> i64 {
+//     let res = settings.get_integer("useTerminalWidthOf");
+//     if res.is_err(){
+//         let message = format!("Cannot determine dimensions of terminal from settings.");
+//         feedback(Feedback::Error, message);
+//         exit(17);
+//     }
+//     return res.unwrap();
+// }
 
 
 // function to verify my hexidecimal string
@@ -1524,8 +1530,6 @@ pub fn strip_and_dip(mods: &mut Vec<String>, task: &Task) -> Result<String, &'st
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::{fs::copy};
-    use substring::Substring;
     use std::fs::remove_file;
 
     
@@ -1671,7 +1675,7 @@ mod tests {
         let mut h_set:Hdeci = Hdeci::new();
         h_set.add(2);
         h_set.add(1);
-        let next =  h_set.get_next_hexidecimal();
+        // let next =  h_set.get_next_hexidecimal();
         
         let vs1: Vec<String> = vec!["Something".to_string(),
                                     "another".to_string()];

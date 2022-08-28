@@ -6,19 +6,13 @@
 
 
 use crate::library::my_utils::*;
-use chrono::prelude::*;
 use substring::Substring;
 use std::path::Path;
 use std::fs::*;
-// use std::fs::remove_file;
-use std::io::{Write, LineWriter};
+use std::io::{Write};
 use std::process::exit;
 use std::fmt::{Debug};
-use std::env;
-// use serde::{Serialize, Deserialize};
 use std::collections::BTreeMap;
-use termion::{color, style};
-use std::time::{UNIX_EPOCH, Duration};
 use std::io::{BufRead, BufReader};
 
 
@@ -44,7 +38,6 @@ impl SettingsMap {
         map.insert("color_recur_chain_fg".to_string(), "(29,153,243)".to_string());
         map.insert("color_recur_period_fg".to_string(), "(0,95,175)".to_string());
         map.insert("color_tagged".to_string(), "(0,175,95)".to_string());
-        // map.insert("dataDir".to_string(), "/DATA/programming/Rust/mytodo/test/working".to_string());
         map.insert("nag".to_string(), "You go Sven".to_string());
         map.insert("showNag".to_string(), "true".to_string());
         map.insert("showResponseTimes".to_string(), "true".to_string());
@@ -162,38 +155,6 @@ impl SettingsMap {
 
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Functions @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@           @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-// // Writes the settings to disk in local folder
-// // I have decided to make this text and not json
-// pub fn export( map: &BTreeMap<String,String>,  path: &str) -> Result<(), &'static str> {
-//     let path = Path::new(path);
-    
-//     if remove_file(path).is_err() {
-//         let message = format!("No worries: old settings file was not found, a new one will be created.");
-//         feedback(Feedback::Info, message)
-//     }
-
-//     let vec = make_file_string(map.clone());
-//     // let serialized = serde_json::to_string_pretty(map);
-//     let mut file = match OpenOptions::new()
-//                             .read(false)
-//                             .write(true)
-//                             .create(true)
-//                             .open(path)  {
-        
-//         Err(_) => { return Err("Problems opening text file in 'write_settings'"); } 
-//         Ok(file)   => { file }
-//     };
-
-//     for line in vec {
-//         let res = file.write(line.as_bytes());
-//         if res.is_err() {
-//             return Err("Error in writing settings file")
-//         }
-//     }
-    
-//     Ok(())
-// } 
-
 
 
 
@@ -341,37 +302,23 @@ pub fn make_file_string(map: BTreeMap<String,String>) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use substring::Substring;
-    use std::fs::*;
 
 
-    // #[ignore]
-    #[test]
-    fn t001_date() {
-        let date = Utc.ymd(2022, 8, 3);
-        let str = date.format("%Y-%m-%d");
+
+    // // #[ignore]
+    // #[test]
+    // fn t001_date() {
+    //     let date = Utc.ymd(2022, 8, 3);
+    //     let str = date.format("%Y-%m-%d");
         
-        assert_eq!(str.to_string(), "2022-08-03".to_string());
-    }
+    //     assert_eq!(str.to_string(), "2022-08-03".to_string());
+    // }
     
-    // #[ignore]
-    #[test]
-    fn t002_make_file_string() {
-        // let path = "./tempo.txt";
-        // let mut map: BTreeMap<String,String> = BTreeMap::new();
-        // map.insert("dataDir".to_string(), "/DATA/myToDo".to_string());
-        // map.insert("lastSpeciesViewed".to_string(), "0".to_string());
-        
-        // let res = make_file_string(map.clone());
-        // let len = res.len();
-        // assert_eq!(len, 9);
-        
-        // let _res_wri = export(&map, path);
-        // let file = File::open(path);
-        // let x = file.unwrap().metadata().unwrap().len();
-        // remove_file(path).expect("Cleanup test failed");
-        // assert_eq!(x, 138);
-    }
+    // // #[ignore]
+    // #[test]
+    // fn t002_make_file_string() {
+
+    // }
 
     // #[ignore]
     #[test]

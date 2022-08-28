@@ -221,9 +221,6 @@ impl VirtualTags {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::{fs::copy};
-    use substring::Substring;
-    use std::fs::remove_file;
 
     
     // #[ignore]
