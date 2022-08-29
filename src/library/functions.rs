@@ -936,11 +936,8 @@ pub fn get_input(text: &str) -> Result<String, &'static str> {
         Ok(_) => {
             ret = ret.trim().to_string();
             if ret.len() > 0 {
-                // let greeting = "Hello, ".to_string() + &name + &", nice to meet you!".to_string();
-                // println!("{}", greeting);
-                // println!("{}", ret);
+
             } else {
-                // println!("No name entered, goodbye.");
                 return Err("Nothing entered!");
             }
         }
@@ -1129,6 +1126,74 @@ pub fn get_task_line_recurring(col_sizes: &Vec<usize>, block: &str, task: &Task)
     return ret;
 }
 
+pub fn get_task_lines_search(col_sizes: &Vec<usize>, block: &str, task: &Task) -> Vec<String> {
+    let mut ret:Vec<String> = Vec::new();
+    let mut line:String;
+    let mut diff:i64;
+    let now = lts_now();
+
+    // task line
+    match task.clone().id {
+        Some(id) => {
+            line = justify(id.to_string(), col_sizes[0], Justify::Right) + " ";
+        }
+        None => {
+            line = justify("-".to_string(), col_sizes[0], Justify::Right) + " ";
+        }
+    }
+    
+    let status = task.clone().status.text().substring(0, 1).to_string();
+    line += &justify(status, col_sizes[1], Justify::Right);
+    line += " ";
+    
+    line += &task.clone().uuiid;
+    line += " ";
+
+    diff = now - task.clone().entry;
+    line += &align_timeframe(diff);                                                           // col size = 7
+    line += " ";
+
+    let num_tags = task.clone().tags.len();
+    match num_tags {
+        0 => {
+            line += &repeat_char(" ".to_string(), col_sizes[4])
+        }
+        _ => {
+            let temp = format!("[{}]",task.clone().tags.len());
+            line += &justify(temp, col_sizes[4], Justify::Center);
+        }
+    }
+    line += " ";
+    
+    match task.clone().end {
+        Some(ts) => {
+            line += &lts_to_date_string(ts);
+            line += " ";
+        }
+        None => {
+            line += &repeat_char(" ".to_string(), col_sizes[5]);
+            line += " ";
+        }
+    }
+
+    line += &justify(task.clone().description, col_sizes[6], Justify::Left);
+    ret.push(line);
+
+    // lets do the annotations
+    for anno in task.clone().ann {
+        line = block.to_string();
+        line += &lts_to_date_string(anno.date);
+        line += " ";
+
+        // take into account: date length(10) and three extra spaces (i know two, dunno three)
+        let len_anno = col_sizes[6] - 10 - 3;
+        line += &justify(anno.desc, len_anno, Justify::Left);
+        ret.push(line);
+    }
+    
+    return ret;
+}
+
 pub fn get_task_line_waiting(col_sizes: &Vec<usize>, block: &str, task: &Task) -> Vec<String> {
     let mut ret:Vec<String> = Vec::new();
     let mut line:String;
@@ -1185,18 +1250,6 @@ pub fn get_task_line_waiting(col_sizes: &Vec<usize>, block: &str, task: &Task) -
     return ret;
 }
 
-// // get the termianl width size in characters
-// pub fn get_terminal_width(settings: &SettingsMap) -> i64 {
-//     let res = settings.get_integer("useTerminalWidthOf");
-//     if res.is_err(){
-//         let message = format!("Cannot determine dimensions of terminal from settings.");
-//         feedback(Feedback::Error, message);
-//         exit(17);
-//     }
-//     return res.unwrap();
-// }
-
-
 // function to verify my hexidecimal string
 pub fn hexi_verify(str: &str) -> Result<i64, &'static str> {
     let sub2 = "0x";
@@ -1222,6 +1275,10 @@ pub fn is_arg_command(first: &str) -> Result< &str, &str> {
         }
 
         "add" => {
+            return Ok(first);
+        }
+
+        "all" => {
             return Ok(first);
         }
 

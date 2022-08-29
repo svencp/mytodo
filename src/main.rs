@@ -55,8 +55,8 @@ fn main() {
     let mut hd_set: Hdeci         = Hdeci::new();
     
     load_all_tasks( &pending_file,&completed_file, &mut pending_tasks, &mut completed_tasks, &mut hd_set);
-    all_tasks.append(pending_tasks.clone());
     all_tasks.append(completed_tasks.clone());
+    all_tasks.append(pending_tasks.clone());
 
     // generate recurring tasks
     generate_recurring_tasks(&mut pending_tasks, &mut completed_tasks, &mut hd_set);
@@ -267,6 +267,14 @@ fn main() {
                         exit(17);
                     }
                     println!("Created task {}",result_add.unwrap());
+                }
+
+                "all" => {
+                    let result = report_search(&arguments, &colors, &settings, &all_tasks);
+                    if result.is_err() {
+                        let message = result.err().unwrap().to_string();
+                        feedback(Feedback::Warning, message);
+                    }
                 }
 
                 "colortest" => {
