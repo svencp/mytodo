@@ -115,88 +115,11 @@ impl<'a> List<'a> {
             line += "\n";
 
             ret.push_str(&line);
-
-            // ret.push_str("description:");
-            // ret.push_str(&task.description);
-            // ret.push_str("\t");
-            // ret.push_str("uuiid:");
-            // ret.push_str(&task.uuiid);
-            // ret.push_str("\t");
-            // ret.push_str("entry:");
-            // ret.push_str(&task.entry.to_string());
-            // ret.push_str("\t");
-            // ret.push_str("status:");
-            // ret.push_str(&task.status.text().to_lower_case());
-    
-            // if task.ann.len() != 0 {
-            //     for a in task.ann.clone() {
-            //         ret.push_str("\tannotation_");
-            //         let num = a.date.to_string() + ":";
-            //         ret.push_str(&num);
-            //         ret.push_str(&a.desc);
-            //     }
-            // }
-            // if task.due.is_some() {                                                        //due
-            //     ret.push_str("\tdue:");
-            //     ret.push_str(&task.due.unwrap().to_string());
-            // }
-            // if task.end.is_some() {                                                        //due
-            //     ret.push_str("\tend:");
-            //     ret.push_str(&task.end.unwrap().to_string());
-            // }
-            // if task.parent.is_some() {                                                     //parent
-            //     ret.push_str("\tparent:");
-            //     ret.push_str(&task.parent.clone().unwrap());
-            // }
-            // if task.prodigy.is_some() {                                                    //parent
-            //     ret.push_str("\tprodigy:");
-            //     ret.push_str(&task.prodigy.unwrap().to_string());
-            // }
-            // if task.recur.is_some() {                                                      //recur
-            //     ret.push_str("\trecur:");
-            //     ret.push_str(&task.recur.clone().unwrap());
-            // }
-            // if task.rtype.is_some() {                                                      //recur
-            //     ret.push_str("\trtype:");
-            //     ret.push_str(&task.rtype.clone().unwrap().text().to_lowercase());
-            // }
-            // if task.start.is_some() {                                                      //start
-            //     ret.push_str("\tstart:");
-            //     ret.push_str(&task.start.unwrap().to_string());
-            // }
-            // if task.tags.len() > 0 {                                                       //tags
-            //     let mut vec:String = "".to_string();
-            //     for tag in task.tags.clone() {
-            //         let str = tag + ",";
-            //         vec.push_str(&str);
-            //     }
-                
-            //     //remove last comma
-            //     let len = vec.len();
-            //     let end = len -1 ;
-            //     let taggings = vec[0..end].to_string();
-                
-            //     ret.push_str("\ttags:");                                                  
-            //     ret.push_str(&taggings);
-            // }
-            // if task.timetrackingseconds != 0 {                                             //parent
-            //     ret.push_str("\ttimetrackingseconds:");
-            //     ret.push_str(&task.timetrackingseconds.to_string());
-            // }
-            // if task.wait.is_some() {                                                       //wait
-            //     ret.push_str("\twait:");
-            //     ret.push_str(&task.wait.unwrap().to_string());
-            // }
-    
-            // ret.push_str("\n")
     
         }
     
-        return ret;
-    
+        return ret;    
     } // end of make_big_string 
-
-
 
     // make an empty task for compilers sake
     pub fn new(file: &str) -> List {
@@ -720,9 +643,28 @@ mod tests {
         let ii = pending_tasks.get_index_of_task_with_uuiid("0x0011");
         assert_eq!(ii, 0);
     }
+    
+    // #[ignore]
+    #[test]
+    fn t005_due(){
+        let line = "description:how do i get the konsole that i have now\tdue:+5d\t\
+                            entry:1658513756\tstart:1658513756\tstatus:pending\tuuiid:0x0011";
+        let vec:Vec<_> = line.split("\t").collect();
+        let task = make_task(vec);
+        assert_eq!(task.is_ok(), true);
+        
+        let line = "description:how do i get the konsole that i have now\tdue:-5d\t\
+                            entry:1658513756\tstart:1658513756\tstatus:pending\tuuiid:0x0011";
+        let vec:Vec<_> = line.split("\t").collect();
+        let task = make_task(vec);
+        assert_eq!(task.is_ok(), false);
+    }
 
 
 
+
+
+    
 
 
 

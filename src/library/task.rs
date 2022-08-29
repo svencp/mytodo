@@ -519,20 +519,6 @@ pub fn make_task(vec:Vec<&str>) -> Result<Task, &'static str> {
             }
         }
 
-        // match element.starts_with("description") {
-        //     true => {
-        //         let res_opt = element.split_once(":");
-        //         if res_opt.is_none(){
-        //             return Err("Something wrong with description line.");
-        //         }
-        //         split_colon.push(res_opt.unwrap().0);
-        //         split_colon.push(res_opt.unwrap().1);
-        //     }
-        //     false => {
-        //         split_colon = element.split(":").collect();
-        //     }
-        // }
-
         let number_of_terms = split_colon.len();
         match number_of_terms {
             1 => {
@@ -727,105 +713,6 @@ pub fn make_task(vec:Vec<&str>) -> Result<Task, &'static str> {
 
     Ok(ret)
 }
-
-// pub fn make_virtual_tags(task: Task) -> Vec<VirtualTags> {
-//     let mut ret: Vec<VirtualTags> = Vec::new();
-//     let now = lts_now();
-
-//     // Active
-//     if task.start.is_some(){
-//         if !task.is_parent() {
-//             ret.push(VirtualTags::Active);
-//         }
-//     }
-
-//     // Annotated
-//     if task.ann.len() > 0 {
-//         ret.push(VirtualTags::Annotated);
-//     }
-
-//     // Child
-//     if task.parent.is_some() {
-//         ret.push(VirtualTags::Child);
-//     }
-
-//     // Completed
-//     if task.end.is_some() {
-//         ret.push(VirtualTags::Completed);
-//     }
-
-//     // Deleted
-//     if task.status == Status::Deleted {
-//         ret.push(VirtualTags::Deleted);
-//     }
-    
-//     // Overdue
-//     if task.due.is_some() {
-//         if now > task.due.unwrap() {
-//             if !task.is_parent() {
-//                 ret.push(VirtualTags::Overdue);
-//             }
-//         }
-//     } 
-    
-//     // Parent
-//     if task.status == Status::Recurring {
-//         ret.push(VirtualTags::Parent);
-//     }
-    
-//     // Pending
-//     if task.status == Status::Pending {
-//         ret.push(VirtualTags::Pending);
-//     }
-    
-//     // Tagged
-//     if task.tags.len() > 0 {
-//         ret.push(VirtualTags::Tagged);
-//     }
-    
-//     // Waiting
-//     if task.wait.is_some() {
-//         if now < task.wait.unwrap() {
-//             if !task.is_parent() {
-//                 ret.push(VirtualTags::Waiting);
-//             }
-//         }
-//     }
-
-//     return ret;
-// }
-
-
-// // update the status
-// pub fn update_status(now: i64, task: Task) -> Status {
-//     // if this does not have a parent, and has recur, it is a parent; change to recurring
-//     if task.recur.is_some(){
-//         if task.parent.is_none(){
-//             return Status::Recurring;
-//         }
-//     }
-//     match task.status {
-//         Status::Pending => {
-//             if task.wait.is_some(){
-//                 if now < task.wait.unwrap() {
-//                     return Status::Waiting;
-//                 }
-//                 return Status::Pending;
-//             }
-//             return Status::Pending;
-//         }
-//         Status::Waiting => {
-//             if now > task.wait.unwrap() {
-//                 return Status::Pending;
-//             }
-//             return Status::Waiting;
-//         }
-//         _ => {
-//             return task.status
-//         }
-//     }
-// }
-
 
 
 
