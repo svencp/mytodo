@@ -3,7 +3,9 @@
     2022.07.24      Sven Ponelat
 
     2022-08-29  1.2.0   adding the search function -> report
-    
+    2022-08-31  1.2.2   adding the purge command    1) eg.  m 2,3 purge
+                                                    2) eg.  m purge
+
 
 
 */
@@ -56,7 +58,8 @@ fn main() {
     let mut all_tasks:List        = List::new_no_file();
     let mut hd_set: Hdeci         = Hdeci::new();
     
-    load_all_tasks( &pending_file,&completed_file, &mut pending_tasks, &mut completed_tasks, &mut hd_set);
+    // load_all_tasks( &pending_file,&completed_file, &mut pending_tasks, &mut completed_tasks, &mut hd_set);
+    load_all_tasks( &mut pending_tasks, &mut completed_tasks, &mut hd_set);
     all_tasks.append(completed_tasks.clone());
     all_tasks.append(pending_tasks.clone());
 
@@ -99,7 +102,7 @@ fn main() {
                                 exit(17); 
                             }
 
-                            println!("{}",term);
+                            // println!("{}",term);
                         } // end of ann
                         
                         "del" => {
@@ -142,14 +145,16 @@ fn main() {
                             if result.is_err(){
                                 let message = result.err().unwrap().to_string();
                                 feedback(Feedback::Error, message);
-                                // exit(17);
                             }
-
-                            // println!("{}",term);
                         }
                         
                         "pur" => {
-                            println!("{}",term);
+                            let result = command_purge(&arg_id, &arg_hex, 
+                                                    &mut pending_tasks, &mut completed_tasks);
+                            if result.is_err(){
+                                let message = result.err().unwrap().to_string();
+                                feedback(Feedback::Error, message);
+                            }
                         }
 
                         // start

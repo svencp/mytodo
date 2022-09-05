@@ -356,17 +356,18 @@ pub fn generate_recurring_tasks(pend: &mut List, comp: &mut List, hd_set: &mut H
 }
 
 // no result needed as files could be messed up
-pub fn load_all_tasks(  p_file: &str, c_file: &str, pending: &mut List, 
-                        completed: &mut List, hexi_set: &mut Hdeci) {
+pub fn load_all_tasks( pending: &mut List, completed: &mut List, hexi_set: &mut Hdeci) {
     
-    let res_pend = load_task_file(p_file, pending, hexi_set);
+    // let res_pend = load_task_file(p_file, pending, hexi_set);
+    let res_pend = load_task_file(pending, hexi_set);
     if res_pend.is_err(){
         let message = res_pend.err().unwrap();
         feedback(Feedback::Error, message);
         exit(17);
     }
     
-    let res_comp = load_task_file(c_file, completed, hexi_set);
+    // let res_comp = load_task_file(c_file, completed, hexi_set);
+    let res_comp = load_task_file(completed, hexi_set);
     if res_comp.is_err(){
         let message = res_comp.err().unwrap();
         feedback(Feedback::Error, message);
@@ -374,14 +375,15 @@ pub fn load_all_tasks(  p_file: &str, c_file: &str, pending: &mut List,
     }
 }
 
-pub fn load_task_file(task_file: &str, the_list: &mut List, hexi_set: &mut Hdeci) -> Result<(), String> {
+// Lets change this function to read the file from the struct
+pub fn load_task_file(the_list: &mut List, hexi_set: &mut Hdeci) -> Result<(), String> {
     // does the file exists, if not return empties
-    if ! Path::new(task_file).exists() {
+    if ! Path::new(the_list.file).exists() {
         return Ok(());
     }
 
     let mut line_counter = 0;
-    let file = File::open(task_file).unwrap();
+    let file = File::open(the_list.file).unwrap();
     let reader = BufReader::new(file);
 
     for line in reader.lines() {
@@ -389,7 +391,7 @@ pub fn load_task_file(task_file: &str, the_list: &mut List, hexi_set: &mut Hdeci
         let mut task;
 
         if line.is_err() {
-            let message = format!("Problems reading file: {} on line number {}",task_file, line_counter);
+            let message = format!("Problems reading file: {} on line number {}",the_list.file, line_counter);
             return Err(message);            
         }
         let one_line = line.unwrap();
@@ -527,7 +529,7 @@ mod tests {
         let destination = "./test/pending.data";
         copy(source,destination).expect("Failed to copy");
         let mut pending: List = List::new(destination);
-        let _res = load_task_file(destination, &mut pending, &mut h_set);
+        let _res = load_task_file(&mut pending, &mut h_set);
         remove_file(destination).expect("Cleanup test failed");
 
         assert_eq!(pending.list.len(), 3);
@@ -551,7 +553,7 @@ mod tests {
         let destination = "./test/completed.data";
         copy(source,destination).expect("Failed to copy");
         let mut completed: List = List::new(destination);
-        let res = load_task_file(destination, &mut completed, &mut h_set);
+        let res = load_task_file(&mut completed, &mut h_set);
         remove_file(destination).expect("Cleanup test failed");
         
         assert_eq!(res.is_err(), true);
@@ -563,7 +565,7 @@ mod tests {
         let source = "/DATA/programming/Rust/mytodo/test/some-documents/completed1.data";
         let destination = "./test/completed.data";
         copy(source,destination).expect("Failed to copy");
-        let _res2 = load_task_file(destination, &mut completed, &mut h_set);
+        let _res2 = load_task_file(&mut completed, &mut h_set);
         remove_file(destination).expect("Cleanup test failed");        
         assert_eq!(completed.list.len(), 2);
         
@@ -634,7 +636,7 @@ mod tests {
         pen.save();
 
         let mut pending_tasks = List::new(&destination);
-        let _res = load_task_file(pending_tasks.file, &mut pending_tasks, &mut hd_set);
+        let _res = load_task_file(&mut pending_tasks, &mut hd_set);
         remove_file(destination).expect("Cleanup test failed");
         
         let index = pending_tasks.get_index_of_task_with_id(2);

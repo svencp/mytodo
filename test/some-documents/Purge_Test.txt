@@ -1,0 +1,31 @@
+    // #[ignore]
+    #[test]
+    fn t018_purge() {
+        let s_pend = "./test/some-documents/pend-purge.data";
+        let d_pend = "./test/pend.data";
+        copy(s_pend,d_pend).expect("Failed to copy");
+        let s_comp = "./test/some-documents/comp-purge.data";
+        let d_comp = "./test/comp.data";
+        copy(s_comp,d_comp).expect("Failed to copy");
+
+        let mut pending_tasks:List    = List::new(&d_pend);
+        let mut completed_tasks:List  = List::new(&d_comp);
+        let mut hd_set: Hdeci         = Hdeci::new();
+        load_all_tasks( &mut pending_tasks, &mut completed_tasks, &mut hd_set);
+
+        let v_hex = vec!["0x000008".to_string()];
+        let v_id: Vec<i64> = Vec::new();
+        let _result = command_purge(&v_id, &v_hex, &mut pending_tasks, &mut completed_tasks);
+        assert_eq!(completed_tasks.list.len(), 4);
+
+        let v_id: Vec<i64> = vec![4,5];
+        let v_hex: Vec<String> = Vec::new();
+        let _result = command_purge(&v_id, &v_hex, &mut pending_tasks, &mut completed_tasks);
+        assert_eq!(pending_tasks.list.len(), 4);
+
+
+
+
+
+        assert_eq!(true,true);
+    }

@@ -314,7 +314,6 @@ pub fn command_delete(v_int: &Vec<i64>, v_hex: &Vec<String>,
                                             println!();
                                             continue;
                                         }
-                                        // done = true;
                                     }
                                     "n" => {
                                         println!("Task not deleted.");
@@ -323,7 +322,6 @@ pub fn command_delete(v_int: &Vec<i64>, v_hex: &Vec<String>,
                                             println!();
                                             continue;
                                         }
-                                        // done = true;
                                     }
                                     "a" => {
                                         for task in v_tasks.clone() {
@@ -638,6 +636,41 @@ pub fn command_modification(args: &Vec<String>, v_id: &Vec<i64>, v_hex: &Vec<Str
 
     Ok(())                        
 }
+
+pub fn command_purge(v_id: &Vec<i64>, v_hex: &Vec<String>, pend: &mut List, comp: &mut List) -> Result<(), &'static str> {
+    let mut v_tasks: Vec<Task>;
+    // let mut v_purged: Vec<Task> = Vec::new();
+    // let mut done = false;
+    // let mut del_counter = 0;
+
+    match v_hex.len() {
+        // assume only id tasks
+        0 => { 
+            v_tasks = remove_tasks_with_id(v_id, pend);
+            let res = purge_tasks(&mut v_tasks, pend, comp);
+            if res.is_err() {
+                return Err(res.err().unwrap());
+            }
+        }
+        // assume only completed tasks
+        _ => {
+            v_tasks = remove_tasks_with_uuiid(v_hex, pend, comp);
+            if v_tasks.len() == 0 {
+                return Err("Invalid task id's or hex values given. Cannot get index.")
+            }
+
+            let res = purge_tasks(&mut v_tasks, pend, comp);
+            if res.is_err() {
+                return Err(res.err().unwrap());
+            }
+        }
+    }
+
+
+
+    Ok(())
+}
+
 
 // start the given tasks
 pub fn command_start(v_int: &Vec<i64>, v_hex: &Vec<String>,
@@ -971,6 +1004,22 @@ pub fn get_integer_single_report(settings: &SettingsMap, colors: Colors, uuiid_i
 
     Ok(())
 }
+
+// // this function will make pend smaller if valid id is given
+// pub fn get_pending_purges(v_id: &Vec<i64>, pend: &mut List) -> Vec<Task> {
+//     let mut ret: Vec<Task> = Vec::new(); 
+
+//     for id in v_id.clone() {
+//         let index = pend.get_index_of_task_with_id(id);
+//         if index < 0 {
+//             continue;
+//         }
+//         let task = pend.list.remove(index as usize);
+//         ret.push(task);
+//     }
+
+//     return ret;
+// }
 
 pub fn get_task_lines_completed(col_sizes: &Vec<usize>, block: &str, task: &Task) -> Vec<String> {
     let mut ret:Vec<String> = Vec::new();
@@ -1500,29 +1549,258 @@ pub fn make_timetracking_timeframe(secs: i64) -> String {
     return term;
 }
 
-// // this function adds the "descrption:" to the front of the first element
-// pub fn refine_vector(vec: Vec<&str>) -> Vec<String> {
-//     let mut ret: Vec<String> = Vec::new();
+pub fn purge_multi_tasks(v_tasks: &mut Vec<Task>, pend: &mut List, comp: &mut List) -> Result<(), &'static str> {
+    let mut v_purged: Vec<Task> = Vec::new();
+    let mut done = false;
+    let mut del_counter = 0;
 
-//     // there should always be at least one element
-//     let first = vec.get(0).unwrap().trim();
-//     let refined = "description:".to_string() + first;
-//     ret.push(refined);
+    let len = v_tasks.len();
 
-//     match vec.len() {
-//         1 => {
-//             return ret;
-//         }
-//         _ => {
-//             for i in 1..vec.len() {
-//                 let temp = *vec.get(i).unwrap();
-//                 ret.push(temp.to_string());
-//             }
-//         }
-//     }
+    while !done {
+        for t in 0..len {
+            let task = v_tasks.get(t).unwrap();
 
-//     return ret.clone();
-// }
+            let out_text = format!("Purge task {} '{}'? (yes/no/all/quit) ", 
+                                // task.clone().id.unwrap(), task.clone().description);
+                                task.uuiid, task.description);
+            let res_reply = get_input(&out_text);
+            if res_reply.is_err() {
+                return Err(res_reply.err().unwrap())
+            }
+            let reply = res_reply.unwrap().to_lowercase();
+            if  reply.starts_with("y") || reply.starts_with("n") ||
+                reply.starts_with("a") || reply.starts_with("q") {
+                match reply.substring(0, 1) {
+                    "y" => {
+                        println!("Purging task {} '{}'.", task.uuiid, task.description);
+                        v_purged.push(task.clone());
+                        del_counter += 1;
+
+                        if t + 1 < len {
+                            println!();
+                            continue;
+                        }
+                    }
+                    "n" => {
+                        println!("Task not purged");
+                        match task.is_complete(){
+                            true => {
+                                comp.list.push(task.clone());
+                            }
+                            false => {
+                                pend.list.push(task.clone());
+                            }
+                        }
+
+                        if t + 1 < len {
+                            println!();
+                            continue;
+                        }
+                    }
+                    "a" => {
+                        for ta in v_tasks.clone() {
+                            println!("Purging task {} '{}'.", ta.uuiid, ta.description);
+                            del_counter += 1;
+                        }
+                        done = true;
+                        break;
+                    }
+                    "q" => {
+                        for tq in v_tasks.clone() {
+                            let mut found = false;
+                            for tp in v_purged.clone() {
+                                if tq == tp {
+                                    found = true;
+                                }
+                            } 
+                            match found {
+                                true => {
+                                }
+                                false => {
+                                    match task.is_complete() {
+                                        true => {
+                                            let r = comp.get_task_from_uuiid(task.clone().uuiid);
+                                            match r.is_err() {
+                                                // it is not there , so add it back
+                                                true => {
+                                                    comp.list.push(task.clone());
+                                                }
+                                                // it is there so don't do anything
+                                                false => {
+                                                }
+                                            }
+                                        }
+                                        false => {
+                                            let r = pend.get_task_from_id(task.id.unwrap());
+                                            match r.is_err() {
+                                                // it is not there , so add it back
+                                                true => {
+                                                    pend.list.push(task.clone());
+                                                }
+                                                // it is there so don't do anything
+                                                false => {
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            } 
+                        }
+                        
+                        done = true;
+                        break;
+                    }
+                    _ => {
+                    }
+                }
+                done = true;
+            }
+        }
+        pend.save();
+        comp.save();
+    }
+
+    println!("Purged {} {}",del_counter.to_string(), units("task", del_counter));
+
+    Ok(())
+}
+
+pub fn purge_single_task(task: Task, pend: &mut List, comp: &mut List) -> Result<(), &'static str> {
+    let mut done = false;
+    let mut del_counter = 0;
+
+    match task.is_complete() {
+        true => {
+            while !done {
+                let out_text = format!("Purge task {} '{}'? (yes/no) ", task.uuiid, task.description);
+                let res_reply = get_input(&out_text);
+                if res_reply.is_err() {
+                    return Err(res_reply.err().unwrap())
+                }
+                let reply = res_reply.unwrap().to_lowercase();
+                if reply.starts_with("y") || reply.starts_with("n") {
+                    match reply.substring(0, 1) {
+                        "y" => {
+                            println!("Purging task {} '{}'.", task.uuiid, task.description);
+                            del_counter += 1;
+                        }
+                        _ => {
+                            println!("Task not purged");
+                            println!("Purged 0 tasks.");
+                            comp.list.push(task.clone());
+                        }
+                    }
+                    done = true;
+                }
+            }
+            comp.save();    
+        }
+        false => {
+            while !done {
+                let out_text = format!("Purge task {} '{}'? (yes/no) ", task.id.unwrap(), task.description);
+                let res_reply = get_input(&out_text);
+                if res_reply.is_err() {
+                    return Err(res_reply.err().unwrap())
+                }
+                let reply = res_reply.unwrap().to_lowercase();
+                if reply.starts_with("y") || reply.starts_with("n") {
+                    match reply.substring(0, 1) {
+                        "y" => {
+                            println!("Purging task {} '{}'.", task.uuiid, task.description);
+                            del_counter += 1;
+                        }
+                        _ => {
+                            println!("Task not purged");
+                            println!("Purged 0 tasks.");
+                            pend.list.push(task.clone());
+                        }
+                    }
+                    done = true;
+                }
+            }
+            pend.save();    
+        }
+    }
+    println!("Purged {} {}",del_counter.to_string(), units("task", del_counter));
+
+    Ok(())
+}
+
+// assume that all v_tasks are valid tasks
+pub fn purge_tasks(v_tasks: &mut Vec<Task>, pend: &mut List, comp: &mut List) -> Result<(), &'static str> {
+    // let mut v_purged: Vec<Task>;
+    // let mut done = false;
+    // let mut del_counter = 0;
+    
+    let v_len = v_tasks.len();
+    
+    match v_len {
+        1 => {
+            let task = v_tasks.pop().unwrap();
+            let res = purge_single_task(task, pend, comp);
+            if res.is_err() {
+                return Err("Error in reply!");
+            }
+            
+        }
+        _ => {
+            let res = purge_multi_tasks(v_tasks, pend, comp);
+            if res.is_err() {
+                return Err("Error in reply! (multi-tasks)");
+            }
+            // println!("Purged {} {}",del_counter.to_string(), units("task", del_counter));
+        }
+    }
+
+
+
+    Ok(())
+}
+
+pub fn remove_tasks_with_id(v_id: &Vec<i64>, pend: &mut List) -> Vec<Task> {
+    let mut ret: Vec<Task> = Vec::new(); 
+
+    for id in v_id {
+        let index = pend.get_index_of_task_with_id(*id);
+        if index < 0 {
+            let message = "Invalid id's given".to_string();
+            feedback(Feedback::Error, message);
+            exit(17);
+        }
+        let task = pend.list.remove(index as usize);
+        ret.push(task);
+    }
+
+    return ret;    
+}
+
+// This function does not give an error but could return an empty vector
+pub fn remove_tasks_with_uuiid(v_hex: &Vec<String>, pend: &mut List, comp: &mut List) -> Vec<Task> {
+    let mut ret: Vec<Task> = Vec::new(); 
+
+    // lets do pend first
+    for uuiid in v_hex {
+        let index = pend.get_index_of_task_with_uuiid(uuiid);
+        if index < 0 {
+            continue;
+        }
+        let task = pend.list.remove(index as usize);
+        ret.push(task);
+    }
+
+    // now lets do the complete ones
+    for uuiid in v_hex {
+        let index = comp.get_index_of_task_with_uuiid(uuiid);
+        if index < 0 {
+            continue;
+        }
+        let task = comp.list.remove(index as usize);
+        ret.push(task);
+    }
+
+    return ret; 
+}
+
 
 // shorten vec from the front by ... 
 pub fn shorten_front_of_vec_by_2<'a>(args: &'a Vec<String>) -> Result<Vec<&'a str>, &'static str> {
@@ -1627,7 +1905,7 @@ pub fn strip_and_dip(mods: &mut Vec<String>, task: &Task) -> Result<String, &'st
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::fs::remove_file;
+    use std::fs::*;
 
     
     // #[ignore]
@@ -1929,7 +2207,7 @@ mod tests {
         pen.save();
         pen.list.clear();
         
-        let _res_load = load_task_file(dest1, &mut pen, &mut hd_set);
+        let _res_load = load_task_file(&mut pen, &mut hd_set);
         remove_file(dest1).expect("Cleanup test failed");
         remove_file(dest2).expect("Cleanup test failed");
 
@@ -1995,6 +2273,19 @@ mod tests {
 
         assert_eq!(vec[0],19);
     }
+    
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
