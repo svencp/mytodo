@@ -19,8 +19,7 @@
                     "kind": "bin"
                 }
             },
-            // "args": [ "0x000006,0x00000c", "pur" ],
-            "args": [ "0x000005,0x000004,0x000006", "pur" ],
+            "args": [ "p" ],
             "cwd": "${workspaceFolder}"
         },
         {

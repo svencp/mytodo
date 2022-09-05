@@ -73,7 +73,7 @@ fn main() {
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Arguments @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
     let matcho: ArgType = determine_first_arg(&arguments, &mut arg_id, &mut arg_hex, &mut command);
-
+    
     // lets do it
     match matcho {
         ArgType::None => {
@@ -101,8 +101,6 @@ fn main() {
                                 feedback(Feedback::Error, message);
                                 exit(17); 
                             }
-
-                            // println!("{}",term);
                         } // end of ann
                         
                         "del" => {
@@ -113,8 +111,6 @@ fn main() {
                                 feedback(Feedback::Error, message);
                                 exit(17);
                             }
-
-                            println!("{}",term);
                         }
                         
                         "den" => {
@@ -295,6 +291,14 @@ fn main() {
                         feedback(Feedback::Warning, message);
                     }
                 }
+
+                "purge" => {
+                    let result = purge_deleted(&mut completed_tasks);
+                    if result.is_err() {
+                        let message = result.err().unwrap().to_string();
+                        feedback(Feedback::Warning, message);
+                    }                   
+                }
                 
                 "recurring" => {
                     let result = report_recurring(&colors, &settings, &pending_tasks);
@@ -322,8 +326,6 @@ fn main() {
                 }
             }
         }
-
-
 
         _ => {
             println!("Garbage in -> garbage out!")

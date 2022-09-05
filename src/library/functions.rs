@@ -1338,6 +1338,10 @@ pub fn is_arg_command(first: &str) -> Result< &str, &str> {
         "c" | "-c" | "-completed" | "completed" | "comp" | "-comp" => {
             return Ok("completed");
         }
+
+        "p" | "-p" | "-purge" | "purge" | "pur" | "-pur" => {
+            return Ok("purge");
+        }
         
         "r" | "-r" | "-recurring" | "recurring" => {
             return Ok("recurring");
@@ -1547,6 +1551,35 @@ pub fn make_timetracking_timeframe(secs: i64) -> String {
     }
 
     return term;
+}
+
+pub fn purge_deleted(comp: &mut List) -> Result<(), &'static str> {
+    let len = comp.list.len();
+    let mut num_purged = 0;
+    let mut to_be_purged: Vec<Task> = Vec::new();
+
+    for index in 0..len {
+        let task = comp.list.get(index).unwrap();
+        if task.is_deleted() {
+            to_be_purged.push(task.clone());
+        }
+    }
+
+    for task in to_be_purged {
+        let purged = comp.remove_with_uuiid(task.uuiid);
+        if purged.is_err() {
+            return Err(purged.err().unwrap());
+        }
+        let p = purged.unwrap();
+        println!("{} {} was purged.",p.uuiid, p.description);
+        num_purged += 1;
+    }
+
+    println!("Purged {} {}",num_purged, units("task", num_purged));
+    
+    comp.save();
+
+    Ok(())
 }
 
 pub fn purge_multi_tasks(v_tasks: &mut Vec<Task>, pend: &mut List, comp: &mut List) -> Result<(), &'static str> {
@@ -2274,6 +2307,27 @@ mod tests {
         assert_eq!(vec[0],19);
     }
     
+    // #[ignore]
+    #[test]
+    fn t018_purge() {
+        let s_pend = "./test/some-documents/pend-purge.data";
+        let d_pend = "./test/pend.data";
+        copy(s_pend,d_pend).expect("Failed to copy");
+        let s_comp = "./test/some-documents/comp-purge.data";
+        let d_comp = "./test/comp.data";
+        copy(s_comp,d_comp).expect("Failed to copy");
+
+        let mut pending_tasks:List    = List::new(&d_pend);
+        let mut completed_tasks:List  = List::new(&d_comp);
+        let mut hd_set: Hdeci         = Hdeci::new();
+        load_all_tasks( &mut pending_tasks, &mut completed_tasks, &mut hd_set);
+        assert_eq!(completed_tasks.list.len(), 5);
+
+        let _result = purge_deleted(&mut completed_tasks);
+        remove_file(d_pend).expect("Cleanup test failed");
+        remove_file(d_comp).expect("Cleanup test failed");
+        assert_eq!(completed_tasks.list.len(), 2);
+    }
 
 
 

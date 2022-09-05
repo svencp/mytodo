@@ -200,7 +200,16 @@ impl<'a> List<'a> {
         Ok(ret)
     }
 
+    // remove from list given only the uuiid
+    pub fn remove_with_uuiid(&mut self, uuiid:String) -> Result<Task,&'static str> {
+        let index = self.get_index_of_task_with_uuiid(&uuiid);
+        if index < 0 {
+            return Err("UUIID not found in list.")
+        }
+        let ret = self.list.remove(index as usize);
 
+        Ok(ret)
+    }
 
 
 
@@ -418,7 +427,6 @@ pub fn load_task_file(the_list: &mut List, hexi_set: &mut Hdeci) -> Result<(), S
         hexi_set.add(task.uuiid_int);
 
         // we have to do the virtual tags as well
-        // task.virtual_tags = make_virtual_tags(task.clone());
         task.update_virtual_tags();
 
         the_list.list.push(task);

@@ -1,5 +1,5 @@
-description:a little recur maybe	uuiid:0x000007	entry:1661725509	status:recurring	due:1661725509	end:1662119879	prodigy:2	recur:+21d	rtype:periodic
+description:a little recur maybe	uuiid:0x000007	entry:1661725509	status:deleted	due:1661725509	end:1662119879	prodigy:2	recur:+21d	rtype:periodic
 description:to be deleted1	uuiid:0x00000b	entry:1661981339	status:deleted	end:1661981339	start:1661981339
 description:First task: Thats it''' -> ()	uuiid:0x000001	entry:1661698087	status:completed	annotation_1661698280:Hey:_-> what's going on....	annotation_1661699865:can I add -- __ as well:	end:1661707665	timetrackingseconds:7938
-description:lets delete this one	uuiid:0x000008	entry:1662315355	status:completed	due:1662315355	end:1662315378	timetrackingseconds:23
+description:lets delete this one	uuiid:0x000008	entry:1662315355	status:deleted	due:1662315355	end:1662315378	timetrackingseconds:23
 description:lets delete this one and this one	uuiid:0x000009	entry:1662315362	status:completed	due:1662315362	end:1662315378	timetrackingseconds:16

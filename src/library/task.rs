@@ -144,6 +144,15 @@ impl Task {
         return false;
     }
 
+    pub fn is_deleted(&self) -> bool {
+        for v in self.virtual_tags.clone() {
+            if v == VirtualTags::Deleted {
+                return true;
+            }
+        } 
+        return false;
+    }
+
     pub fn is_overdue(&self) -> bool {
         for v in self.virtual_tags.clone() {
             if v == VirtualTags::Overdue {
@@ -226,12 +235,12 @@ impl Task {
     pub fn update_status(&mut self) {
         let now = lts_now();
 
-        // if this does not have a parent, and has recur, it is a parent; change to recurring
-        if self.recur.is_some(){
-            if self.parent.is_none(){
-                self.status = Status::Recurring;
-            }
-        }
+        // // if this does not have a parent, and has recur, it is a parent; change to recurring
+        // if self.recur.is_some(){
+        //     if self.parent.is_none(){
+        //         self.status = Status::Recurring;
+        //     }
+        // }
         match self.status {
             Status::Pending => {
                 match self.wait {
@@ -261,7 +270,16 @@ impl Task {
                     }
                 }
             }
+            Status::Deleted => {
+                self.status = Status::Deleted;
+            }
             _ => {
+                // if this does not have a parent, and has recur, it is a parent; change to recurring
+                if self.recur.is_some(){
+                    if self.parent.is_none(){
+                        self.status = Status::Recurring;
+                    }
+                }
             }
         }
     }
