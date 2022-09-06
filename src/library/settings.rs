@@ -164,35 +164,35 @@ impl SettingsMap {
 
 
 
-// This functions checks if one can read and write to the directory.
-// Again for testing puposes I have to input a file with a directory.
-pub fn file_system_ok(test: &str) -> Result<(), &str> {
-    let path = Path::new(test);
+// // This functions checks if one can read and write to the directory.
+// // Again for testing puposes I have to input a file with a directory.
+// pub fn file_system_ok(test: &str) -> Result<(), &str> {
+//     let path = Path::new(test);
 
-    // Lets open a file
-    let mut file = match OpenOptions::new()
-                                .read(true)
-                                .write(true)
-                                .create(true)
-                                .open(path){
-        Ok(content) => content,
-        Err(_) => { return Err("Problem opening any file in file_system_ok"); }
-    };
+//     // Lets open a file
+//     let mut file = match OpenOptions::new()
+//                                 .read(true)
+//                                 .write(true)
+//                                 .create(true)
+//                                 .open(path){
+//         Ok(content) => content,
+//         Err(_) => { return Err("Problem opening any file in file_system_ok"); }
+//     };
 
-    // Lets write to a file
-    match file.write_all("Hello Sven".as_bytes()){
-        Ok(content) => content,
-        Err(_) => { return Err("Problem writing any file in file_system_ok"); }   
-    }
+//     // Lets write to a file
+//     match file.write_all("Hello Sven".as_bytes()){
+//         Ok(content) => content,
+//         Err(_) => { return Err("Problem writing any file in file_system_ok"); }   
+//     }
 
-    // Lets delete a file
-    match remove_file(&path){
-        Ok(_) => (),
-        Err(_) => { return Err("Problem removing any file in file_system_ok"); }   
-    }
+//     // Lets delete a file
+//     match remove_file(&path){
+//         Ok(_) => (),
+//         Err(_) => { return Err("Problem removing any file in file_system_ok"); }   
+//     }
 
-    Ok(())
-}
+//     Ok(())
+// }
 
 
 // Reads the settings (settings.text) file into a treemap, returning a result

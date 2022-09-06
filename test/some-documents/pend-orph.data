@@ -1,0 +1,7 @@
+description:Let's try this: "hello Svenny" ok()	uuiid:0x000002	entry:1661707727	status:pending	annotation_1661709144:just an: annotation in "quotes" -> _ yebo	due:1661707727	start:1661707727	tags:house
+description:just a little something	uuiid:0x000005	entry:1662473920	status:pending	due:1661990400	start:1662473920
+description:a little waiting	uuiid:0x000006	entry:1662475472	status:waiting	due:1670803200	wait:1667745872
+description:really again, really . . . . .	uuiid:0x00000b	entry:1662481371	status:pending	due:1715008061	parent:0x000009	recur:+10m	rtype:chained
+description:just another recur  --> yebo yes	uuiid:0x00000e	entry:1662481448	status:recurring	due:1661990400	prodigy:1	recur:+2m	rtype:chained
+description:just another recur  --> yebo yes	uuiid:0x00000f	entry:1662481451	status:pending	due:1661990400	parent:0x00000e	recur:+2m	rtype:chained
+description:really again, really	uuiid:0x000003	entry:1662481663	status:pending	due:1661990400	parent:0x000001	recur:+1m	rtype:chained

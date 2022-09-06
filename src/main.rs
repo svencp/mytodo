@@ -5,7 +5,8 @@
     2022-08-29  1.2.0   adding the search function -> report
     2022-08-31  1.2.2   adding the purge command    1) eg.  m 2,3 purge
                                                     2) eg.  m purge
-
+    2022-09-06  1.2.6   adding status column to completed report   
+    2022-09-06  1.2.7   make ID 3 chars long in reports
 
 
 */
@@ -24,8 +25,8 @@ use std::env;
 use std::time::{SystemTime};
 
 
-pub const RELEASE: bool            = false;
-// pub const RELEASE: bool            = true;
+// pub const RELEASE: bool            = false;
+pub const RELEASE: bool            = true;
 pub const VERSION: &str            = env!("CARGO_PKG_VERSION");
 
 

@@ -1028,28 +1028,36 @@ pub fn get_task_lines_completed(col_sizes: &Vec<usize>, block: &str, task: &Task
 
     // task line
     line = justify(task.clone().uuiid, col_sizes[0], Justify::Right) + " ";
+    
+    // insert the status column here
+    let char = task.status.text().to_uppercase().substring(0, 1).to_string();
+    line += &justify(char, col_sizes[1], Justify::Right);
+    line += " ";
+    
+
     let diff = now - task.clone().entry;
     line += &align_timeframe(diff);                                                           // col size = 7
     line += " ";
-    line += &justify(make_timetracking_string(task.clone().timetrackingseconds), col_sizes[2], Justify::Right);
+
+    line += &justify(make_timetracking_string(task.clone().timetrackingseconds), col_sizes[3], Justify::Right);
     line += " ";
     let num_tags = task.clone().tags.len();
     match num_tags {
         0 => {
-            line += &repeat_char(" ".to_string(), col_sizes[3])
+            line += &repeat_char(" ".to_string(), col_sizes[4])
         }
         1 => {
-            line += &justify(task.clone().tags[0].to_string(), col_sizes[3], Justify::Left);
+            line += &justify(task.clone().tags[0].to_string(), col_sizes[4], Justify::Left);
         }
         _ => {
             let temp = format!("[{}]",task.clone().tags.len());
-            line += &justify(temp, col_sizes[3], Justify::Center);
+            line += &justify(temp, col_sizes[4], Justify::Center);
         }
     }
     line += " ";
     line += &lts_to_date_string(task.clone().end.unwrap());
     line += " ";
-    line += &justify(task.clone().description, col_sizes[5], Justify::Left);
+    line += &justify(task.clone().description, col_sizes[6], Justify::Left);
     ret.push(line);
 
     
@@ -1060,7 +1068,7 @@ pub fn get_task_lines_completed(col_sizes: &Vec<usize>, block: &str, task: &Task
         line += " ";
 
         // take into account: date length(10) and three extra spaces (i know two, dunno three)
-        let len_anno = col_sizes[5] - 10 - 3;
+        let len_anno = col_sizes[6] - 10 - 3;
         line += &justify(anno.desc, len_anno, Justify::Left);
         ret.push(line);
     }
@@ -1178,7 +1186,7 @@ pub fn get_task_line_recurring(col_sizes: &Vec<usize>, block: &str, task: &Task)
 pub fn get_task_lines_search(col_sizes: &Vec<usize>, block: &str, task: &Task) -> Vec<String> {
     let mut ret:Vec<String> = Vec::new();
     let mut line:String;
-    let mut diff:i64;
+    let diff:i64;
     let now = lts_now();
 
     // task line
@@ -2329,7 +2337,48 @@ mod tests {
         assert_eq!(completed_tasks.list.len(), 2);
     }
 
+    // #[ignore]
+    #[test]
+    fn t019_orphan_sort() {
+        let s_pend = "./test/some-documents/pend-orph.data";
+        let d_pend = "./test/pend.data";
+        copy(s_pend,d_pend).expect("Failed to copy");
+        let s_comp = "./test/some-documents/comp-orph.data";
+        let d_comp = "./test/comp.data";
+        copy(s_comp,d_comp).expect("Failed to copy");
 
+        let mut pending_tasks:List    = List::new(&d_pend);
+        let mut completed_tasks:List  = List::new(&d_comp);
+        let mut hd_set: Hdeci         = Hdeci::new();
+        load_all_tasks( &mut pending_tasks, &mut completed_tasks, &mut hd_set);
+        assert_eq!(completed_tasks.list.len(), 2);
+        assert_eq!(pending_tasks.list.len(), 7);
+        
+        let mut num_children = 0;
+        for task in pending_tasks.clone().list {
+            if task.is_child(){
+                num_children += 1;
+            }
+        }
+        assert_eq!(num_children, 3);
+        
+        handle_orphans(&mut pending_tasks);
+        assert_eq!(completed_tasks.list.len(), 2);
+        assert_eq!(pending_tasks.list.len(), 7);
+
+        num_children = 0;
+        for task in pending_tasks.clone().list {
+            if task.is_child(){
+                num_children += 1;
+            }
+        }
+        assert_eq!(num_children, 1);
+
+        let _result = purge_deleted(&mut completed_tasks);
+        remove_file(d_pend).expect("Cleanup test failed");
+        remove_file(d_comp).expect("Cleanup test failed");
+        assert_eq!(completed_tasks.list.len(), 0);
+    }
 
 
 

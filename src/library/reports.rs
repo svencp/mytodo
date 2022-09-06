@@ -97,7 +97,7 @@ pub fn format_report_active(col_sizes: &Vec<usize>, headers: Vec<&str>, tasks: &
                     }
 
                     let desc = lts_to_date_string(ann.date) + " " + &ann.desc;
-                    let d = justify(desc.clone(), col_sizes[4]-2, Justify::Left);
+                    let d = justify(desc.clone(), col_sizes[5]-2, Justify::Left);
                     print!("{}{}",anno_block, d);
                     print!("{}\n",style::Reset);
                 }
@@ -106,7 +106,7 @@ pub fn format_report_active(col_sizes: &Vec<usize>, headers: Vec<&str>, tasks: &
     }
 
     print!("\n");
-    println!("{} {} \n",tasks.clone().len(), units("task", tasks.len()));
+    println!("{} {} \n",tasks.len(), units("task", tasks.len()));
 
 }
 
@@ -736,23 +736,34 @@ pub fn print_description_line(col_sizes: &Vec<usize>, task: &Task) {
         }
     }
     
-    match task.due {
-        Some(secs) => {
-            print!("{} ",lts_to_date_string(secs));
+    // Insert the Recur column here
+    match task.clone().recur {
+        Some(r) => {
+            let recur = justify(r, col_sizes[3], Justify::Center);
+            print!("{} ",recur);
         }
         None => {
             print!("{} ",repeat_char(" ".to_string(),col_sizes[3]));                              
         }
     }
+
+    match task.due {
+        Some(secs) => {
+            print!("{} ",lts_to_date_string(secs));
+        }
+        None => {
+            print!("{} ",repeat_char(" ".to_string(),col_sizes[4]));                              
+        }
+    }
     
-    let desc = justify(task.clone().description, col_sizes[4], Justify::Left);
+    let desc = justify(task.clone().description, col_sizes[5], Justify::Left);
     print!("{}{}\n",desc, style::Reset);
 }
 
 // my active report
 pub fn report_active(colors: &Colors, settings: &SettingsMap, pend: &List) -> Result<(),&'static str> {
-    let mut col_sizes = vec![2,10,7,10];
-    let headers = vec!["ID", "Started", "Active", "Due", "Description" ];
+    let mut col_sizes = vec![3,10,7,5,10];
+    let headers = vec!["ID", "Started", "Active", "Recur", "Due", "Description" ];
     let mut tasks: Vec<Task> = Vec::new();
     let mut v_desc: Vec<String> = Vec::new();
     let mut max_col: usize = 0;
@@ -822,7 +833,7 @@ pub fn report_active(colors: &Colors, settings: &SettingsMap, pend: &List) -> Re
 }
 
 pub fn report_all_pending(pend: &List, colors: Colors, settings: &SettingsMap) -> Result<(), &'static str> {
-    let mut col_sizes = vec![2,7,11,7];
+    let mut col_sizes = vec![3,7,11,7];
     let headers = vec!["ID", "Age", "Tags", "Due", "Description" ];
     let mut tasks: Vec<Task> = Vec::new();
     let mut v_desc: Vec<String> = Vec::new();
@@ -901,8 +912,8 @@ pub fn report_all_pending(pend: &List, colors: Colors, settings: &SettingsMap) -
 }
 
 pub fn report_completed(colors: &Colors, settings: &SettingsMap, comp: &List ) -> Result<(), &'static str> {
-    let mut col_sizes = vec![8,7,16,11,10];
-    let headers = vec!["UUIID", "Age", "Duration", "Tags", "Completed", "Description" ];
+    let mut col_sizes = vec![8,2,7,16,11,10];
+    let headers = vec!["UUIID", "St", "Age", "Duration", "Tags", "Completed", "Description" ];
     let mut tasks: Vec<Task> = Vec::new();
     let mut v_desc: Vec<String> = Vec::new();
     let mut max_col: usize = 0;
@@ -955,7 +966,7 @@ pub fn report_completed(colors: &Colors, settings: &SettingsMap, comp: &List ) -
 }
 
 pub fn report_recurring(colors: &Colors, settings: &SettingsMap, pend: &List ) -> Result<(), &'static str> {
-    let mut col_sizes = vec![2,8,7,4];
+    let mut col_sizes = vec![3,8,7,4];
     let headers = vec!["ID", "UUIID", "Age", "Tags", "Description" ];
     let mut tasks: Vec<Task> = Vec::new();
     let mut v_desc: Vec<String> = Vec::new();
@@ -1010,7 +1021,7 @@ pub fn report_recurring(colors: &Colors, settings: &SettingsMap, pend: &List ) -
 }
 
 pub fn report_search(args: &Vec<String>, colors: &Colors, settings: &SettingsMap, all_tasks: &List ) -> Result<(), &'static str> {
-    let mut col_sizes = vec![2,2,8,7,4,10];
+    let mut col_sizes = vec![3,2,8,7,4,10];
     let headers = vec!["ID", "St", "UUIID", "Age", "Tags", "Done", "Description" ];
     let mut tasks: Vec<Task> = Vec::new();
     let mut v_desc: Vec<String> = Vec::new();
@@ -1251,7 +1262,7 @@ pub fn report_single(settings: &SettingsMap, colors: &Colors, task: &Task ) -> R
 }
 
 pub fn report_waiting(colors: &Colors, settings: &SettingsMap, pend: &List ) -> Result<(), &'static str> {
-    let mut col_sizes = vec![2,8,7,4,7];
+    let mut col_sizes = vec![3,8,7,4,7];
     let headers = vec!["ID", "UUIID", "Age", "Tags", "Wait", "Description" ];
     let mut tasks: Vec<Task> = Vec::new();
     let mut v_desc: Vec<String> = Vec::new();
