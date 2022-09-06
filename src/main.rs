@@ -65,7 +65,7 @@ fn main() {
 
     // generate recurring tasks
     generate_recurring_tasks(&mut pending_tasks, &mut completed_tasks, &mut hd_set);
-
+    handle_orphans(&mut pending_tasks);
     
 
 

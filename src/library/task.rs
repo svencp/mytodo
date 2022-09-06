@@ -145,12 +145,16 @@ impl Task {
     }
 
     pub fn is_deleted(&self) -> bool {
-        for v in self.virtual_tags.clone() {
-            if v == VirtualTags::Deleted {
-                return true;
-            }
-        } 
+        if self.status == Status::Deleted {
+            return true;
+        }
         return false;
+        // for v in self.virtual_tags.clone() {
+        //     if v == VirtualTags::Deleted {
+        //         return true;
+        //     }
+        // } 
+        // return false;
     }
 
     pub fn is_overdue(&self) -> bool {
@@ -235,12 +239,6 @@ impl Task {
     pub fn update_status(&mut self) {
         let now = lts_now();
 
-        // // if this does not have a parent, and has recur, it is a parent; change to recurring
-        // if self.recur.is_some(){
-        //     if self.parent.is_none(){
-        //         self.status = Status::Recurring;
-        //     }
-        // }
         match self.status {
             Status::Pending => {
                 match self.wait {
@@ -274,11 +272,14 @@ impl Task {
                 self.status = Status::Deleted;
             }
             _ => {
-                // if this does not have a parent, and has recur, it is a parent; change to recurring
-                if self.recur.is_some(){
-                    if self.parent.is_none(){
-                        self.status = Status::Recurring;
-                    }
+            }
+        }
+        
+        // do not change status 'deleted' but check on parent
+        if !self.is_deleted() {
+            if self.recur.is_some() { 
+                if self.parent.is_none() {
+                    self.status = Status::Recurring;
                 }
             }
         }
@@ -455,8 +456,6 @@ pub fn generate_child(pend: &List, comp: &List, parent: &Task, hd_set: &mut Hdec
                                     ret.due = Some( new_ts );
                                 }
                             }
-                            // let new_ts = term.multiply_from_timestring(ts, parent.prodigy.unwrap()); 
-                            // ret.wait = Some( new_ts );
                         }
                         None => {
                             ret.wait = None;

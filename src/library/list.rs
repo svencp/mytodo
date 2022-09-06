@@ -384,6 +384,57 @@ pub fn load_all_tasks( pending: &mut List, completed: &mut List, hexi_set: &mut 
     }
 }
 
+// function to make sure that orphans don't break the system
+pub fn handle_orphans(pend: &mut List) {
+    let mut children: Vec<Task> = Vec::new();
+    let mut parents: Vec<Task> = Vec::new();
+    let mut orphans: Vec<Task> = Vec::new();
+    let mut work_done = false;
+    
+    // get the children and parents
+    for task in pend.list.clone() {
+        if task.is_child() {
+            children.push(task.clone())
+        }
+        if task.is_parent() {
+            parents.push(task.clone())
+        }
+    }
+    
+    // get the orphans
+    '_children: for child in children {
+        '_parents: for parent in parents.clone() {
+            if child.clone().parent.unwrap() == parent.uuiid {
+                continue '_children;
+            }
+        }
+
+        // not found
+        orphans.push(child.clone());
+    }
+
+    // sort out orphans
+    for task in orphans {
+
+        let mut legit = pend.remove_with_id(task.id.unwrap()).unwrap();
+
+        legit.parent     = None;
+        legit.parent_int = None;
+        legit.recur      = None;
+        legit.rtype      = None;
+
+        pend.list.push(legit.clone());
+        work_done = true;
+
+        let line = format!("Orphan {} with description of '{}' has been sorted.\n", legit.uuiid, legit.description);
+        to_orange_feedback(&line);
+    }
+
+    if work_done {
+        pend.save()
+    }
+}
+
 // Lets change this function to read the file from the struct
 pub fn load_task_file(the_list: &mut List, hexi_set: &mut Hdeci) -> Result<(), String> {
     // does the file exists, if not return empties
@@ -427,6 +478,7 @@ pub fn load_task_file(the_list: &mut List, hexi_set: &mut Hdeci) -> Result<(), S
         hexi_set.add(task.uuiid_int);
 
         // we have to do the virtual tags as well
+        // @@@ although we do virtual tags in make_task, do we need this one?
         task.update_virtual_tags();
 
         the_list.list.push(task);
