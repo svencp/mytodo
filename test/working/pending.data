@@ -1,6 +1,6 @@
 description:Let's try this: "hello Svenny" ok()	uuiid:0x000002	entry:1661707727	status:pending	annotation_1661709144:just an: annotation in "quotes" -> _ yebo	due:1661707727	start:1661707727	tags:house
 description:just a little something	uuiid:0x000005	entry:1662473920	status:pending	due:1661990400	start:1662473920
-description:just another recur  --> yebo yes	uuiid:0x00000e	entry:1662481448	status:recurring	annotation_1662484823:@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@	due:1661990400	prodigy:2	recur:+2m	rtype:chained
-description:just another recur  --> yebo yes	uuiid:0x000004	entry:1662483954	status:pending	due:1667754350	parent:0x00000e	recur:+2m	rtype:chained
+description:just another recur  --> yebo yes	uuiid:0x00000e	entry:1662481448	status:recurring	annotation_1662484823:@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@	due:1661990400	prodigy:3	recur:+2m	rtype:chained
 description:a little waiting maybe	uuiid:0x000001	entry:1662484375	status:waiting	annotation_1662484443:for the waiting -------------------->	due:1667754775	wait:1665076375
 description:another amazon scam coming along	uuiid:0x000007	entry:1662484493	status:waiting	annotation_1662484525:you go boy *********************************	due:1670346893	wait:1665076493
+description:just another recur  --> yebo yes	uuiid:0x000008	entry:1662486657	status:pending	annotation_1662484823:@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@	due:1673027453	parent:0x00000e	recur:+2m	rtype:chained

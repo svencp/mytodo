@@ -2,3 +2,4 @@ description:a little waiting	uuiid:0x000006	entry:1662475472	status:completed	du
 description:just another recur  --> yebo yes	uuiid:0x00000f	entry:1662481451	status:completed	due:1661990400	end:1662483950	parent:0x00000e	recur:+2m	rtype:chained	timetrackingseconds:2499
 description:really again, really . . . . .	uuiid:0x00000b	entry:1662481371	status:completed	due:1715008061	end:1662483950	timetrackingseconds:2579
 description:really again, really	uuiid:0x000003	entry:1662481663	status:completed	due:1661990400	end:1662483950	timetrackingseconds:2287
+description:just another recur  --> yebo yes	uuiid:0x000004	entry:1662483954	status:deleted	due:1667754350	end:1662486653	parent:0x00000e	recur:+2m	rtype:chained

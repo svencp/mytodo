@@ -252,10 +252,10 @@ pub fn delete_task(pend: &mut List, comp: &mut List, task: Task ) -> Result<(),&
     }
 
     pend.save();
-    comp.list.insert(0, deleted.clone());
+    comp.list.push( deleted.clone());
     comp.save();
 
-    println!("Deleting task {} '{}'.", deleted.clone().uuiid, deleted.description);
+    println!("Deleting task {} '{}'.", deleted.uuiid, deleted.description);
 
     Ok(())
 }

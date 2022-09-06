@@ -25,8 +25,8 @@ use std::env;
 use std::time::{SystemTime};
 
 
-// pub const RELEASE: bool            = false;
-pub const RELEASE: bool            = true;
+pub const RELEASE: bool            = false;
+// pub const RELEASE: bool            = true;
 pub const VERSION: &str            = env!("CARGO_PKG_VERSION");
 
 
