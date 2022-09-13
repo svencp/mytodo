@@ -459,6 +459,90 @@ pub fn command_delete(v_int: &Vec<i64>, v_hex: &Vec<String>,
     Ok(())
 }
 
+// function to denotate from the bottom up
+pub fn command_den(args: &Vec<String>, v_int: &Vec<i64>, v_hex: &Vec<String>, pend: &mut List, comp: &mut List, 
+                    all: &List) -> Result<(), &'static str> {
+    if args.len() > 3 {
+        return Err("Too many arguments given.");
+    }
+    if v_int.len() > 1 || v_hex.len() > 1 {
+        return Err("Denotate should only be for one task.");
+    }
+
+    let mut task:Task;
+    let index:usize;
+
+    match v_int.len() {
+        0 => {
+            // @@@@@@@@@@@@@@@@@@@@ HEXIDECIMAL @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+            let h = v_hex.get(0).unwrap().to_string();
+            let res_t = all.get_task_from_uuiid(h);
+            if res_t.is_err() {
+                return Err("Not a valid hexidecimal value (task) given.")
+            }
+            let t = res_t.unwrap();
+            if !t.is_annotated(){
+                return Err("This task has no annotations, thus nothing to do.")
+            }
+
+            // what kind of task is it
+            match t.is_complete() {
+                true => {
+                    index = comp.get_index_of_task_with_uuiid(&t.uuiid) as usize;
+                    task = comp.list.remove(index);
+                }
+                false => {
+                    index = pend.get_index_of_task_with_id(t.id.unwrap()) as usize;
+                    task = pend.list.remove(index);
+                }
+            }
+            
+            let len = task.ann.len();
+            let ann = task.ann.remove(len-1);
+
+            println!("Found annotation '{}' and deleted it.", ann.desc);
+            println!("Denotated 1 task.");
+
+            // return to right kind of task
+            match t.is_complete() {
+                true => {
+                    comp.list.insert(index, task);
+                    comp.save();
+                }
+                false => {
+                    pend.list.insert(index, task);
+                    pend.save();
+                }
+            }
+        }
+        _ => {
+            // @@@@@@@@@@@@@@@@@@@@@@ INTEGERS @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+            let i = *v_int.get(0).unwrap();
+            let res_t = all.get_task_from_id(i);
+            if res_t.is_err() {
+                return Err("Not a valid integer value (task) given.")
+            }
+            let t = res_t.unwrap();
+            if !t.is_annotated(){
+                return Err("This task has no annotations, thus nothing to do.")
+            }
+
+            index = pend.get_index_of_task_with_id(t.id.unwrap()) as usize;
+            task = pend.list.remove(index);
+
+            let len = task.ann.len();
+            let ann = task.ann.remove(len-1);
+
+            println!("Found annotation '{}' and deleted it.", ann.desc);
+            println!("Denotated 1 task.");
+
+            pend.list.insert(index, task);
+            pend.save();
+        }
+    }
+
+    Ok(())
+}
 
 //function to complete tasks; return number of tasks completed
 pub fn command_done(v_id:Vec<i64>, pend: &mut List, comp: &mut List, settings: &SettingsMap  ) -> Result<(), &'static str> {

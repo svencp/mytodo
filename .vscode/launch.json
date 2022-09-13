@@ -19,7 +19,7 @@
                     "kind": "bin"
                 }
             },
-            "args": [ "a" ],
+            "args": [ "0x000009", "den" ],
             "cwd": "${workspaceFolder}"
         },
         {

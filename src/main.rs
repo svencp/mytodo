@@ -7,6 +7,7 @@
                                                     2) eg.  m purge
     2022-09-06  1.2.6   adding status column to completed report   
     2022-09-06  1.2.7   make ID 3 chars long in reports
+    2022-09-13  1.2.9   den-annotate
 
 
 */
@@ -25,8 +26,8 @@ use std::env;
 use std::time::{SystemTime};
 
 
-pub const RELEASE: bool            = false;
-// pub const RELEASE: bool            = true;
+// pub const RELEASE: bool            = false;
+pub const RELEASE: bool            = true;
 pub const VERSION: &str            = env!("CARGO_PKG_VERSION");
 
 
@@ -115,7 +116,13 @@ fn main() {
                         }
                         
                         "den" => {
-                            println!("{}",term);
+                            let result = command_den(&arguments, &arg_id, &arg_hex, 
+                                                &mut pending_tasks, &mut completed_tasks, &all_tasks);
+                            if result.is_err() {
+                                let message = result.err().unwrap().to_string();
+                                feedback(Feedback::Error, message);
+                                exit(17); 
+                            }
                         }
                         
                         // done

@@ -87,6 +87,7 @@ impl<'a> List<'a> {
         Err("Task not found with given id")
     }
     
+    // Does not remove task
     pub fn get_task_from_uuiid(&self, uuiid: String) -> Result<Task, &'static str> {
         for task in self.list.clone() {
             if uuiid == task.uuiid {
