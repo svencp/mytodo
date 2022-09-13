@@ -7,7 +7,7 @@
                                                     2) eg.  m purge
     2022-09-06  1.2.6   adding status column to completed report   
     2022-09-06  1.2.7   make ID 3 chars long in reports
-    2022-09-13  1.2.9   den-annotate
+    2022-09-13  1.2.9   denotate
 
 
 */
@@ -26,8 +26,8 @@ use std::env;
 use std::time::{SystemTime};
 
 
-// pub const RELEASE: bool            = false;
-pub const RELEASE: bool            = true;
+pub const RELEASE: bool            = false;
+// pub const RELEASE: bool            = true;
 pub const VERSION: &str            = env!("CARGO_PKG_VERSION");
 
 
