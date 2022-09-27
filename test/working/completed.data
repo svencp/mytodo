@@ -1,5 +1,7 @@
-description:a little waiting	uuiid:0x000006	entry:1662475472	status:completed	due:1670803200	end:1662483950	timetrackingseconds:8478	wait:1667745872
-description:just another recur  --> yebo yes	uuiid:0x00000f	entry:1662481451	status:completed	due:1661990400	end:1662483950	parent:0x00000e	recur:+2m	rtype:chained	timetrackingseconds:2499
-description:really again, really . . . . .	uuiid:0x00000b	entry:1662481371	status:completed	due:1715008061	end:1662483950	timetrackingseconds:2579
-description:really again, really	uuiid:0x000003	entry:1662481663	status:completed	annotation_1663057836:Ann really!	due:1661990400	end:1662483950	timetrackingseconds:2287
-description:just another recur  --> yebo yes	uuiid:0x000004	entry:1662483954	status:deleted	due:1667754350	end:1662486653	parent:0x00000e	recur:+2m	rtype:chained
+description:a little recurrence	uuiid:0x000004	entry:1664204444	status:completed	due:1664377238	end:1664204520	parent:0x000003	recur:+3w	rtype:chained	timetrackingseconds:47	wait:1664204438
+description:a little recurrence	uuiid:0x000005	entry:1664204527	status:completed	due:1666018920	end:1664204595	parent:0x000003	recur:+3w	rtype:chained	timetrackingseconds:68	wait:1665846120
+description:a little recurrence	uuiid:0x000006	entry:1664204601	status:completed	due:1667833395	end:1664204756	parent:0x000003	recur:+3w	rtype:chained	timetrackingseconds:155	wait:1667660595
+description:another test	uuiid:0x000009	entry:1664226186	status:completed	due:1666990981	end:1664226258	parent:0x000008	recur:+1m	rtype:chained	timetrackingseconds:72	wait:1666818181
+description:another test	uuiid:0x00000a	entry:1664226261	status:completed	due:1666818258	end:1664226300	parent:0x000008	recur:+1m	rtype:chained	timetrackingseconds:39	wait:1666645458
+description:period.	uuiid:0x00000d	entry:1664226381	status:completed	due:1664485577	end:1664226440	parent:0x00000c	recur:+2w	rtype:periodic	timetrackingseconds:32	wait:1664226377
+description:period.	uuiid:0x00000e	entry:1664226448	status:completed	due:1665695177	end:1664226562	parent:0x00000c	recur:+2w	rtype:periodic	timetrackingseconds:114	wait:1665435977

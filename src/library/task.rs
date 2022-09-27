@@ -437,7 +437,8 @@ pub fn generate_child(pend: &List, comp: &List, parent: &Task, hd_set: &mut Hdec
 
                     match child.due {
                         Some(_ts) => {
-                            let new_ts = term.multiply_from_timestring(ets, parent.prodigy.unwrap()); 
+                            // let new_ts = term.multiply_from_timestring(ets, parent.prodigy.unwrap()); 
+                            let new_ts = term.multiply_from_timestring(ets, 1 ); 
                             ret.due = Some( new_ts );
                         }
                         None => {
@@ -452,7 +453,8 @@ pub fn generate_child(pend: &List, comp: &List, parent: &Task, hd_set: &mut Hdec
                                     ret.wait = Some(ret.due.unwrap() - diff);
                                 }
                                 None => {
-                                    let new_ts = term.multiply_from_timestring(parent.wait.unwrap(), parent.prodigy.unwrap()); 
+                                    // let new_ts = term.multiply_from_timestring(parent.wait.unwrap(), parent.prodigy.unwrap()); 
+                                    let new_ts = term.multiply_from_timestring(parent.wait.unwrap(), 1 ); 
                                     ret.due = Some( new_ts );
                                 }
                             }
@@ -465,7 +467,8 @@ pub fn generate_child(pend: &List, comp: &List, parent: &Task, hd_set: &mut Hdec
                 None => {
                     match parent.due {
                         Some(ts) => {
-                            let new_ts = term.multiply_from_timestring(ts, parent.prodigy.unwrap()); 
+                            // let new_ts = term.multiply_from_timestring(ts, parent.prodigy.unwrap()); 
+                            let new_ts = term.multiply_from_timestring(ts, 1 ); 
                             ret.due = Some( new_ts );
                         }
                         None => {
@@ -474,7 +477,8 @@ pub fn generate_child(pend: &List, comp: &List, parent: &Task, hd_set: &mut Hdec
                     }
                     match parent.wait {
                         Some(ts) => {
-                            let new_ts = term.multiply_from_timestring(ts, parent.prodigy.unwrap()); 
+                            // let new_ts = term.multiply_from_timestring(ts, parent.prodigy.unwrap()); 
+                            let new_ts = term.multiply_from_timestring(ts, 1 ); 
                             ret.wait = Some( new_ts );
                         }
                         None => {
