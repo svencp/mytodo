@@ -1,6 +1,7 @@
 /*
     This is my to-do list
     2022.07.24      Sven Ponelat
+                    Use the shortcut 'so' to compile and move release executable to its place
 
     2022-08-29  1.2.0   adding the search function -> report
     2022-08-31  1.2.2   adding the purge command    1) eg.  m 2,3 purge
@@ -9,6 +10,7 @@
     2022-09-06  1.2.7   make ID 3 chars long in reports
     2022-09-13  1.2.9   denotate
     2022-09-26  1.2.10  recurring chained too long, period should count from last task end time
+    2022-10-04  1.2.11  change the sort order on the task waiting screen - soonest at the bottom
 
 
 */

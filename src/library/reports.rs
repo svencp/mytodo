@@ -1291,6 +1291,22 @@ pub fn report_waiting(colors: &Colors, settings: &SettingsMap, pend: &List ) -> 
         }
     }
 
+    //lets sort this vector with the least wait date on bottom (basically I have reveresed the order)
+    tasks.sort_by(|a,b| {
+        let ans =  a.wait.unwrap().cmp(&b.wait.unwrap());
+        match ans {
+            Ordering::Less => {
+                return Ordering::Greater 
+            }
+            Ordering::Equal => {
+                return Ordering::Equal 
+            }
+            Ordering::Greater => {
+                return Ordering::Less 
+            }
+        }
+    });
+
     // add max_col to col_sizes with two spaces
     col_sizes.push(max_col);
     let mut total_width = 0;
