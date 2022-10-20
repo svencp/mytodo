@@ -134,9 +134,15 @@ pub fn command_add_task(args: &Vec<String>,  pending: &mut List, hdeci: &mut Hde
             let temp = *r_vec.get(i).unwrap();
             refined_vector.push(temp);
         }
-
     }
 
+    // lets add the shortcut interpreter here
+    let op_shortcut = has_shortcut(&mut refined_vector);
+    if !has_conflicts(&mut refined_vector) && op_shortcut.is_some() {
+        expand_shortcut(op_shortcut.unwrap(), &mut refined_vector );
+    }
+
+    // Make Task
     let t_result = make_task(refined_vector);
     if t_result.is_err(){
         let message = t_result.err().unwrap().to_string();
@@ -1041,6 +1047,37 @@ pub fn determine_second_arg(args: &Vec<String>, command: &mut String) -> ArgType
     return ArgType::Unknown;
 }
 
+// function to expand the shortcut
+pub fn expand_shortcut(term: String, vec: &mut Vec<&str> ) {
+    match term.len() {
+    
+        // should only be equal sign => due:now start:now
+        1 => {
+            vec.push("due:now");
+            vec.push("start:now");
+        }
+        
+        // more than one term
+        _ => {
+            let second = term[1..].to_string();
+            let values = second.chars();
+
+            for c in values {
+                match c {
+                    'd' => {
+                        vec.push("due:now");
+                    }
+                    's' => {
+                        vec.push("start:now");
+                    }
+                    _ => {
+                    }
+                }
+            }
+        }
+    }
+}
+
 pub fn get_input(text: &str) -> Result<String, &'static str> {
     print!("{}",text);
     match io::stdout().flush() {
@@ -1391,6 +1428,64 @@ pub fn get_task_line_waiting(col_sizes: &Vec<usize>, block: &str, task: &Task) -
     return ret;
 }
 
+// are there conflicts in the vector such as 'due' and 'start'
+pub fn has_conflicts(vec: &mut Vec<&str>) -> bool {
+
+    for term in vec {
+        if term.len() > 2 {
+            let first3 = term[0..3].to_string();
+            match first3.as_str() {
+                "due" => {
+                    return true;
+                }
+                "sta" => {
+                    return true;
+                }
+                _ => {
+
+                }
+            } 
+        }
+    }
+
+    return false
+}
+
+
+// has the vector got shortcut terms in it
+pub fn has_shortcut(vec: &mut Vec<&str>) -> Option<String> {
+    let mut found = String::new();
+    let mut index:usize = 0;
+
+    for term in vec.iter() {
+        
+        let first = &term[0..1];
+        
+        match first {
+            "-" => {
+                found = term.to_string();
+                break;
+            }
+            _ => {
+                index += 1;
+                continue;
+            }
+        }
+    }
+
+    // if found remove it from vector and return term
+    match found.len() {
+        0 => {
+            return None;
+        }
+        _ => {
+            vec.remove(index);
+            return Some(found);
+        }
+    }
+}
+
+
 // function to verify my hexidecimal string
 pub fn hexi_verify(str: &str) -> Result<i64, &'static str> {
     let sub2 = "0x";
@@ -1414,15 +1509,15 @@ pub fn is_arg_command(first: &str) -> Result< &str, &str> {
         "a" | "-a" | "active" => {
             return Ok("active");
         }
-
+        
         "add" => {
             return Ok(first);
         }
-
+        
         "all" => {
             return Ok(first);
         }
-
+        
         "-color_test" | "col" | "color" | "color_test" | "-color" | "colortest" => {
             return Ok("colortest");
         }
@@ -1430,7 +1525,7 @@ pub fn is_arg_command(first: &str) -> Result< &str, &str> {
         "c" | "-c" | "-completed" | "completed" | "comp" | "-comp" => {
             return Ok("completed");
         }
-
+        
         "p" | "-p" | "-purge" | "purge" | "pur" | "-pur" => {
             return Ok("purge");
         }
@@ -1446,7 +1541,7 @@ pub fn is_arg_command(first: &str) -> Result< &str, &str> {
         "w" | "-w" | "-waiting" | "waiting"  => {
             return Ok("waiting");
         }
-
+        
         _ => {
             return Err("unknown command");
         }
@@ -1457,17 +1552,17 @@ pub fn is_arg_command(first: &str) -> Result< &str, &str> {
 pub fn is_arg_hexidecimal(first: &str) -> Result<Vec<String>, &str> {
     let mut ret: Vec<String> = Vec::new(); 
     let split: Vec<&str> = first.split(",").collect();
-
+    
     for hexi in split {
-
+        
         let res = hexi_verify(hexi);
         if res.is_err() {
             return Err(res.err().unwrap());
         }
-
+        
         ret.push(hexi.to_lowercase().trim().to_string());
     }
-
+    
     Ok(ret)
 }
 
@@ -1548,18 +1643,18 @@ pub fn make_timetracking_string(secs: i64) -> String {
     if secs < 1 {
         return "".to_string();
     }
-
+    
     const DAY_SECS: i64    = 86_400;
     const HOUR_SECS: i64   =  3_600;
     const MINUTE_SECS: i64 =     60;
-
+    
     let days:i64;
     let hours:i64;
     let minutes:i64;
     let mut ret:String = "P".to_string();
     let mut remainder:i64;
-
-
+    
+    
     // how many days
     days = secs / DAY_SECS;
     remainder = secs - (days * DAY_SECS);
@@ -1571,7 +1666,7 @@ pub fn make_timetracking_string(secs: i64) -> String {
     // how many minutes
     minutes = remainder / MINUTE_SECS;
     remainder = remainder - ( minutes * MINUTE_SECS );
-
+    
     // lets build
     match days {
         0 => {
@@ -1584,7 +1679,7 @@ pub fn make_timetracking_string(secs: i64) -> String {
                     let temp = days.to_string() + "D";
                     ret.push_str(&temp);
                 }
-
+                
                 _ => {
                     let temp = days.to_string() + "DT";
                     ret.push_str(&temp);
@@ -1623,7 +1718,7 @@ pub fn make_timetracking_string(secs: i64) -> String {
             ret.push_str(&temp);
         }
     }
-
+    
     return ret;
 }
 
@@ -1636,14 +1731,75 @@ pub fn make_timetracking_timeframe(secs: i64) -> String {
     }
     
     let term = categorize_term(secs.abs());
-
+    
     if neg {
         let ret = "-".to_string() + &term;
         return ret;
     }
-
+    
     return term;
 }
+
+// // functio to process shortcut, if it has any
+// pub fn process_shortcut( vec: &mut Vec<&str> ) -> bool {
+//     let mut found = String::new();
+//     let mut index:usize = 0;
+
+//     for term in vec.iter() {
+        
+//         let first = &term[0..1];
+        
+//         match first {
+//             "=" => {
+//                 found = term.to_string();
+//                 break;
+//             }
+//             _ => {
+//                 index += 1;
+//                 continue;
+//             }
+//         }
+//     }
+
+//     match found.len() {
+//         // no shortcut present
+//         0 => {
+//             return false;
+//         }
+
+//         // should only be equal sign => due:now start:now
+//         1 => {
+//             vec.remove(index);
+//             vec.push("due:now");
+//             vec.push("start:now");
+//             return true;
+//         }
+        
+//         // more than one term
+//         _ => {
+//             vec.remove(index);
+
+//             let second = found[1..].to_string();
+//             let values = second.chars();
+
+//             for c in values {
+//                 match c {
+//                     'd' => {
+//                         vec.push("due:now");
+//                     }
+//                     's' => {
+//                         vec.push("start:now");
+//                     }
+//                     _ => {
+
+//                     }
+//                 }
+//             }
+//             return true;
+//         }
+//     }
+// }
+
 
 pub fn purge_deleted(comp: &mut List) -> Result<(), &'static str> {
     let len = comp.list.len();
@@ -1670,7 +1826,7 @@ pub fn purge_deleted(comp: &mut List) -> Result<(), &'static str> {
     println!("Purged {} {}",num_purged, units("task", num_purged));
     
     comp.save();
-
+    
     Ok(())
 }
 
@@ -1678,29 +1834,29 @@ pub fn purge_multi_tasks(v_tasks: &mut Vec<Task>, pend: &mut List, comp: &mut Li
     let mut v_purged: Vec<Task> = Vec::new();
     let mut done = false;
     let mut del_counter = 0;
-
+    
     let len = v_tasks.len();
-
+    
     while !done {
         for t in 0..len {
             let task = v_tasks.get(t).unwrap();
-
+            
             let out_text = format!("Purge task {} '{}'? (yes/no/all/quit) ", 
-                                // task.clone().id.unwrap(), task.clone().description);
-                                task.uuiid, task.description);
+            // task.clone().id.unwrap(), task.clone().description);
+            task.uuiid, task.description);
             let res_reply = get_input(&out_text);
             if res_reply.is_err() {
                 return Err(res_reply.err().unwrap())
             }
             let reply = res_reply.unwrap().to_lowercase();
             if  reply.starts_with("y") || reply.starts_with("n") ||
-                reply.starts_with("a") || reply.starts_with("q") {
+            reply.starts_with("a") || reply.starts_with("q") {
                 match reply.substring(0, 1) {
                     "y" => {
                         println!("Purging task {} '{}'.", task.uuiid, task.description);
                         v_purged.push(task.clone());
                         del_counter += 1;
-
+                        
                         if t + 1 < len {
                             println!();
                             continue;
@@ -2175,7 +2331,6 @@ mod tests {
         let mut h_set:Hdeci = Hdeci::new();
         h_set.add(2);
         h_set.add(1);
-        // let next =  h_set.get_next_hexidecimal();
         
         let vs1: Vec<String> = vec!["Something".to_string(),
                                     "another".to_string()];
@@ -2464,6 +2619,101 @@ mod tests {
         assert_eq!(completed_tasks.list.len(), 0);
     }
 
+
+    // #[ignore]
+    #[test]
+    fn t020_command_add_shortcut() {
+        let destination = "./test/trial.data";
+        let mut pen = List::new(destination);
+        let mut h_set:Hdeci = Hdeci::new();
+        h_set.add(2);
+        h_set.add(1);
+        
+        let vs1: Vec<String> = vec!["Something".to_string(),
+                                    "another".to_string(),
+                                    "First Task: It's what its all about! --> !()_".to_string(),
+                                    "start:now".to_string(),
+                                    "+household".to_string()];
+        let _result_add1 = command_add_task(&vs1 ,&mut pen, &mut h_set);
+        let task1 = pen.get_task_from_id(1).unwrap();
+        assert_eq!(task1.has_start(),true);
+        assert_eq!(task1.has_due(),false);
+        
+
+        let vs2: Vec<String> = vec!["Something".to_string(),
+                                    "another".to_string(),
+                                    "Second Task: It's what its all about! --> !()_".to_string(),
+                                    "-".to_string(),
+                                    "+household".to_string()];
+        let _result_add2 = command_add_task(&vs2 ,&mut pen, &mut h_set);
+        let task2 = pen.get_task_from_id(2).unwrap();
+        assert_eq!(task2.has_start(),true);
+        assert_eq!(task2.has_due(),true);
+        
+        
+        let vs3: Vec<String> = vec!["Something".to_string(),
+                                    "another".to_string(),
+                                    "Third Task: It's what its all about! --> !()_".to_string(),
+                                    "-s".to_string(),
+                                    "+household".to_string()];
+        let _result_add3 = command_add_task(&vs3 ,&mut pen, &mut h_set);
+        let task3 = pen.get_task_from_id(3).unwrap();
+        assert_eq!(task3.has_start(),true);
+        assert_eq!(task3.has_due(),false);
+
+
+        let vs4: Vec<String> = vec!["Something".to_string(),
+                                    "another".to_string(),
+                                    "Fourth Task: It's what its all about! --> !()_".to_string(),
+                                    "-ds".to_string(),
+                                    "+household".to_string()];
+        let _result_add4 = command_add_task(&vs4 ,&mut pen, &mut h_set);
+        let task4 = pen.get_task_from_id(4).unwrap();
+        assert_eq!(task4.has_start(),true);
+        assert_eq!(task4.has_due(),true);
+
+
+        let vs5: Vec<String> = vec!["Something".to_string(),
+                                    "another".to_string(),
+                                    "Fifth Task: It's what its all about! --> !()_".to_string(),
+                                    "-sd".to_string(),
+                                    "+household".to_string()];
+        let _result_add5 = command_add_task(&vs5 ,&mut pen, &mut h_set);
+        let task5 = pen.get_task_from_id(5).unwrap();
+        assert_eq!(task5.has_start(),true);
+        assert_eq!(task5.has_due(),true);
+
+
+        let vs6: Vec<String> = vec!["Something".to_string(),
+                                    "another".to_string(),
+                                    "Sixth Task: It's what its all about! --> !()_".to_string(),
+                                    "-sd".to_string(),
+                                    "+household".to_string(),
+                                    "start:2000-01-01".to_string(),
+                                    "due:2000-10-10".to_string()];
+        let _result_add6 = command_add_task(&vs6 ,&mut pen, &mut h_set);
+        let task6 = pen.get_task_from_id(6).unwrap();
+        assert_eq!(_result_add6.is_ok(),true);
+        assert_eq!(task6.due.unwrap(),971136000);
+        assert_eq!(task6.start.unwrap(),946684800);
+        
+        
+        let vs7: Vec<String> = vec!["Something".to_string(),
+                                    "another".to_string(),
+                                    "Seventh Task: It's what its all about! --> !()_".to_string(),
+                                    "-sd".to_string(),
+                                    "+household".to_string(),
+                                    "due:2000-10-10".to_string()];
+        let _result_add7 = command_add_task(&vs7 ,&mut pen, &mut h_set);
+        let task7 = pen.get_task_from_id(7).unwrap();
+        assert_eq!(_result_add7.is_ok(),true);
+        assert_eq!(task7.due.unwrap(),971136000);
+        assert_eq!(task7.start.is_none(),true);
+
+        pen.save();
+        assert_eq!(pen.list.len(),7);
+        remove_file(destination).expect("Cleanup test failed");
+    }
 
 
 

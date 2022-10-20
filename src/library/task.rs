@@ -521,7 +521,6 @@ pub fn generate_child(pend: &List, comp: &List, parent: &Task, hd_set: &mut Hdec
 pub fn make_task(vec:Vec<&str>) -> Result<Task, &'static str> {
     let mut ret = Task::new();
     let mut split_colon:Vec<_> = Vec::new();
-    // let now = lts_now();
 
     for element in vec {
         let starts_with = element.substring(0, 3);

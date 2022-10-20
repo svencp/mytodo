@@ -19,7 +19,7 @@
                     "kind": "bin"
                 }
             },
-            "args": [ "-w" ],
+            "args": [ "add", "my description, kinda trying", "=ds", "+car", "start:2000-01-01", "due:2000-10-10" ],
             "cwd": "${workspaceFolder}"
         },
         {

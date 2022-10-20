@@ -1,8 +1,0 @@
-description:hello	uuiid:0x000001	entry:1664204287	status:pending	due:1664204287	start:1664204287
-description:hello 2	uuiid:0x000002	entry:1664204299	status:pending	due:1664204299	start:1664204299
-description:a little recurrence	uuiid:0x000003	entry:1664204438	status:recurring	due:1664377238	prodigy:4	recur:+3w	rtype:chained	wait:1664204438
-description:a little recurrence	uuiid:0x000007	entry:1664226088	status:waiting	due:1666019156	parent:0x000003	recur:+3w	rtype:chained	wait:1665846356
-description:another test	uuiid:0x000008	entry:1664226181	status:recurring	due:1664398981	prodigy:3	recur:+1m	rtype:chained	wait:1664226181
-description:another test	uuiid:0x00000b	entry:1664226305	status:waiting	due:1666818300	parent:0x000008	recur:+1m	rtype:chained	wait:1666645500
-description:period.	uuiid:0x00000c	entry:1664226377	status:recurring	due:1664485577	prodigy:3	recur:+2w	rtype:periodic	wait:1664226377
-description:period.	uuiid:0x00000f	entry:1664226566	status:waiting	due:1666904777	parent:0x00000c	recur:+2w	rtype:periodic	wait:1666645577
