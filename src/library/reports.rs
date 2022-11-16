@@ -867,23 +867,45 @@ pub fn report_all_pending(pend: &List, colors: Colors, settings: &SettingsMap) -
         return Err("There are no tasks to be done!");
     }
 
-    //lets sort this vector with the least due date (if it has) on top
+    // [Original]
+    // //lets sort this vector with the least due date (if it has) on top 
+    // tasks.sort_by(|a,b| {
+    //     match &a.due {
+    //         Some(secs) => {
+    //             if b.due.is_none() {
+    //                 return Ordering::Less;
+    //             }
+    //             return secs.cmp(&b.due.unwrap())
+    //         }
+    //         None => {
+    //             if b.due.is_some() {
+    //                 return Ordering::Greater;
+    //             }
+    //             return Ordering::Equal;
+    //         }
+    //     }
+    // });
+
+    
+    //[Reverse Order]
+    //I have since decided to reverse the order - oldest due date at the bottom
     tasks.sort_by(|a,b| {
-        match &a.due {
+        match &b.due {
             Some(secs) => {
-                if b.due.is_none() {
+                if a.due.is_none() {
                     return Ordering::Less;
                 }
-                return secs.cmp(&b.due.unwrap())
+                return secs.cmp(&a.due.unwrap())
             }
             None => {
-                if b.due.is_some() {
+                if a.due.is_some() {
                     return Ordering::Greater;
                 }
                 return Ordering::Equal;
             }
         }
     });
+
 
     // add max_col to col_sizes with two spaces
     col_sizes.push(max_col);
