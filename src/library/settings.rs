@@ -5,7 +5,8 @@
 */
 
 
-use crate::library::my_utils::*;
+use error_feedback::*;
+// use crate::library::my_utils::*;
 use substring::Substring;
 use std::path::Path;
 use std::fs::*;
@@ -20,7 +21,8 @@ use std::io::{BufRead, BufReader};
 
 #[allow(non_snake_case)]
 // #[derive(Clone, Debug, Serialize, Deserialize, derivative::Derivative)]
-#[derive(Clone, Debug, derivative::Derivative)]
+// #[derive(Clone, Debug, derivative::Derivative)]
+#[derive(Clone, Debug)]
 pub struct SettingsMap {
     pub map: BTreeMap< String, String >
     // pub colors: BTreeMap< String, color::Rgb>

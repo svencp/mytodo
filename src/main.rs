@@ -13,14 +13,20 @@
     2022-10-04  1.2.11  change the sort order on the task waiting screen - soonest at the bottom
     2022-10-16  1.3.0   introduce shortcuts to add command { '-'  ->  currently only due:now start:now }
     2022-11-15  1.3.1   change the sort order on the All Pending report, with longest past due on the bottom
-
+    2022-12-01  1.3.2   make searching case insensitive by making both (term and search) lowercase
+                        removed lts module and use the local_timestamps crate instead
+                        removed my_utils module and use the error_feedback crate instead
     
+
+
+
 
 */
 
 mod library;
 
-use library::my_utils::*;
+use error_feedback::*;
+// use library::my_utils::*;
 use library::functions::*;
 use library::enums::*;
 use library::settings::*;

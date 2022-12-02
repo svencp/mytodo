@@ -4,13 +4,14 @@ Module for everything to do with a list consisting of tasks
 
 */
 
-
+use error_feedback::*;
+use local_timestamps::*;
 use inflections::Inflect;
 use crate::library::task::*;
-use crate::library::my_utils::*;
+// use crate::library::my_utils::*;
 use crate::library::enums::*;
 use crate::library::structs::*;
-use crate::library::lts::*;
+// use crate::library::lts::*;
 use std::path::Path;
 use std::fs::{ OpenOptions };
 use std::io::{BufRead, BufReader};
@@ -97,6 +98,7 @@ impl<'a> List<'a> {
         Err("Task not found with given uuiid")
     }
     
+    #[allow(dead_code)]
     pub fn get_task_from_uuiid_int(&self, uuiid_int: i64) -> Result<Task, &'static str> {
         for task in self.list.clone() {
             if uuiid_int == task.uuiid_int {
@@ -586,7 +588,7 @@ mod tests {
 
         let mut h_set:Hdeci = Hdeci::new();
         
-        let source = "/DATA/programming/Rust/mytodo/test/some-documents/pending1.data";
+        let source = "/DATA/programming/Rust/programs/mytodo/test/some-documents/pending1.data";
         let destination = "./test/pending.data";
         copy(source,destination).expect("Failed to copy");
         let mut pending: List = List::new(destination);
@@ -610,7 +612,7 @@ mod tests {
 
         let mut h_set:Hdeci = Hdeci::new();
         
-        let source = "/DATA/programming/Rust/mytodo/test/some-documents/completedx1.data";
+        let source = "/DATA/programming/Rust/programs/mytodo/test/some-documents/completedx1.data";
         let destination = "./test/completed.data";
         copy(source,destination).expect("Failed to copy");
         let mut completed: List = List::new(destination);
@@ -623,7 +625,7 @@ mod tests {
         completed.list.clear();
         
         
-        let source = "/DATA/programming/Rust/mytodo/test/some-documents/completed1.data";
+        let source = "/DATA/programming/Rust/programs/mytodo/test/some-documents/completed1.data";
         let destination = "./test/completed.data";
         copy(source,destination).expect("Failed to copy");
         let _res2 = load_task_file(&mut completed, &mut h_set);

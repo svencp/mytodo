@@ -30,6 +30,7 @@ pub const WEEK_SECS: i64         = 604800;
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Functions @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@           @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
+#[allow(deprecated)]
 // a function that returns the utc timestamp as a local timestamp;
 pub fn lts_now() -> i64 {
     let ts = Local::now().timestamp();
@@ -39,6 +40,7 @@ pub fn lts_now() -> i64 {
     return ret;
 }
 
+#[allow(deprecated)]
 // a function that takes a lts timestamp and converts it to a date string
 pub fn lts_to_date_string(ts: i64) -> String {
     let ndt = NaiveDateTime::from_timestamp(ts, 0);
@@ -46,6 +48,7 @@ pub fn lts_to_date_string(ts: i64) -> String {
     return ret;
 }
 
+#[allow(deprecated)]
 // a function that takes a lts timestamp and converts it to a date and time string
 pub fn lts_to_date_time_string(ts: i64) -> String {
     let ndt = NaiveDateTime::from_timestamp(ts, 0);
@@ -53,7 +56,7 @@ pub fn lts_to_date_time_string(ts: i64) -> String {
     return ret;
 }
 
-
+#[allow(deprecated)]
 // a function that takes a date string and converts it to a timestamp (dont do local here)
 pub fn lts_date_string_to_timestamp(date_str: &str) ->  Result<i64, &'static str> {
     let nd = NaiveDate::parse_from_str(date_str, DATE_FORMAT);
@@ -65,6 +68,7 @@ pub fn lts_date_string_to_timestamp(date_str: &str) ->  Result<i64, &'static str
     return Ok(ndt.timestamp());
 }
 
+#[allow(deprecated)]
 // a function that takes a date string and converts it to a timestamp (dont do local here)
 pub fn lts_date_time_string_to_timestamp(date_time_str: &str) ->  Result<i64, &'static str> {
     let ndt = NaiveDateTime::parse_from_str(date_time_str, DATE_TIME_FORMAT);
@@ -154,6 +158,7 @@ pub fn lts_add_timestamp_to_recur_term(ts: i64, term: &str) -> Result<i64, &'sta
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@         @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 #[cfg(test)]
+#[allow(deprecated)]
 mod tests {
     use super::*;
 

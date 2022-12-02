@@ -4,16 +4,17 @@
 
 */
 
-
+use error_feedback::*;
+use local_timestamps::*;
 use crate::library::enums::Rtype;
 use crate::library::functions::*;
-use crate::library::lts::*;
 use crate::library::structs::*;
 use crate::library::settings::*;
-use crate::library::my_utils::*;
+// use crate::library::my_utils::*;
 use crate::library::task::*;
 use crate::library::list::*;
 use termion::{color, style};
+// use core::unicode::conversions::to_lower;
 use std::cmp::Ordering;
 use std::process::exit;
 
@@ -1042,6 +1043,8 @@ pub fn report_recurring(colors: &Colors, settings: &SettingsMap, pend: &List ) -
     Ok(())
 }
 
+// lets make the term and the result be case insensitive by
+// making all lowercase
 pub fn report_search(args: &Vec<String>, colors: &Colors, settings: &SettingsMap, all_tasks: &List ) -> Result<(), &'static str> {
     let mut col_sizes = vec![3,2,8,7,4,10];
     let headers = vec!["ID", "St", "UUIID", "Age", "Tags", "Done", "Description" ];
@@ -1054,7 +1057,9 @@ pub fn report_search(args: &Vec<String>, colors: &Colors, settings: &SettingsMap
     if args.len() < 3 {
         return Err("No search term provided");
     }
-    let term = args.get(2).unwrap().as_str();
+    // let term = args.get(2).unwrap().as_str();
+    let temp_term =  args.get(2).unwrap().to_lowercase();
+    let term = temp_term.as_str();
 
     // lets get the set of tasks
     for t in all_tasks.list.clone() {
@@ -1062,18 +1067,26 @@ pub fn report_search(args: &Vec<String>, colors: &Colors, settings: &SettingsMap
 
         // search all descriptions, annotations and tags
         if t.is_tagged() {
+            // for tag in t.clone().tags {
             for tag in t.clone().tags {
-                if tag.contains(term) {
+                let tag_lower = tag.to_lowercase();
+                // if tag.contains(term) {
+                if tag_lower.contains(term) {
                     found = true;
                 }
             }
         }
-        if t.description.contains(term) {
+        let t_desc_lower = t.description.to_lowercase();
+        // if t.description.contains(term) {
+        if t_desc_lower.contains(term) {
             found = true;
         }
         if t.is_annotated() {
+            // for anno in t.clone().ann {
             for anno in t.clone().ann {
-                if anno.desc.contains(term) {
+                let anno_desc_lower = anno.desc.to_lowercase();
+                // if anno.desc.contains(term) {
+                if anno_desc_lower.contains(term) {
                     found = true;
                 }
             }

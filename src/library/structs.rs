@@ -4,13 +4,15 @@ Most of my odd structs are in here.
 
 */
 
-use std::collections::{BTreeSet, BTreeMap};
-use termion::{color, style};
+
+use error_feedback::*;
+use std::collections::{BTreeSet};
+use termion::{color};
 use crate::library::settings::*;
-use crate::library::my_utils::*;
-use crate::library::lts::*;
+// use crate::library::my_utils::*;
+// use crate::library::lts::*;
 use std::process::exit;
-use std::time::{UNIX_EPOCH, Duration};
+// use std::time::{UNIX_EPOCH, Duration};
 use chrono::*;
 use chronoutil::*;
 
@@ -104,6 +106,7 @@ pub struct RecurTerm {
     pub is_relative: bool,
 }
 
+#[allow(deprecated)]
 impl RecurTerm {
 
     fn instant() -> RecurTerm {
@@ -211,6 +214,8 @@ impl RecurTerm {
         Ok(ret)
     } // end of new()
 
+    
+    #[allow(dead_code)]
     pub fn text(&self) -> String {
         return  self.term.to_string()
     }
@@ -322,12 +327,13 @@ pub fn load_colors(settings: &SettingsMap) -> Colors {
 
 #[cfg(test)]
 mod tests {
-    use crate::library::{enums::Status, lts::lts_to_date_time_string};
+    // use crate::library::{enums::Status};
 
     use super::*;
-    use std::{fs::copy};
+    // use std::{fs::copy};
     use substring::Substring;
-    use std::fs::remove_file;
+    use local_timestamps::*;
+    // use std::fs::remove_file;
 
     
     // #[ignore]
