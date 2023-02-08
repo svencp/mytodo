@@ -17,7 +17,7 @@
     2022-12-01  1.3.2   make searching case insensitive by making both (term and search) lowercase
                         removed lts module and use the local_timestamps crate instead
                         removed my_utils module and use the error_feedback crate instead
-    
+    2023-02-08  1.3.3   testing new rust version 1.67
 
 
 
