@@ -15,7 +15,7 @@ derivative = "2.2.0"
 substring = "1.4.5"
 termion = "2.0.1"
 thousands = "0.2.0"
-parse-display = "0.6.0"
+parse-display = "0.8.0"
 chrono = "0.4.19"
 term_size = "0.3.2"
 

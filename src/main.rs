@@ -2,6 +2,7 @@
     This is my to-do list
     2022.07.24      Sven Ponelat
                     Use the shortcut 'so' to compile and move release executable to its place
+                    To run it use: cargo run c                   { shows completed report }
 
     2022-08-29  1.2.0   adding the search function -> report
     2022-08-31  1.2.2   adding the purge command    1) eg.  m 2,3 purge
@@ -26,7 +27,6 @@
 mod library;
 
 use error_feedback::*;
-// use library::my_utils::*;
 use library::functions::*;
 use library::enums::*;
 use library::settings::*;
@@ -35,7 +35,7 @@ use library::reports::*;
 use library::list::*;
 use std::process::exit;
 use std::env;
-use std::time::{SystemTime};
+use std::time::SystemTime;
 
 
 pub const RELEASE: bool            = false;
