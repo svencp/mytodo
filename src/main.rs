@@ -18,6 +18,7 @@
                         removed lts module and use the local_timestamps crate instead
                         removed my_utils module and use the error_feedback crate instead
     2023-02-08  1.3.3   testing new rust version 1.67
+    2023-07-10  1.3.4   nixos with cargo 1.70
 
 
 
@@ -38,8 +39,8 @@ use std::env;
 use std::time::SystemTime;
 
 
-pub const RELEASE: bool            = false;
-// pub const RELEASE: bool            = true;
+// pub const RELEASE: bool            = false;
+pub const RELEASE: bool            = true;
 pub const VERSION: &str            = env!("CARGO_PKG_VERSION");
 
 
