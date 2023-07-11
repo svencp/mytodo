@@ -1,0 +1,12 @@
+/home/sven/Tempo/mytodo/target/debug/deps/thousands-e9448ab362fbb8c0.rmeta: /home/sven/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thousands-0.2.0/src/lib.rs /home/sven/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thousands-0.2.0/src/digits.rs /home/sven/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thousands-0.2.0/src/policies.rs /home/sven/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thousands-0.2.0/src/traits.rs /home/sven/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thousands-0.2.0/src/display.rs /home/sven/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thousands-0.2.0/src/helpers.rs
+
+/home/sven/Tempo/mytodo/target/debug/deps/libthousands-e9448ab362fbb8c0.rlib: /home/sven/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thousands-0.2.0/src/lib.rs /home/sven/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thousands-0.2.0/src/digits.rs /home/sven/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thousands-0.2.0/src/policies.rs /home/sven/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thousands-0.2.0/src/traits.rs /home/sven/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thousands-0.2.0/src/display.rs /home/sven/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thousands-0.2.0/src/helpers.rs
+
+/home/sven/Tempo/mytodo/target/debug/deps/thousands-e9448ab362fbb8c0.d: /home/sven/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thousands-0.2.0/src/lib.rs /home/sven/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thousands-0.2.0/src/digits.rs /home/sven/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thousands-0.2.0/src/policies.rs /home/sven/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thousands-0.2.0/src/traits.rs /home/sven/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thousands-0.2.0/src/display.rs /home/sven/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thousands-0.2.0/src/helpers.rs
+
+/home/sven/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thousands-0.2.0/src/lib.rs:
+/home/sven/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thousands-0.2.0/src/digits.rs:
+/home/sven/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thousands-0.2.0/src/policies.rs:
+/home/sven/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thousands-0.2.0/src/traits.rs:
+/home/sven/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thousands-0.2.0/src/display.rs:
+/home/sven/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thousands-0.2.0/src/helpers.rs:
